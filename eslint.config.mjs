@@ -26,16 +26,6 @@ const eslintConfig = [
           selector: "function",
           format: ["camelCase", "PascalCase"],
         },
-        // React hooks must start with 'use'
-        {
-          selector: "function",
-          format: ["camelCase"],
-          prefix: ["use"],
-          filter: {
-            regex: "^use[A-Z]",
-            match: true,
-          },
-        },
         // Types, Interfaces, Classes use PascalCase
         {
           selector: "typeLike",

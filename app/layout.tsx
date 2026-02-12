@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { onest } from '@/lib/fonts'
+import { OfflineStatus } from '@/components/layout/offline-status'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -47,6 +48,7 @@ export default function RootLayout({
         className={`${onest.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <OfflineStatus />
         {children}
       </body>
     </html>
