@@ -1,0 +1,108 @@
+# generated: 2026-02-11
+# project: Bleau-info
+# project_key: bleau-info
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-11
+project: Bleau-info
+project_key: bleau-info
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Fondation & App Shell PWA
+  epic-1: in-progress
+  1-1-initialisation-du-projet-nextjs-design-system: done
+  1-2-configuration-pwa-service-worker: done
+  1-3-detection-reseau-indicateur-offline: backlog
+  1-4-dark-mode-toggle: backlog
+  1-5-monitoring-error-tracking: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Exploration & Découverte
+  epic-2: backlog
+  2-1-integration-carte-vectorielle-maplibre-protomaps: backlog
+  2-2-filtrage-des-blocs: backlog
+  2-3-recherche-textuelle-secteur-bloc: backlog
+  2-4-fiche-detail-bloc-mapsheet-pattern: backlog
+  2-5-visualiseur-de-topo-photo-svg: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Authentification & Profil Utilisateur
+  epic-3: backlog
+  3-1-inscription-connexion-supabase-auth: backlog
+  3-2-gestion-du-profil-public: backlog
+  3-3-conformite-gdpr-export-suppression: backlog
+  3-4-visualisation-du-trust-score: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Carnet de Croix & Progression
+  epic-4: backlog
+  4-1-logger-une-ascension-croix: backlog
+  4-2-gestion-des-listes-de-blocs: backlog
+  4-3-visualisation-des-statistiques: backlog
+  4-4-annotations-timeline: backlog
+  4-5-prevention-de-la-sollicitation-gps-en-arriere-plan: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Contribution & Création de Blocs
+  epic-5: backlog
+  5-1-formulaire-de-creation-de-bloc-metadonnees: backlog
+  5-2-capture-upload-photo: backlog
+  5-3-geolocalisation-gps-precise: backlog
+  5-4-editeur-de-trace-vectoriel-konva-canvas: backlog
+  5-5-sauvegarde-en-brouillon-local-offline: backlog
+  5-6-suggestion-de-modification-sur-bloc-existant: backlog
+  5-7-upload-video-de-demonstration: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Offline & Synchronisation
+  epic-6: backlog
+  6-1-telechargement-pack-secteur: backlog
+  6-2-synchronisation-automatique-en-background: backlog
+  6-3-hard-reset-cache-resynchronisation: backlog
+  6-4-gestion-de-lespace-de-stockage: backlog
+  6-5-gestion-des-conflits-last-write-wins-manual-merge: backlog
+  6-6-incremental-static-regeneration-isr: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Modération & Qualité
+  epic-7: backlog
+  7-1-detection-automatique-des-doublons: backlog
+  7-2-file-dattente-de-moderation: backlog
+  7-3-comparaison-side-by-side-diff-visuel: backlog
+  7-4-actions-de-moderation-valider-rejeter-corrections: backlog
+  7-5-auto-validation-pour-trusted-users: backlog
+  7-6-suspension-des-droits-decriture-ban: backlog
+  7-7-moderation-collaborative-en-temps-reel: backlog
+  epic-7-retrospective: optional
