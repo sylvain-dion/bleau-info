@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { onest } from '@/lib/fonts'
 import { OfflineStatus } from '@/components/layout/offline-status'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -72,6 +74,8 @@ export default function RootLayout({
         </header>
         <OfflineStatus />
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
