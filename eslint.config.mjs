@@ -31,13 +31,12 @@ const eslintConfig = [
           selector: "typeLike",
           format: ["PascalCase"],
         },
-        // React Components use PascalCase
+        // React Components use PascalCase (uppercase then lowercase = PascalCase)
         {
           selector: "variable",
-          types: ["function"],
           format: ["PascalCase"],
           filter: {
-            regex: "^[A-Z]",
+            regex: "^[A-Z][a-z]",
             match: true,
           },
         },
