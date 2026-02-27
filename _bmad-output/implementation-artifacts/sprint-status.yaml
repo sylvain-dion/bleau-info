@@ -50,8 +50,8 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Exploration & Découverte
-  epic-2: backlog
-  2-1-integration-carte-vectorielle-maplibre-protomaps: backlog
+  epic-2: in-progress
+  2-1-integration-carte-vectorielle-maplibre-protomaps: done
   2-2-filtrage-des-blocs: backlog
   2-3-recherche-textuelle-secteur-bloc: backlog
   2-4-fiche-detail-bloc-mapsheet-pattern: backlog
