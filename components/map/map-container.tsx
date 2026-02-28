@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import {
@@ -15,11 +15,23 @@ import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import type { CircuitColor } from '@/lib/data/mock-boulders'
 import { useMapStore } from '@/stores/map-store'
+import { useFilterStore, matchesFilters } from '@/stores/filter-store'
+import type { FilterState } from '@/stores/filter-store'
+import { FilterBar } from '@/components/filters/filter-bar'
 import { MapControls } from './map-controls'
 
 interface MapContainerProps {
   /** Current resolved theme ('light' or 'dark') */
   theme: 'light' | 'dark'
+}
+
+/** Filter the mock boulder GeoJSON based on current filter state */
+function filterBoulders(state: FilterState): typeof mockBoulders {
+  const filtered = mockBoulders.features.filter(
+    (feature: (typeof mockBoulders.features)[number]) =>
+      matchesFilters(feature.properties, state)
+  )
+  return { type: 'FeatureCollection', features: filtered }
 }
 
 export function MapContainer({ theme }: MapContainerProps) {
@@ -28,6 +40,23 @@ export function MapContainer({ theme }: MapContainerProps) {
   const protocolRef = useRef<Protocol | null>(null)
 
   const { center, zoom, setView } = useMapStore()
+
+  // Track visible/total counts for the filter bar
+  const totalCount = mockBoulders.features.length
+  const [visibleCount, setVisibleCount] = useState(totalCount)
+
+  /** Update the map GeoJSON source with filtered data */
+  const updateMapData = useCallback((state: FilterState) => {
+    const map = mapRef.current
+    if (!map) return
+
+    const source = map.getSource('boulders') as maplibregl.GeoJSONSource | undefined
+    if (!source) return
+
+    const filtered = filterBoulders(state)
+    source.setData(filtered)
+    setVisibleCount(filtered.features.length)
+  }, [])
 
   /** Initialize the map */
   useEffect(() => {
@@ -58,6 +87,8 @@ export function MapContainer({ theme }: MapContainerProps) {
     map.on('load', () => {
       addBoulderLayers(map)
       addMapInteractions(map)
+      // Apply any pre-existing filters
+      updateMapData(useFilterStore.getState())
     })
 
     // Fallback to OSM raster tiles if remote style fails
@@ -67,6 +98,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         map.once('styledata', () => {
           addBoulderLayers(map)
           addMapInteractions(map)
+          updateMapData(useFilterStore.getState())
         })
       }
     })
@@ -90,6 +122,14 @@ export function MapContainer({ theme }: MapContainerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /** Subscribe to filter store changes and update map data */
+  useEffect(() => {
+    const unsubscribe = useFilterStore.subscribe((state) => {
+      updateMapData(state)
+    })
+    return unsubscribe
+  }, [updateMapData])
+
   /** Update map style when theme changes */
   useEffect(() => {
     const map = mapRef.current
@@ -101,8 +141,9 @@ export function MapContainer({ theme }: MapContainerProps) {
     map.once('styledata', () => {
       addBoulderLayers(map)
       addMapInteractions(map)
+      updateMapData(useFilterStore.getState())
     })
-  }, [theme])
+  }, [theme, updateMapData])
 
   /** Handle zoom in */
   const handleZoomIn = useCallback(() => {
@@ -138,6 +179,7 @@ export function MapContainer({ theme }: MapContainerProps) {
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
+      <FilterBar visibleCount={visibleCount} totalCount={totalCount} />
       <MapControls
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
