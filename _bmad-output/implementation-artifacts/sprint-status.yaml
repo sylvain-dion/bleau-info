@@ -54,7 +54,7 @@ development_status:
   2-1-integration-carte-vectorielle-maplibre-protomaps: done
   2-2-filtrage-des-blocs: done
   2-3-recherche-textuelle-secteur-bloc: done
-  2-4-fiche-detail-bloc-mapsheet-pattern: backlog
+  2-4-fiche-detail-bloc-mapsheet-pattern: done
   2-5-visualiseur-de-topo-photo-svg: backlog
   epic-2-retrospective: optional
 
