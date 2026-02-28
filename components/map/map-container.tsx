@@ -18,6 +18,8 @@ import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
 import type { FilterState } from '@/stores/filter-store'
 import { FilterBar } from '@/components/filters/filter-bar'
+import { SearchBar } from '@/components/search/search-bar'
+import type { SearchResult } from '@/lib/search'
 import { MapControls } from './map-controls'
 
 interface MapContainerProps {
@@ -155,6 +157,53 @@ export function MapContainer({ theme }: MapContainerProps) {
     mapRef.current?.zoomOut({ duration: 300 })
   }, [])
 
+  /** Handle search result selection — FlyTo for boulders, fitBounds for sectors */
+  const handleSearchSelect = useCallback((result: SearchResult) => {
+    const map = mapRef.current
+    if (!map) return
+
+    if (result.type === 'sector' && result.bounds) {
+      map.fitBounds(result.bounds, {
+        padding: 60,
+        duration: MAP_INTERACTION.flyToDuration,
+        maxZoom: 16,
+      })
+    } else {
+      map.flyTo({
+        center: result.center,
+        zoom: result.zoom,
+        duration: MAP_INTERACTION.flyToDuration,
+      })
+    }
+
+    // If it's a boulder, select it and show popup after fly animation
+    if (result.type === 'boulder' && result.properties) {
+      useMapStore.getState().selectFeature(result.properties.id)
+      const circuit = result.properties.circuit as CircuitColor | null
+      const circuitColor = circuit ? CIRCUIT_COLORS[circuit] : '#a1a1aa'
+
+      // Remove existing popups
+      document.querySelectorAll('.maplibregl-popup').forEach((p) => p.remove())
+
+      // Show popup after flyTo settles
+      setTimeout(() => {
+        if (!mapRef.current) return
+        new maplibregl.Popup({ offset: 12, closeButton: false })
+          .setLngLat(result.center)
+          .setHTML(
+            `<div style="font-family:var(--font-onest),sans-serif;padding:4px 0">` +
+            `<strong style="font-size:14px">${result.properties!.name}</strong>` +
+            `<div style="margin-top:4px;display:flex;align-items:center;gap:6px">` +
+            `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${circuitColor}"></span>` +
+            `<span style="font-size:13px;color:#71717a">${result.properties!.grade}</span>` +
+            `</div>` +
+            `</div>`
+          )
+          .addTo(mapRef.current)
+      }, MAP_INTERACTION.flyToDuration * 0.6)
+    }
+  }, [])
+
   /** Handle locate me */
   const handleLocate = useCallback(() => {
     navigator.geolocation.getCurrentPosition(
@@ -179,7 +228,13 @@ export function MapContainer({ theme }: MapContainerProps) {
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <FilterBar visibleCount={visibleCount} totalCount={totalCount} />
+      {/* Top overlay: filter bar attached to header, then search bar floating */}
+      <div className="absolute left-0 right-0 top-0 z-10">
+        <FilterBar visibleCount={visibleCount} totalCount={totalCount} />
+        <div className="p-3">
+          <SearchBar onSelect={handleSearchSelect} />
+        </div>
+      </div>
       <MapControls
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}

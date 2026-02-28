@@ -33,7 +33,7 @@ export function FilterBar({ visibleCount, totalCount }: FilterBarProps) {
 
   return (
     <>
-      <div className="absolute left-0 right-0 top-0 z-10 bg-background/90 backdrop-blur">
+      <div className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 overflow-x-auto px-3 py-2 scrollbar-none">
           {/* Filter button with active count badge */}
           <button
