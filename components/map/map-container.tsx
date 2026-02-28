@@ -13,13 +13,13 @@ import {
 } from '@/lib/maplibre/config'
 import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
-import type { CircuitColor } from '@/lib/data/mock-boulders'
 import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
 import type { FilterState } from '@/stores/filter-store'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { SearchBar } from '@/components/search/search-bar'
 import type { SearchResult } from '@/lib/search'
+import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
 
 interface MapContainerProps {
@@ -176,31 +176,12 @@ export function MapContainer({ theme }: MapContainerProps) {
       })
     }
 
-    // If it's a boulder, select it and show popup after fly animation
+    // If it's a boulder, select it to open the MapSheet
     if (result.type === 'boulder' && result.properties) {
-      useMapStore.getState().selectFeature(result.properties.id)
-      const circuit = result.properties.circuit as CircuitColor | null
-      const circuitColor = circuit ? CIRCUIT_COLORS[circuit] : '#a1a1aa'
-
-      // Remove existing popups
-      document.querySelectorAll('.maplibregl-popup').forEach((p) => p.remove())
-
-      // Show popup after flyTo settles
+      // Delay selection until fly animation is underway so sheet doesn't block view
       setTimeout(() => {
-        if (!mapRef.current) return
-        new maplibregl.Popup({ offset: 12, closeButton: false })
-          .setLngLat(result.center)
-          .setHTML(
-            `<div style="font-family:var(--font-onest),sans-serif;padding:4px 0">` +
-            `<strong style="font-size:14px">${result.properties!.name}</strong>` +
-            `<div style="margin-top:4px;display:flex;align-items:center;gap:6px">` +
-            `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${circuitColor}"></span>` +
-            `<span style="font-size:13px;color:#71717a">${result.properties!.grade}</span>` +
-            `</div>` +
-            `</div>`
-          )
-          .addTo(mapRef.current)
-      }, MAP_INTERACTION.flyToDuration * 0.6)
+        useMapStore.getState().selectFeature(result.properties!.id)
+      }, MAP_INTERACTION.flyToDuration * 0.4)
     }
   }, [])
 
@@ -240,6 +221,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         onZoomOut={handleZoomOut}
         onLocate={handleLocate}
       />
+      <MapSheet />
     </div>
   )
 }
@@ -361,37 +343,13 @@ function addMapInteractions(map: maplibregl.Map) {
     }
   })
 
-  // Click on individual boulder marker
+  // Click on individual boulder marker → open MapSheet
   map.on('click', 'boulder-markers', (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: ['boulder-markers'] })
     if (!features.length) return
 
-    const feature = features[0]
-    const props = feature.properties
-    const name = props.name || 'Bloc inconnu'
-    const grade = props.grade || ''
-    const circuit = props.circuit as CircuitColor | null
-    const circuitColor = circuit ? CIRCUIT_COLORS[circuit] : '#a1a1aa'
-
-    // Select the feature in the store (for future Bottom Sheet integration)
+    const props = features[0].properties
     useMapStore.getState().selectFeature(props.id)
-
-    // Show a popup with boulder info
-    const geometry = feature.geometry
-    if (geometry.type === 'Point') {
-      new maplibregl.Popup({ offset: 12, closeButton: false })
-        .setLngLat(geometry.coordinates as [number, number])
-        .setHTML(
-          `<div style="font-family:var(--font-onest),sans-serif;padding:4px 0">` +
-          `<strong style="font-size:14px">${name}</strong>` +
-          `<div style="margin-top:4px;display:flex;align-items:center;gap:6px">` +
-          `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${circuitColor}"></span>` +
-          `<span style="font-size:13px;color:#71717a">${grade}</span>` +
-          `</div>` +
-          `</div>`
-        )
-        .addTo(map)
-    }
   })
 
   // Cursor changes on hover
