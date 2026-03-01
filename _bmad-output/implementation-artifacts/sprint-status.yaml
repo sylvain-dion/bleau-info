@@ -59,11 +59,11 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Authentification & Profil Utilisateur
-  epic-3: in-progress
+  epic-3: done
   3-1-inscription-connexion-supabase-auth: done
   3-2-gestion-du-profil-public: done
   3-3-conformite-gdpr-export-suppression: done
-  3-4-visualisation-du-trust-score: backlog
+  3-4-visualisation-du-trust-score: done
   epic-3-retrospective: optional
 
   # Epic 4: Carnet de Croix & Progression
