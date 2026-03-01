@@ -18,7 +18,9 @@ import type {
   BoulderStyle,
   BoulderExposure,
 } from '@/lib/data/mock-boulders'
+import { getTopoData } from '@/lib/data/mock-topos'
 import { formatGrade } from '@/lib/grades'
+import { TopoViewer } from '@/components/topo/topo-viewer'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -163,19 +165,41 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
             </div>
           </div>
 
-          {/* Topo placeholder */}
+          {/* Topo viewer or placeholder */}
           <div className="border-t border-border pt-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Topo</h3>
-            <div className="flex h-48 items-center justify-center rounded-lg bg-muted/50 text-sm text-muted-foreground">
-              <div className="text-center">
-                <Mountain className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p>Photo + tracé vectoriel</p>
-                <p className="text-xs">À venir (Story 2.5)</p>
-              </div>
-            </div>
+            <TopoSection name={name} boulderId={properties.id} />
           </div>
         </>
       )}
     </div>
+  )
+}
+
+/** Renders TopoViewer if topo data exists, otherwise a placeholder */
+function TopoSection({ name, boulderId }: { name: string; boulderId: string }) {
+  const topo = getTopoData(boulderId)
+
+  if (!topo) {
+    return (
+      <>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Topo</h3>
+        <div className="flex h-48 items-center justify-center rounded-lg bg-muted/50 text-sm text-muted-foreground">
+          <div className="text-center">
+            <Mountain className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+            <p>Topo non disponible</p>
+            <p className="text-xs">Aucun tracé pour ce bloc</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <TopoViewer
+      boulderName={name}
+      photoUrl={topo.photoUrl}
+      circuitColor={topo.circuitColor}
+      drawing={topo.drawing}
+    />
   )
 }
