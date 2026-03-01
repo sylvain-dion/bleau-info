@@ -11,6 +11,7 @@ import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
 import { ProfileStats } from '@/components/profile/profile-stats'
 import { AvatarPicker } from '@/components/profile/avatar-picker'
+import { TrustScoreCard } from '@/components/profile/trust-score-card'
 import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import type { ProfileFormData } from '@/lib/validations/profile'
@@ -111,6 +112,14 @@ export default function ProfilPage() {
           memberSince={user.created_at ?? new Date().toISOString()}
           tickCount={0}
           contributionPoints={0}
+        />
+      </div>
+
+      {/* Trust Score */}
+      <div className="mb-6">
+        <TrustScoreCard
+          trustScore={user.user_metadata?.trust_score ?? 0}
+          role={user.user_metadata?.role ?? null}
         />
       </div>
 
