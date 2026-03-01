@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { onest } from '@/lib/fonts'
 import { OfflineStatus } from '@/components/layout/offline-status'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { AuthListener } from '@/components/auth/auth-listener'
+import { UserMenu } from '@/components/auth/user-menu'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -70,8 +72,12 @@ export default function RootLayout({
       >
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="text-xl font-bold text-foreground">Bleau.info</div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <UserMenu />
+            <ThemeToggle />
+          </div>
         </header>
+        <AuthListener />
         <OfflineStatus />
         {children}
         <Analytics />
