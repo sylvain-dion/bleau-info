@@ -11,6 +11,8 @@ import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
 import { ProfileStats } from '@/components/profile/profile-stats'
 import { AvatarPicker } from '@/components/profile/avatar-picker'
+import { DataExportButton } from '@/components/profile/data-export-button'
+import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -207,6 +209,18 @@ export default function ProfilPage() {
           {isSaving ? 'Enregistrement...' : 'Enregistrer'}
         </button>
       </form>
+
+      {/* GDPR - Données personnelles */}
+      <div className="mt-8 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Données personnelles</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Conformément au RGPD, vous pouvez télécharger ou supprimer vos données à tout moment.
+        </p>
+        <div className="space-y-3">
+          <DataExportButton />
+          <DeleteAccountDialog />
+        </div>
+      </div>
     </div>
   )
 }
