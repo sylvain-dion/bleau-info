@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { LogIn, LogOut } from 'lucide-react'
+import { LogIn, LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/supabase/client'
+import { getAvatarPreset } from '@/lib/validations/profile'
 
 /**
  * User menu for the header.
@@ -88,8 +89,10 @@ function AuthenticatedMenu() {
   }
 
   const email = user?.email ?? ''
-  const initials = getInitials(email, user?.user_metadata?.full_name)
+  const displayName = user?.user_metadata?.display_name ?? user?.user_metadata?.full_name
+  const initials = getInitials(email, displayName)
   const avatarUrl = user?.user_metadata?.avatar_url
+  const avatarPreset = getAvatarPreset(user?.user_metadata?.avatar_preset ?? '')
 
   return (
     <div className="relative" ref={menuRef}>
@@ -111,6 +114,8 @@ function AuthenticatedMenu() {
             referrerPolicy="no-referrer"
             unoptimized
           />
+        ) : avatarPreset ? (
+          <span className="text-lg" aria-hidden="true">{avatarPreset.emoji}</span>
         ) : (
           <span>{initials}</span>
         )}
@@ -125,13 +130,22 @@ function AuthenticatedMenu() {
           {/* User info */}
           <div className="border-b border-border px-3 py-2">
             <p className="truncate text-sm font-medium text-foreground">
-              {user?.user_metadata?.full_name ?? 'Utilisateur'}
+              {displayName ?? 'Utilisateur'}
             </p>
             <p className="truncate text-xs text-muted-foreground">{email}</p>
           </div>
 
           {/* Actions */}
           <div className="py-1">
+            <Link
+              href="/profil"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <User className="h-4 w-4" />
+              Mon Profil
+            </Link>
             <button
               type="button"
               role="menuitem"
