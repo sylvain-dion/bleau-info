@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BoulderDetail } from '@/components/map/boulder-detail'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
+
+// Mock react-zoom-pan-pinch to avoid DOM measurement issues in tests
+vi.mock('react-zoom-pan-pinch', () => ({
+  TransformWrapper: ({ children }: { children: (utils: Record<string, () => void>) => React.ReactNode }) =>
+    children({ zoomIn: vi.fn(), zoomOut: vi.fn(), resetTransform: vi.fn() }),
+  TransformComponent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
 
 const defaultProps: BoulderProperties = {
   id: 'test-boulder-1',
@@ -133,7 +140,7 @@ describe('BoulderDetail', () => {
       expect(screen.getByText('Oui')).toBeDefined()
     })
 
-    it('should render topo placeholder', () => {
+    it('should render topo placeholder for boulder without topo data', () => {
       render(
         <BoulderDetail
           properties={defaultProps}
@@ -142,6 +149,24 @@ describe('BoulderDetail', () => {
         />
       )
       expect(screen.getByText('Topo')).toBeDefined()
+      expect(screen.getByText('Topo non disponible')).toBeDefined()
+    })
+
+    it('should render TopoViewer for boulder with topo data', () => {
+      const topoProps: BoulderProperties = {
+        ...defaultProps,
+        id: 'cul-de-chien-1', // This boulder has mock topo data
+      }
+      render(
+        <BoulderDetail
+          properties={topoProps}
+          coordinates={defaultCoordinates}
+          isExpanded={true}
+        />
+      )
+      expect(screen.getByLabelText('Tracé de La Marie-Rose')).toBeDefined()
+      expect(screen.getByText('Départ')).toBeDefined()
+      expect(screen.getByText('Arrivée')).toBeDefined()
     })
 
     it('should render coordinates', () => {
