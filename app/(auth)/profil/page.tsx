@@ -59,6 +59,10 @@ export default function ProfilPage() {
 
     try {
       const supabase = createClient()
+      if (!supabase) {
+        setSaveError('Service indisponible. Rechargez la page.')
+        return
+      }
       const { error } = await supabase.auth.updateUser({
         data: {
           display_name: data.displayName,

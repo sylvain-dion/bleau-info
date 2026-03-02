@@ -8,16 +8,18 @@ import { cookies } from 'next/headers'
  * Uses the async `cookies()` API from Next.js 15. The cookie store is
  * used by `@supabase/ssr` to read/write session tokens via HttpOnly cookies.
  *
- * @throws if NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY are missing
+ * Returns `null` if environment variables are missing.
+ * Callers must handle the `null` case gracefully.
  */
 export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+    console.warn(
+      '[Supabase Server] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY — auth disabled'
     )
+    return null
   }
 
   const cookieStore = await cookies()
