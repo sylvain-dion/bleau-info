@@ -136,6 +136,11 @@ function GoogleSignInButton({ onError }: { onError: (msg: string) => void }) {
     setIsLoading(true)
     try {
       const supabase = createClient()
+      if (!supabase) {
+        onError('Service d\'authentification indisponible. Rechargez la page.')
+        setIsLoading(false)
+        return
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -147,8 +152,10 @@ function GoogleSignInButton({ onError }: { onError: (msg: string) => void }) {
         setIsLoading(false)
       }
       // If no error, browser will redirect — don't reset loading
-    } catch {
-      onError('Impossible de se connecter avec Google')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue'
+      console.error('[Google OAuth error]', message)
+      onError('Impossible de se connecter. Veuillez réessayer.')
       setIsLoading(false)
     }
   }
@@ -204,6 +211,10 @@ function LoginForm({ onError }: { onError: (msg: string) => void }) {
     onError('')
     try {
       const supabase = createClient()
+      if (!supabase) {
+        onError('Service d\'authentification indisponible. Rechargez la page.')
+        return
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -318,6 +329,10 @@ function SignupForm({
     onError('')
     try {
       const supabase = createClient()
+      if (!supabase) {
+        onError('Service d\'authentification indisponible. Rechargez la page.')
+        return
+      }
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,

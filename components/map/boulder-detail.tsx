@@ -13,6 +13,8 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Plus,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react'
 import { CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import type {
@@ -27,6 +29,8 @@ import { TopoViewer } from '@/components/topo/topo-viewer'
 import { TickForm } from '@/components/boulder/tick-form'
 import { useTickStore, formatTickStyle } from '@/stores/tick-store'
 import { useAuthStore } from '@/stores/auth-store'
+import { useListStore } from '@/stores/list-store'
+import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -91,11 +95,14 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
   const { name, grade, sector, circuit, circuitNumber, style, exposure, strollerAccessible } =
     properties
   const [showTickForm, setShowTickForm] = useState(false)
+  const [showListMenu, setShowListMenu] = useState(false)
   const { user } = useAuthStore()
   const isBoulderCompleted = useTickStore((s) => s.isBoulderCompleted)
   const getTicksForBoulder = useTickStore((s) => s.getTicksForBoulder)
+  const isBoulderInAnyList = useListStore((s) => s.isBoulderInAnyList)
   const isCompleted = isBoulderCompleted(properties.id)
   const boulderTicks = getTicksForBoulder(properties.id)
+  const isBookmarked = isBoulderInAnyList(properties.id)
 
   return (
     <div className="space-y-4">
@@ -109,9 +116,37 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           </div>
         </div>
 
-        {/* Grade badge */}
-        <div className="flex shrink-0 flex-col items-center rounded-lg bg-primary/10 px-3 py-1.5">
-          <span className="text-xl font-bold text-primary">{formatGrade(grade)}</span>
+        {/* Grade badge + bookmark */}
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowListMenu(!showListMenu)}
+              disabled={!user}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors min-touch ${
+                isBookmarked
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              } disabled:opacity-50`}
+              aria-label={isBookmarked ? 'Modifier les listes' : 'Ajouter à une liste'}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-5 w-5" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
+            </button>
+            <AddToListMenu
+              boulderId={properties.id}
+              boulderName={name}
+              boulderGrade={grade}
+              isOpen={showListMenu}
+              onClose={() => setShowListMenu(false)}
+            />
+          </div>
+          <div className="flex flex-col items-center rounded-lg bg-primary/10 px-3 py-1.5">
+            <span className="text-xl font-bold text-primary">{formatGrade(grade)}</span>
+          </div>
         </div>
       </div>
 

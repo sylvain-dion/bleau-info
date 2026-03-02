@@ -16,18 +16,19 @@ export default async function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
-  let isAuthenticated = false
+  const supabase = await createClient()
 
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    isAuthenticated = !!user
-  } catch {
-    // Supabase not configured — allow through in dev
-    isAuthenticated = false
+  // If Supabase is not configured (missing env vars), skip auth check in dev
+  if (!supabase) {
+    if (process.env.NODE_ENV !== 'development') {
+      redirect('/login')
+    }
+    return <>{children}</>
   }
 
-  if (!isAuthenticated) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
     redirect('/login')
   }
 

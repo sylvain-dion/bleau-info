@@ -19,21 +19,25 @@ export function AuthListener() {
   const setLoading = useAuthStore((s) => s.setLoading)
 
   useEffect(() => {
-    let supabase: ReturnType<typeof createClient>
+    const supabase = createClient()
 
-    try {
-      supabase = createClient()
-    } catch {
+    if (!supabase) {
       // Supabase not configured — mark as done loading with no user
       setLoading(false)
       return
     }
 
     // Check current session on mount
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      setLoading(false)
-    })
+    supabase.auth.getUser()
+      .then(({ data: { user } }) => {
+        setUser(user)
+        setLoading(false)
+      })
+      .catch(() => {
+        // Network error or invalid token — mark as done loading with no user
+        setUser(null)
+        setLoading(false)
+      })
 
     // Subscribe to auth state changes (login, logout, token refresh)
     const {

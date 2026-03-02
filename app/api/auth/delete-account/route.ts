@@ -16,6 +16,12 @@ export async function DELETE() {
   try {
     // 1. Verify the user is authenticated
     const supabase = await createClient()
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Service indisponible.' },
+        { status: 503 }
+      )
+    }
     const {
       data: { user },
       error: authError,
