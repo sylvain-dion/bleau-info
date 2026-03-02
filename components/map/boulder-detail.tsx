@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Mountain,
   MapPin,
@@ -10,6 +11,8 @@ import {
   Baby,
   Hash,
   ArrowUpRight,
+  CheckCircle2,
+  Plus,
 } from 'lucide-react'
 import { CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import type {
@@ -21,6 +24,9 @@ import type {
 import { getTopoData } from '@/lib/data/mock-topos'
 import { formatGrade } from '@/lib/grades'
 import { TopoViewer } from '@/components/topo/topo-viewer'
+import { TickForm } from '@/components/boulder/tick-form'
+import { useTickStore, formatTickStyle } from '@/stores/tick-store'
+import { useAuthStore } from '@/stores/auth-store'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -84,6 +90,12 @@ interface BoulderDetailProps {
 export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDetailProps) {
   const { name, grade, sector, circuit, circuitNumber, style, exposure, strollerAccessible } =
     properties
+  const [showTickForm, setShowTickForm] = useState(false)
+  const { user } = useAuthStore()
+  const isBoulderCompleted = useTickStore((s) => s.isBoulderCompleted)
+  const getTicksForBoulder = useTickStore((s) => s.getTicksForBoulder)
+  const isCompleted = isBoulderCompleted(properties.id)
+  const boulderTicks = getTicksForBoulder(properties.id)
 
   return (
     <div className="space-y-4">
@@ -168,6 +180,63 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           {/* Topo viewer or placeholder */}
           <div className="border-t border-border pt-4">
             <TopoSection name={name} boulderId={properties.id} />
+          </div>
+
+          {/* Tick logging section */}
+          <div className="border-t border-border pt-4">
+            {/* Existing ticks summary */}
+            {isCompleted && (
+              <div className="mb-3 flex items-center gap-2 rounded-lg bg-green-500/10 p-3">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Fait — {boulderTicks.length} croix
+                  </p>
+                  <p className="text-xs text-green-600/80 dark:text-green-400/70">
+                    {boulderTicks
+                      .slice(0, 2)
+                      .map((t) => `${formatTickStyle(t.tickStyle)} le ${new Date(t.tickDate).toLocaleDateString('fr-FR')}`)
+                      .join(' · ')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Tick form or button */}
+            {showTickForm ? (
+              <div className="rounded-xl border border-border bg-card p-4">
+                <TickForm
+                  boulderId={properties.id}
+                  boulderName={name}
+                  boulderGrade={grade}
+                  onClose={() => setShowTickForm(false)}
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowTickForm(true)}
+                disabled={!user}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 min-touch"
+              >
+                {isCompleted ? (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Logger une autre croix
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Logger une croix
+                  </>
+                )}
+              </button>
+            )}
+            {!user && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Connectez-vous pour enregistrer vos croix
+              </p>
+            )}
           </div>
         </>
       )}
