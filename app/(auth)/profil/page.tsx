@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { User, Save, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
+import { useTickStore } from '@/stores/tick-store'
 import { createClient } from '@/lib/supabase/client'
 import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
@@ -19,6 +20,7 @@ import type { AvatarPresetKey } from '@/lib/validations/profile'
 
 export default function ProfilPage() {
   const { user, isLoading } = useAuthStore()
+  const tickCount = useTickStore((s) => s.ticks.length)
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -110,7 +112,7 @@ export default function ProfilPage() {
       <div className="mb-6">
         <ProfileStats
           memberSince={user.created_at ?? new Date().toISOString()}
-          tickCount={0}
+          tickCount={tickCount}
           contributionPoints={0}
         />
       </div>

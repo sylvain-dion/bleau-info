@@ -15,6 +15,7 @@ import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
+import { useTickStore } from '@/stores/tick-store'
 import type { FilterState } from '@/stores/filter-store'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { SearchBar } from '@/components/search/search-bar'
@@ -88,6 +89,7 @@ export function MapContainer({ theme }: MapContainerProps) {
 
     map.on('load', () => {
       addBoulderLayers(map)
+      addCompletedBoulderLayer(map)
       addMapInteractions(map)
       // Apply any pre-existing filters
       updateMapData(useFilterStore.getState())
@@ -99,6 +101,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         map.setStyle(createFallbackStyle())
         map.once('styledata', () => {
           addBoulderLayers(map)
+          addCompletedBoulderLayer(map)
           addMapInteractions(map)
           updateMapData(useFilterStore.getState())
         })
@@ -131,6 +134,14 @@ export function MapContainer({ theme }: MapContainerProps) {
     })
     return unsubscribe
   }, [updateMapData])
+
+  /** Subscribe to tick store changes and update completed boulders layer */
+  useEffect(() => {
+    const unsubscribe = useTickStore.subscribe(() => {
+      updateCompletedLayer(mapRef.current)
+    })
+    return unsubscribe
+  }, [])
 
   /** Update map style when theme changes */
   useEffect(() => {
@@ -316,6 +327,71 @@ function addBoulderLayers(map: maplibregl.Map) {
       ],
     },
   })
+}
+
+/** Add a green ring overlay on boulders the user has ticked */
+function addCompletedBoulderLayer(map: maplibregl.Map) {
+  if (map.getSource('completed-boulders')) return
+
+  // Start with empty feature collection — populated by updateCompletedLayer
+  map.addSource('completed-boulders', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  })
+
+  map.addLayer({
+    id: 'completed-badge',
+    type: 'circle',
+    source: 'completed-boulders',
+    paint: {
+      'circle-color': '#22c55e', // green-500
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        12, 6,
+        15, 9,
+        18, 13,
+      ],
+      'circle-stroke-color': '#ffffff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.85,
+    },
+  })
+
+  // ✓ label on top of the green circle
+  map.addLayer({
+    id: 'completed-check',
+    type: 'symbol',
+    source: 'completed-boulders',
+    layout: {
+      'text-field': '✓',
+      'text-font': ['Noto Sans Bold'],
+      'text-size': [
+        'interpolate', ['linear'], ['zoom'],
+        12, 8,
+        15, 11,
+        18, 14,
+      ],
+    },
+    paint: {
+      'text-color': '#ffffff',
+    },
+  })
+
+  // Populate with current data
+  updateCompletedLayer(map)
+}
+
+/** Update the completed boulders GeoJSON source from tick store */
+function updateCompletedLayer(map: maplibregl.Map | null) {
+  if (!map) return
+  const source = map.getSource('completed-boulders') as maplibregl.GeoJSONSource | undefined
+  if (!source) return
+
+  const completedIds = useTickStore.getState().getCompletedBoulderIds()
+  const features = mockBoulders.features.filter(
+    (f: (typeof mockBoulders.features)[number]) => completedIds.has(f.properties.id)
+  )
+  source.setData({ type: 'FeatureCollection', features })
 }
 
 /** Add click interactions for clusters and individual markers */
