@@ -69,7 +69,7 @@ development_status:
   # Epic 4: Carnet de Croix & Progression
   epic-4: in-progress
   4-1-logger-une-ascension-croix: done
-  4-2-gestion-des-listes-de-blocs: backlog
+  4-2-gestion-des-listes-de-blocs: done
   4-3-visualisation-des-statistiques: backlog
   4-4-annotations-timeline: backlog
   4-5-prevention-de-la-sollicitation-gps-en-arriere-plan: backlog
