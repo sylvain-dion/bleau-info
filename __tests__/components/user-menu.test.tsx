@@ -113,6 +113,16 @@ describe('UserMenu', () => {
       })
     })
 
+    it('should show Statistiques link in dropdown', () => {
+      render(<UserMenu />)
+      const button = screen.getByLabelText('Menu utilisateur')
+      fireEvent.click(button)
+
+      const statsLink = screen.getByText('Statistiques')
+      expect(statsLink).toBeDefined()
+      expect(statsLink.closest('a')?.getAttribute('href')).toBe('/statistiques')
+    })
+
     it('should close dropdown on Escape key', () => {
       render(<UserMenu />)
       const button = screen.getByLabelText('Menu utilisateur')
