@@ -17,6 +17,8 @@ import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
 import { useTickStore } from '@/stores/tick-store'
 import type { FilterState } from '@/stores/filter-store'
+import { useGeolocation, type GeoPosition } from '@/hooks/use-geolocation'
+import { useAutoLocate } from '@/hooks/use-auto-locate'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { SearchBar } from '@/components/search/search-bar'
 import type { SearchResult } from '@/lib/search'
@@ -42,7 +44,32 @@ export function MapContainer({ theme }: MapContainerProps) {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const protocolRef = useRef<Protocol | null>(null)
 
-  const { center, zoom, setView } = useMapStore()
+  const { center, zoom, setView, hasLocated, setHasLocated } = useMapStore()
+
+  // Safe geolocation — NFR-04: no GPS in background
+  const { locate } = useGeolocation(
+    useCallback(
+      (pos: GeoPosition) => {
+        setHasLocated()
+        mapRef.current?.flyTo({
+          center: [pos.longitude, pos.latitude],
+          zoom: 15,
+          duration: MAP_INTERACTION.flyToDuration,
+        })
+      },
+      [setHasLocated]
+    ),
+    useCallback(() => {
+      mapRef.current?.flyTo({
+        center: MAP_CENTER,
+        zoom: MAP_DEFAULT_ZOOM,
+        duration: MAP_INTERACTION.flyToDuration,
+      })
+    }, [])
+  )
+
+  // Auto-locate when returning to the app (only if user previously located)
+  useAutoLocate(mapRef, hasLocated)
 
   // Track visible/total counts for the filter bar
   const totalCount = mockBoulders.features.length
@@ -196,27 +223,6 @@ export function MapContainer({ theme }: MapContainerProps) {
     }
   }, [])
 
-  /** Handle locate me */
-  const handleLocate = useCallback(() => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        mapRef.current?.flyTo({
-          center: [position.coords.longitude, position.coords.latitude],
-          zoom: 15,
-          duration: MAP_INTERACTION.flyToDuration,
-        })
-      },
-      () => {
-        // Geolocation denied or unavailable — fly to default center
-        mapRef.current?.flyTo({
-          center: MAP_CENTER,
-          zoom: MAP_DEFAULT_ZOOM,
-          duration: MAP_INTERACTION.flyToDuration,
-        })
-      }
-    )
-  }, [])
-
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
@@ -230,7 +236,7 @@ export function MapContainer({ theme }: MapContainerProps) {
       <MapControls
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
-        onLocate={handleLocate}
+        onLocate={locate}
       />
       <MapSheet />
     </div>
