@@ -67,12 +67,12 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Carnet de Croix & Progression
-  epic-4: in-progress
+  epic-4: done
   4-1-logger-une-ascension-croix: done
   4-2-gestion-des-listes-de-blocs: done
   4-3-visualisation-des-statistiques: done
   4-4-annotations-timeline: done
-  4-5-prevention-de-la-sollicitation-gps-en-arriere-plan: backlog
+  4-5-prevention-de-la-sollicitation-gps-en-arriere-plan: done
   epic-4-retrospective: optional
 
   # Epic 5: Contribution & Création de Blocs
