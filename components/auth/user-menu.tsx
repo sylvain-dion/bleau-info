@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { LogIn, LogOut, User, ListChecks } from 'lucide-react'
+import { LogIn, LogOut, User, ListChecks, BarChart3 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/supabase/client'
 import { getAvatarPreset } from '@/lib/validations/profile'
@@ -155,6 +155,15 @@ function AuthenticatedMenu() {
             >
               <ListChecks className="h-4 w-4" />
               Mes Listes
+            </Link>
+            <Link
+              href="/statistiques"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Statistiques
             </Link>
             <button
               type="button"
