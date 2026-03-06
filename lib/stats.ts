@@ -42,14 +42,14 @@ const STYLE_COLORS: Record<TickStyle, string> = {
 }
 
 /** Format a YYYY-MM string to a French short label */
-function formatMonthLabel(yearMonth: string): string {
+export function formatMonthLabel(yearMonth: string): string {
   const [year, month] = yearMonth.split('-')
   const date = new Date(Number(year), Number(month) - 1, 1)
   return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
 }
 
 /** Generate all YYYY-MM keys between two months (inclusive) */
-function generateMonthRange(first: string, last: string): string[] {
+export function generateMonthRange(first: string, last: string): string[] {
   const months: string[] = []
   const [startYear, startMonth] = first.split('-').map(Number)
   const [endYear, endMonth] = last.split('-').map(Number)
@@ -130,4 +130,40 @@ export function computeTickStats(ticks: Tick[]): TickStats {
     gradeDistribution: computeGradeDistribution(ticks),
     styleDistribution: computeStyleDistribution(ticks),
   }
+}
+
+/**
+ * Extend monthly ascent data to include months covered by annotations
+ * that fall outside the existing tick date range.
+ */
+export function mergeAnnotationMonths(
+  monthlyAscents: MonthlyAscent[],
+  annotationDates: string[]
+): MonthlyAscent[] {
+  if (annotationDates.length === 0 || monthlyAscents.length === 0) {
+    return monthlyAscents
+  }
+
+  const annotationMonths = annotationDates.map((d) => d.slice(0, 7))
+  const existingMonths = monthlyAscents.map((m) => m.month)
+
+  const allMonths = [...new Set([...existingMonths, ...annotationMonths])].sort()
+  const rangeFirst = allMonths[0]
+  const rangeLast = allMonths[allMonths.length - 1]
+
+  // If range hasn't changed, return unchanged
+  if (rangeFirst === existingMonths[0] && rangeLast === existingMonths[existingMonths.length - 1]) {
+    return monthlyAscents
+  }
+
+  const existingByMonth = new Map(monthlyAscents.map((m) => [m.month, m]))
+  const fullRange = generateMonthRange(rangeFirst, rangeLast)
+
+  return fullRange.map((month) =>
+    existingByMonth.get(month) ?? {
+      month,
+      label: formatMonthLabel(month),
+      count: 0,
+    }
+  )
 }

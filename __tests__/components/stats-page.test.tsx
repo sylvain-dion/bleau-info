@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useTickStore } from '@/stores/tick-store'
+import { useAnnotationStore } from '@/stores/annotation-store'
 import type { User } from '@supabase/supabase-js'
 import type { Tick } from '@/lib/validations/tick'
 
@@ -25,6 +26,7 @@ vi.mock('recharts', () => ({
   Tooltip: () => null,
   Legend: () => null,
   Line: () => null,
+  ReferenceLine: () => null,
 }))
 
 // Import AFTER mocks
@@ -56,6 +58,7 @@ describe('StatistiquesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useTickStore.setState({ ticks: [] })
+    useAnnotationStore.setState({ annotations: [] })
   })
 
   it('shows loading spinner when auth is loading', () => {
@@ -127,6 +130,16 @@ describe('StatistiquesPage', () => {
     it('does not show empty state when ticks exist', () => {
       render(<StatistiquesPage />)
       expect(screen.queryByText('Aucune statistique')).toBeNull()
+    })
+
+    it('shows annotation button', () => {
+      render(<StatistiquesPage />)
+      expect(screen.getByText('Annoter')).toBeDefined()
+    })
+
+    it('does not show annotation list when no annotations', () => {
+      render(<StatistiquesPage />)
+      expect(screen.queryByText(/Annotations \(/)).toBeNull()
     })
   })
 })

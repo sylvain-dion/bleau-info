@@ -4,7 +4,9 @@ import {
   computeMonthlyAscents,
   computeGradeDistribution,
   computeStyleDistribution,
+  mergeAnnotationMonths,
 } from '@/lib/stats'
+import type { MonthlyAscent } from '@/lib/stats'
 import type { Tick } from '@/lib/validations/tick'
 
 function makeTick(overrides: Partial<Tick> = {}): Tick {
@@ -183,5 +185,62 @@ describe('computeStyleDistribution', () => {
     const result = computeStyleDistribution(ticks)
     expect(result).toHaveLength(1)
     expect(result[0].style).toBe('flash')
+  })
+})
+
+describe('mergeAnnotationMonths', () => {
+  const baseMonths: MonthlyAscent[] = [
+    { month: '2026-01', label: 'janv. 2026', count: 3 },
+    { month: '2026-02', label: 'févr. 2026', count: 0 },
+    { month: '2026-03', label: 'mars 2026', count: 5 },
+  ]
+
+  it('returns unchanged when no annotation dates', () => {
+    const result = mergeAnnotationMonths(baseMonths, [])
+    expect(result).toBe(baseMonths)
+  })
+
+  it('returns unchanged when monthly ascents is empty', () => {
+    const result = mergeAnnotationMonths([], ['2026-05-01'])
+    expect(result).toEqual([])
+  })
+
+  it('returns unchanged when annotations are within existing range', () => {
+    const result = mergeAnnotationMonths(baseMonths, ['2026-02-15'])
+    expect(result).toBe(baseMonths)
+  })
+
+  it('extends range when annotation is after existing range', () => {
+    const result = mergeAnnotationMonths(baseMonths, ['2026-05-10'])
+    expect(result).toHaveLength(5) // Jan, Feb, Mar, Apr, May
+    expect(result[3]).toMatchObject({ month: '2026-04', count: 0 })
+    expect(result[4]).toMatchObject({ month: '2026-05', count: 0 })
+    // Original data preserved
+    expect(result[0].count).toBe(3)
+    expect(result[2].count).toBe(5)
+  })
+
+  it('extends range when annotation is before existing range', () => {
+    const result = mergeAnnotationMonths(baseMonths, ['2025-11-01'])
+    expect(result[0]).toMatchObject({ month: '2025-11', count: 0 })
+    expect(result[1]).toMatchObject({ month: '2025-12', count: 0 })
+    expect(result[2]).toMatchObject({ month: '2026-01', count: 3 })
+  })
+
+  it('extends range in both directions', () => {
+    const result = mergeAnnotationMonths(baseMonths, ['2025-12-01', '2026-05-15'])
+    expect(result[0].month).toBe('2025-12')
+    expect(result[result.length - 1].month).toBe('2026-05')
+    // Original months preserved in middle
+    expect(result.find((m) => m.month === '2026-01')?.count).toBe(3)
+    expect(result.find((m) => m.month === '2026-03')?.count).toBe(5)
+  })
+
+  it('fills gap months between annotation and existing range', () => {
+    const result = mergeAnnotationMonths(baseMonths, ['2026-06-01'])
+    const months = result.map((m) => m.month)
+    expect(months).toEqual([
+      '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06',
+    ])
   })
 })
