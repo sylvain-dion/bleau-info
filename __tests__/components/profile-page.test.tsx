@@ -20,6 +20,19 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }))
 
+// Mock maplibre-gl (no WebGL in jsdom) — pulled in via BoulderForm → LocationPicker
+vi.mock('maplibre-gl', () => ({
+  default: { Map: vi.fn() },
+}))
+
+vi.mock('@/lib/hooks/use-theme', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    resolvedTheme: 'light' as const,
+    setTheme: vi.fn(),
+  }),
+}))
+
 // Must import after mocks
 const { default: ProfilPage } = await import('@/app/(auth)/profil/page')
 

@@ -19,6 +19,11 @@ interface UseGeolocationReturn {
   error: GeolocationPositionError | null
 }
 
+interface UseGeolocationOptions {
+  /** Request high-accuracy GPS (slower, more battery). Default: false. */
+  enableHighAccuracy?: boolean
+}
+
 /**
  * Safe geolocation hook — NFR-04 compliant.
  *
@@ -27,10 +32,12 @@ interface UseGeolocationReturn {
  *
  * @param onSuccess Optional callback when position is obtained
  * @param onError Optional callback when geolocation fails
+ * @param options Optional geolocation settings
  */
 export function useGeolocation(
   onSuccess?: (pos: GeoPosition) => void,
-  onError?: () => void
+  onError?: () => void,
+  options?: UseGeolocationOptions
 ): UseGeolocationReturn {
   const [position, setPosition] = useState<GeoPosition | null>(null)
   const [isLocating, setIsLocating] = useState(false)
@@ -71,12 +78,12 @@ export function useGeolocation(
         onError?.()
       },
       {
-        enableHighAccuracy: false,
+        enableHighAccuracy: options?.enableHighAccuracy ?? false,
         timeout: 10_000,
         maximumAge: 30_000,
       }
     )
-  }, [onSuccess, onError])
+  }, [onSuccess, onError, options?.enableHighAccuracy])
 
   return { locate, position, isLocating, error }
 }

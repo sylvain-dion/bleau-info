@@ -126,6 +126,10 @@ export const boulderFormSchema = z.object({
   photoBlurHash: z.string().optional(),
   photoWidth: z.number().int().positive().optional(),
   photoHeight: z.number().int().positive().optional(),
+
+  /** GPS coordinates (Story 5.3) — 6 decimal places, ~11cm precision */
+  latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide').optional(),
+  longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide').optional(),
 })
 
 /** Input type — what the form fields provide (height as string). */

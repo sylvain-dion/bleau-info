@@ -321,6 +321,74 @@ describe('boulder validation', () => {
       })
       expect(result.success).toBe(false)
     })
+
+    // ── GPS coordinate validation (Story 5.3) ──
+
+    it('should accept valid GPS coordinates', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        latitude: 48.382619,
+        longitude: 2.634521,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.latitude).toBe(48.382619)
+        expect(result.data.longitude).toBe(2.634521)
+      }
+    })
+
+    it('should accept data without GPS coordinates', () => {
+      const result = boulderFormSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.latitude).toBeUndefined()
+        expect(result.data.longitude).toBeUndefined()
+      }
+    })
+
+    it('should reject latitude below -90', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        latitude: -91,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject latitude above 90', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        latitude: 91,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject longitude below -180', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        longitude: -181,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject longitude above 180', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        longitude: 181,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should accept boundary latitude values', () => {
+      expect(boulderFormSchema.safeParse({ ...validData, latitude: -90 }).success).toBe(true)
+      expect(boulderFormSchema.safeParse({ ...validData, latitude: 90 }).success).toBe(true)
+      expect(boulderFormSchema.safeParse({ ...validData, latitude: 0 }).success).toBe(true)
+    })
+
+    it('should accept boundary longitude values', () => {
+      expect(boulderFormSchema.safeParse({ ...validData, longitude: -180 }).success).toBe(true)
+      expect(boulderFormSchema.safeParse({ ...validData, longitude: 180 }).success).toBe(true)
+      expect(boulderFormSchema.safeParse({ ...validData, longitude: 0 }).success).toBe(true)
+    })
   })
 
   describe('extractSectors', () => {

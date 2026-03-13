@@ -20,6 +20,10 @@ export interface BoulderDraft {
   photoWidth: number | null
   /** Photo height in pixels after resize */
   photoHeight: number | null
+  /** GPS latitude (6 decimal places, ~11cm precision) */
+  latitude: number | null
+  /** GPS longitude (6 decimal places, ~11cm precision) */
+  longitude: number | null
   status: 'draft' | 'pending'
   createdAt: string
   updatedAt: string
@@ -71,6 +75,8 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
           photoBlurHash: data.photoBlurHash ?? null,
           photoWidth: data.photoWidth ?? null,
           photoHeight: data.photoHeight ?? null,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
           id,
           status: 'draft',
           createdAt: now,

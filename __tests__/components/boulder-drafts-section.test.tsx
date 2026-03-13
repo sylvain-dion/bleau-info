@@ -4,6 +4,19 @@ import userEvent from '@testing-library/user-event'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 
+// Mock maplibre-gl (no WebGL in jsdom) — pulled in via BoulderForm → LocationPicker
+vi.mock('maplibre-gl', () => ({
+  default: { Map: vi.fn() },
+}))
+
+vi.mock('@/lib/hooks/use-theme', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    resolvedTheme: 'light' as const,
+    setTheme: vi.fn(),
+  }),
+}))
+
 describe('BoulderDraftsSection', () => {
   beforeEach(() => {
     useBoulderDraftStore.setState({ drafts: [] })
@@ -27,6 +40,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -52,6 +67,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
     useBoulderDraftStore.getState().addDraft({
       name: 'Bloc B',
@@ -65,6 +82,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -87,6 +106,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -112,6 +133,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -135,6 +158,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -155,6 +180,8 @@ describe('BoulderDraftsSection', () => {
       photoBlurHash: null,
       photoWidth: null,
       photoHeight: null,
+      latitude: null,
+      longitude: null,
     })
 
     // Manually set status to pending

@@ -95,6 +95,36 @@ describe('useGeolocation', () => {
     expect(onError).toHaveBeenCalled()
   })
 
+  it('passes enableHighAccuracy option to getCurrentPosition', () => {
+    const { result } = renderHook(() =>
+      useGeolocation(undefined, undefined, { enableHighAccuracy: true })
+    )
+
+    act(() => {
+      result.current.locate()
+    })
+
+    expect(mockGetCurrentPosition).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      expect.objectContaining({ enableHighAccuracy: true })
+    )
+  })
+
+  it('defaults enableHighAccuracy to false', () => {
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => {
+      result.current.locate()
+    })
+
+    expect(mockGetCurrentPosition).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      expect.objectContaining({ enableHighAccuracy: false })
+    )
+  })
+
   it('does not call getCurrentPosition when page is hidden', () => {
     vi.mocked(shouldRequestPosition).mockReturnValue(false)
     const onError = vi.fn()
