@@ -14,6 +14,12 @@ export interface BoulderDraft {
   height: number | null
   exposure: BoulderExposureValue | null
   strollerAccessible: boolean
+  /** BlurHash placeholder for the photo (Story 5.2) */
+  photoBlurHash: string | null
+  /** Photo width in pixels after resize */
+  photoWidth: number | null
+  /** Photo height in pixels after resize */
+  photoHeight: number | null
   status: 'draft' | 'pending'
   createdAt: string
   updatedAt: string
@@ -62,6 +68,9 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
         const now = new Date().toISOString()
         const draft: BoulderDraft = {
           ...data,
+          photoBlurHash: data.photoBlurHash ?? null,
+          photoWidth: data.photoWidth ?? null,
+          photoHeight: data.photoHeight ?? null,
           id,
           status: 'draft',
           createdAt: now,

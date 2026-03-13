@@ -109,6 +109,48 @@ describe('boulder-draft-store', () => {
     expect(useBoulderDraftStore.getState().getDraft('non-existent')).toBeUndefined()
   })
 
+  describe('photo metadata (Story 5.2)', () => {
+    it('should store photo metadata with draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft({
+        ...validInput,
+        photoBlurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+        photoWidth: 1200,
+        photoHeight: 800,
+      })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.photoBlurHash).toBe('LEHV6nWB2yk8pyo0adR*.7kCMdnj')
+      expect(draft!.photoWidth).toBe(1200)
+      expect(draft!.photoHeight).toBe(800)
+    })
+
+    it('should default photo metadata to null', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.photoBlurHash).toBeNull()
+      expect(draft!.photoWidth).toBeNull()
+      expect(draft!.photoHeight).toBeNull()
+    })
+
+    it('should update photo metadata on existing draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      useBoulderDraftStore.getState().updateDraft(id, {
+        photoBlurHash: 'LGF5]+Yk^6#M@-5c,1J5@[or[Q6.',
+        photoWidth: 900,
+        photoHeight: 1200,
+      })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft!.photoBlurHash).toBe('LGF5]+Yk^6#M@-5c,1J5@[or[Q6.')
+      expect(draft!.photoWidth).toBe(900)
+      expect(draft!.photoHeight).toBe(1200)
+    })
+  })
+
   describe('isNameTaken', () => {
     it('should detect duplicate name in mock boulders', () => {
       // "La Marie-Rose" exists in "Cul de Chien" sector in mock data

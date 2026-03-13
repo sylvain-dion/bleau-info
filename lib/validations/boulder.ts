@@ -121,6 +121,11 @@ export const boulderFormSchema = z.object({
     .pipe(z.enum(BOULDER_EXPOSURES).optional()),
 
   strollerAccessible: z.boolean().default(false),
+
+  /** Photo metadata (Story 5.2) — only persisted fields, not the data URL */
+  photoBlurHash: z.string().optional(),
+  photoWidth: z.number().int().positive().optional(),
+  photoHeight: z.number().int().positive().optional(),
 })
 
 /** Input type — what the form fields provide (height as string). */
