@@ -122,6 +122,26 @@ describe('BoulderDraftsSection', () => {
     expect(detail.textContent).not.toMatch(/Arête · [A-Z]/)
   })
 
+  it('should render edit button for each draft', () => {
+    useBoulderDraftStore.getState().addDraft({
+      name: 'Bloc Éditable',
+      grade: '6a',
+      style: 'dalle',
+      sector: '',
+      description: '',
+      height: null,
+      exposure: null,
+      strollerAccessible: false,
+      photoBlurHash: null,
+      photoWidth: null,
+      photoHeight: null,
+    })
+
+    render(<BoulderDraftsSection />)
+
+    expect(screen.getByLabelText('Modifier le brouillon Bloc Éditable')).toBeInTheDocument()
+  })
+
   it('should show pending status for pending drafts', () => {
     const id = useBoulderDraftStore.getState().addDraft({
       name: 'En Attente',

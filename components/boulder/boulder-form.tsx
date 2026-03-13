@@ -24,17 +24,27 @@ import { PhotoCapture } from './photo-capture'
 interface BoulderFormProps {
   onClose: () => void
   onSuccess?: () => void
+  /** When provided, the form edits an existing draft instead of creating one. */
+  editDraftId?: string
 }
 
 /**
- * Boulder creation form with Zod + React Hook Form (Story 5.1).
+ * Boulder creation/edit form with Zod + React Hook Form.
  *
  * Required: name, grade, climbing style.
  * Optional: sector, description, height, exposure, stroller access.
+ *
+ * When `editDraftId` is provided, pre-fills from the existing draft
+ * and calls `updateDraft` on submit instead of `addDraft`.
  */
-export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
+export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProps) {
   const addDraft = useBoulderDraftStore((s) => s.addDraft)
+  const updateDraft = useBoulderDraftStore((s) => s.updateDraft)
+  const getDraft = useBoulderDraftStore((s) => s.getDraft)
   const sectors = useMemo(() => extractSectors(mockBoulders.features), [])
+
+  const existingDraft = editDraftId ? getDraft(editDraftId) : undefined
+  const isEditMode = !!existingDraft
 
   // Photo state — data URL lives only in component state, not persisted
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
@@ -49,14 +59,14 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
   } = useForm<BoulderFormInput, unknown, BoulderFormData>({
     resolver: zodResolver(boulderFormSchema),
     defaultValues: {
-      name: '',
-      grade: '',
-      style: '' as BoulderStyleValue,
-      sector: '',
-      description: '',
-      height: '',
-      exposure: '',
-      strollerAccessible: false,
+      name: existingDraft?.name ?? '',
+      grade: existingDraft?.grade ?? '',
+      style: existingDraft?.style ?? ('' as BoulderStyleValue),
+      sector: existingDraft?.sector ?? '',
+      description: existingDraft?.description ?? '',
+      height: existingDraft?.height != null ? String(existingDraft.height) : '',
+      exposure: existingDraft?.exposure ?? '',
+      strollerAccessible: existingDraft?.strollerAccessible ?? false,
     },
   })
 
@@ -79,7 +89,7 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
   }, [])
 
   function onSubmit(data: BoulderFormData) {
-    addDraft({
+    const draftData = {
       name: data.name,
       grade: data.grade,
       style: data.style,
@@ -91,7 +101,13 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
       photoBlurHash: photo?.blurHash ?? null,
       photoWidth: photo?.width ?? null,
       photoHeight: photo?.height ?? null,
-    })
+    }
+
+    if (isEditMode && editDraftId) {
+      updateDraft(editDraftId, draftData)
+    } else {
+      addDraft(draftData)
+    }
 
     triggerTickFeedback()
     onSuccess?.()
@@ -102,7 +118,9 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-foreground">Nouveau bloc</h3>
+        <h3 className="text-base font-semibold text-foreground">
+          {isEditMode ? 'Modifier le brouillon' : 'Nouveau bloc'}
+        </h3>
         <button
           type="button"
           onClick={onClose}
@@ -283,7 +301,9 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 min-touch"
         >
           <CheckCircle2 className="h-4 w-4" />
-          {isSubmitting ? 'Création...' : 'Créer le bloc'}
+          {isSubmitting
+            ? (isEditMode ? 'Enregistrement...' : 'Création...')
+            : (isEditMode ? 'Enregistrer' : 'Créer le bloc')}
         </button>
       </div>
     </form>

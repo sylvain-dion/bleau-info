@@ -1,19 +1,23 @@
 'use client'
 
-import { Mountain, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Mountain, Pencil, Trash2 } from 'lucide-react'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { STYLE_LABELS } from '@/lib/validations/boulder'
 import { formatGrade } from '@/lib/grades'
+import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-drawer'
 
 /**
  * Displays the user's local boulder drafts on the profile page.
  *
  * Each draft shows name, grade, style, and creation date.
- * Drafts can be deleted individually. Renders nothing when empty.
+ * Drafts can be edited (pen icon) or deleted individually.
+ * Renders nothing when empty.
  */
 export function BoulderDraftsSection() {
   const drafts = useBoulderDraftStore((s) => s.drafts)
   const removeDraft = useBoulderDraftStore((s) => s.removeDraft)
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
 
   if (drafts.length === 0) return null
 
@@ -64,6 +68,16 @@ export function BoulderDraftsSection() {
               {draft.status === 'pending' ? 'En attente' : 'Brouillon'}
             </span>
 
+            {/* Edit */}
+            <button
+              type="button"
+              onClick={() => setEditingDraftId(draft.id)}
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              aria-label={`Modifier le brouillon ${draft.name}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+
             {/* Delete */}
             <button
               type="button"
@@ -80,6 +94,13 @@ export function BoulderDraftsSection() {
       <p className="mt-3 text-[11px] text-muted-foreground">
         Les brouillons sont sauvegardés localement. Ils seront synchronisés avec le serveur lors d&apos;une prochaine mise à jour.
       </p>
+
+      {/* Edit drawer */}
+      <BoulderCreationDrawer
+        open={!!editingDraftId}
+        onOpenChange={(open) => { if (!open) setEditingDraftId(null) }}
+        editDraftId={editingDraftId ?? undefined}
+      />
     </div>
   )
 }
