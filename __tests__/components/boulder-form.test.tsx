@@ -7,6 +7,18 @@ vi.mock('@/lib/feedback', () => ({
   triggerTickFeedback: vi.fn(),
 }))
 
+vi.mock('@/lib/hooks/use-theme', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    resolvedTheme: 'light' as const,
+    setTheme: vi.fn(),
+  }),
+}))
+
+vi.mock('@/components/boulder/location-picker', () => ({
+  LocationPicker: vi.fn(() => null),
+}))
+
 describe('BoulderForm', () => {
   const defaultProps = {
     onClose: vi.fn(),
@@ -189,6 +201,8 @@ describe('BoulderForm', () => {
         photoBlurHash: null,
         photoWidth: null,
         photoHeight: null,
+        latitude: null,
+        longitude: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -212,6 +226,8 @@ describe('BoulderForm', () => {
         photoBlurHash: null,
         photoWidth: null,
         photoHeight: null,
+        latitude: null,
+        longitude: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -237,6 +253,8 @@ describe('BoulderForm', () => {
         photoBlurHash: null,
         photoWidth: null,
         photoHeight: null,
+        latitude: null,
+        longitude: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -269,5 +287,88 @@ describe('BoulderForm', () => {
 
     // Close button should have aria-label
     expect(screen.getByLabelText('Fermer')).toBeInTheDocument()
+  })
+
+  describe('location (Story 5.3)', () => {
+    it('should render location button', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      expect(screen.getByText('Localiser le bloc')).toBeInTheDocument()
+    })
+
+    it('should render location label', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      expect(screen.getByText('Localisation')).toBeInTheDocument()
+    })
+
+    it('should save coordinates in draft on submit', async () => {
+      const { triggerTickFeedback } = await import('@/lib/feedback')
+      const { LocationPicker } = await import('@/components/boulder/location-picker')
+
+      // Make LocationPicker render a confirm button that triggers onConfirm
+      vi.mocked(LocationPicker).mockImplementation(({ onConfirm }: { onConfirm: (coords: { latitude: number; longitude: number }) => void }) => (
+        <button type="button" onClick={() => onConfirm({ latitude: 48.382619, longitude: 2.634521 })}>
+          mock-confirm
+        </button>
+      ))
+
+      render(<BoulderForm {...defaultProps} />)
+
+      // Open location picker — renders lazy-loaded mock button
+      fireEvent.click(screen.getByText('Localiser le bloc'))
+
+      // Wait for lazy component to resolve
+      await waitFor(() => {
+        expect(screen.getByText('mock-confirm')).toBeInTheDocument()
+      })
+
+      // Click mock confirm to set coordinates
+      fireEvent.click(screen.getByText('mock-confirm'))
+
+      // Coordinates should now be set — verify UI shows them
+      expect(screen.getByText('Position définie')).toBeInTheDocument()
+
+      // Fill required fields
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Bloc GPS' },
+      })
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '6a' },
+      })
+      fireEvent.click(screen.getByText('Dalle'))
+
+      fireEvent.click(screen.getByText('Créer le bloc'))
+
+      await waitFor(() => {
+        const drafts = useBoulderDraftStore.getState().drafts
+        expect(drafts).toHaveLength(1)
+        expect(drafts[0].latitude).toBe(48.382619)
+        expect(drafts[0].longitude).toBe(2.634521)
+      })
+
+      expect(triggerTickFeedback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should submit null coordinates when no location set', async () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Bloc Sans GPS' },
+      })
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '5a' },
+      })
+      fireEvent.click(screen.getByText('Dalle'))
+
+      fireEvent.click(screen.getByText('Créer le bloc'))
+
+      await waitFor(() => {
+        const drafts = useBoulderDraftStore.getState().drafts
+        expect(drafts).toHaveLength(1)
+        expect(drafts[0].latitude).toBeNull()
+        expect(drafts[0].longitude).toBeNull()
+      })
+    })
   })
 })

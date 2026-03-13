@@ -12,6 +12,11 @@ const validInput: BoulderDraftInput = {
   height: null,
   exposure: null,
   strollerAccessible: false,
+  photoBlurHash: null,
+  photoWidth: null,
+  photoHeight: null,
+  latitude: null,
+  longitude: null,
 }
 
 describe('boulder-draft-store', () => {
@@ -148,6 +153,43 @@ describe('boulder-draft-store', () => {
       expect(draft!.photoBlurHash).toBe('LGF5]+Yk^6#M@-5c,1J5@[or[Q6.')
       expect(draft!.photoWidth).toBe(900)
       expect(draft!.photoHeight).toBe(1200)
+    })
+  })
+
+  describe('GPS coordinates (Story 5.3)', () => {
+    it('should store GPS coordinates with draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft({
+        ...validInput,
+        latitude: 48.382619,
+        longitude: 2.634521,
+      })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.latitude).toBe(48.382619)
+      expect(draft!.longitude).toBe(2.634521)
+    })
+
+    it('should default GPS coordinates to null', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.latitude).toBeNull()
+      expect(draft!.longitude).toBeNull()
+    })
+
+    it('should update GPS coordinates on existing draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      useBoulderDraftStore.getState().updateDraft(id, {
+        latitude: 48.382619,
+        longitude: 2.634521,
+      })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft!.latitude).toBe(48.382619)
+      expect(draft!.longitude).toBe(2.634521)
     })
   })
 

@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, X } from 'lucide-react'
+import { CheckCircle2, CheckCircle, MapPin, X } from 'lucide-react'
 import {
   boulderFormSchema,
   BOULDER_EXPOSURES,
@@ -18,8 +18,15 @@ import { mockBoulders } from '@/lib/data/mock-boulders'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { triggerTickFeedback } from '@/lib/feedback'
 import { processPhoto, type ProcessedPhoto } from '@/lib/image-processing'
+import { useTheme } from '@/lib/hooks/use-theme'
+import { formatLatitude, formatLongitude } from '@/lib/coordinates'
 import { BoulderStyleSelector } from './boulder-style-selector'
 import { PhotoCapture } from './photo-capture'
+
+/** Lazy-loaded — maplibre-gl is heavy (~200 kB), only load when picker opens */
+const LocationPicker = lazy(() =>
+  import('./location-picker').then((m) => ({ default: m.LocationPicker }))
+)
 
 interface BoulderFormProps {
   onClose: () => void
@@ -46,10 +53,20 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
   const existingDraft = editDraftId ? getDraft(editDraftId) : undefined
   const isEditMode = !!existingDraft
 
+  const { resolvedTheme } = useTheme()
+
   // Photo state — data URL lives only in component state, not persisted
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
   const [photoProcessing, setPhotoProcessing] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
+
+  // Location state (Story 5.3)
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(
+    existingDraft?.latitude != null && existingDraft?.longitude != null
+      ? { latitude: existingDraft.latitude, longitude: existingDraft.longitude }
+      : null
+  )
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
 
   const {
     register,
@@ -101,6 +118,8 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
       photoBlurHash: photo?.blurHash ?? null,
       photoWidth: photo?.width ?? null,
       photoHeight: photo?.height ?? null,
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
     }
 
     if (isEditMode && editDraftId) {
@@ -285,6 +304,68 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
         onFileSelected={handleFileSelected}
         onRemove={handlePhotoRemove}
       />
+
+      {/* Location (optional — Story 5.3) */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium text-foreground">
+          Localisation <span className="font-normal text-muted-foreground">(optionnel)</span>
+        </p>
+
+        {location ? (
+          <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">Position définie</p>
+              <p className="text-xs text-muted-foreground" data-testid="form-coordinates">
+                {formatLatitude(location.latitude)}
+                <br />
+                {formatLongitude(location.longitude)}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-1">
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(true)}
+                className="rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocation(null)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Supprimer la localisation"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowLocationPicker(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input px-3 py-4 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            <MapPin className="h-4 w-4" />
+            Localiser le bloc
+          </button>
+        )}
+      </div>
+
+      {/* Location picker overlay (lazy-loaded) */}
+      {showLocationPicker && (
+        <Suspense fallback={null}>
+          <LocationPicker
+            theme={resolvedTheme}
+            initialPosition={location}
+            onConfirm={(coords) => {
+              setLocation(coords)
+              setShowLocationPicker(false)
+            }}
+            onCancel={() => setShowLocationPicker(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
