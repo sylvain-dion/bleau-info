@@ -175,6 +175,88 @@ describe('BoulderForm', () => {
     expect(requiredMarkers.length).toBeGreaterThanOrEqual(2)
   })
 
+  describe('edit mode', () => {
+    it('should show edit header and button when editDraftId is provided', () => {
+      const id = useBoulderDraftStore.getState().addDraft({
+        name: 'Existing Bloc',
+        grade: '6a',
+        style: 'dalle',
+        sector: 'Bas Cuvier',
+        description: 'Un classique',
+        height: 3.5,
+        exposure: 'soleil',
+        strollerAccessible: true,
+        photoBlurHash: null,
+        photoWidth: null,
+        photoHeight: null,
+      })
+
+      render(<BoulderForm {...defaultProps} editDraftId={id} />)
+
+      expect(screen.getByText('Modifier le brouillon')).toBeInTheDocument()
+      expect(screen.getByText('Enregistrer')).toBeInTheDocument()
+      expect(screen.queryByText('Nouveau bloc')).not.toBeInTheDocument()
+      expect(screen.queryByText('Créer le bloc')).not.toBeInTheDocument()
+    })
+
+    it('should pre-fill form with existing draft data', () => {
+      const id = useBoulderDraftStore.getState().addDraft({
+        name: 'Existing Bloc',
+        grade: '6a',
+        style: 'dalle',
+        sector: 'Bas Cuvier',
+        description: 'Un classique',
+        height: 3.5,
+        exposure: 'soleil',
+        strollerAccessible: true,
+        photoBlurHash: null,
+        photoWidth: null,
+        photoHeight: null,
+      })
+
+      render(<BoulderForm {...defaultProps} editDraftId={id} />)
+
+      expect(screen.getByLabelText(/Nom/)).toHaveValue('Existing Bloc')
+      expect(screen.getByLabelText(/Cotation/)).toHaveValue('6a')
+      expect(screen.getByLabelText(/Secteur/)).toHaveValue('Bas Cuvier')
+      expect(screen.getByLabelText(/Description/)).toHaveValue('Un classique')
+      expect(screen.getByLabelText(/Hauteur/)).toHaveValue(3.5)
+      expect(screen.getByLabelText(/Exposition/)).toHaveValue('soleil')
+    })
+
+    it('should update existing draft on submit instead of creating new', async () => {
+      const id = useBoulderDraftStore.getState().addDraft({
+        name: 'Original Name',
+        grade: '5a',
+        style: 'bloc',
+        sector: '',
+        description: '',
+        height: null,
+        exposure: null,
+        strollerAccessible: false,
+        photoBlurHash: null,
+        photoWidth: null,
+        photoHeight: null,
+      })
+
+      render(<BoulderForm {...defaultProps} editDraftId={id} />)
+
+      // Change the name
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Updated Name' },
+      })
+
+      fireEvent.click(screen.getByText('Enregistrer'))
+
+      await waitFor(() => {
+        const drafts = useBoulderDraftStore.getState().drafts
+        expect(drafts).toHaveLength(1) // no new draft created
+        expect(drafts[0].name).toBe('Updated Name')
+        expect(drafts[0].id).toBe(id) // same ID
+      })
+    })
+  })
+
   it('should have accessible form structure', () => {
     render(<BoulderForm {...defaultProps} />)
 

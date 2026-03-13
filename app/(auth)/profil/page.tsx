@@ -15,6 +15,7 @@ import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { TrustScoreCard } from '@/components/profile/trust-score-card'
 import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
+import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -127,6 +128,11 @@ export default function ProfilPage() {
           trustScore={user.user_metadata?.trust_score ?? 0}
           role={user.user_metadata?.role ?? null}
         />
+      </div>
+
+      {/* Boulder drafts */}
+      <div className="mb-6">
+        <BoulderDraftsSection />
       </div>
 
       {/* Edit Form */}
