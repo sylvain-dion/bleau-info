@@ -270,6 +270,57 @@ describe('boulder validation', () => {
       const result = boulderFormSchema.safeParse({ ...validData, exposure: 'plein-sud' })
       expect(result.success).toBe(false)
     })
+
+    // ── Photo metadata validation (Story 5.2) ──
+
+    it('should accept valid photo metadata', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        photoBlurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+        photoWidth: 1200,
+        photoHeight: 800,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.photoBlurHash).toBe('LEHV6nWB2yk8pyo0adR*.7kCMdnj')
+        expect(result.data.photoWidth).toBe(1200)
+        expect(result.data.photoHeight).toBe(800)
+      }
+    })
+
+    it('should accept data without photo metadata', () => {
+      const result = boulderFormSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.photoBlurHash).toBeUndefined()
+        expect(result.data.photoWidth).toBeUndefined()
+        expect(result.data.photoHeight).toBeUndefined()
+      }
+    })
+
+    it('should reject non-integer photo dimensions', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        photoWidth: 1200.5,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject negative photo dimensions', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        photoWidth: -100,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject zero photo dimensions', () => {
+      const result = boulderFormSchema.safeParse({
+        ...validData,
+        photoHeight: 0,
+      })
+      expect(result.success).toBe(false)
+    })
   })
 
   describe('extractSectors', () => {

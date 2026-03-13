@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, X } from 'lucide-react'
@@ -17,7 +17,9 @@ import { GRADE_SCALE, formatGrade } from '@/lib/grades'
 import { mockBoulders } from '@/lib/data/mock-boulders'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { triggerTickFeedback } from '@/lib/feedback'
+import { processPhoto, type ProcessedPhoto } from '@/lib/image-processing'
 import { BoulderStyleSelector } from './boulder-style-selector'
+import { PhotoCapture } from './photo-capture'
 
 interface BoulderFormProps {
   onClose: () => void
@@ -33,6 +35,11 @@ interface BoulderFormProps {
 export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
   const addDraft = useBoulderDraftStore((s) => s.addDraft)
   const sectors = useMemo(() => extractSectors(mockBoulders.features), [])
+
+  // Photo state — data URL lives only in component state, not persisted
+  const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
+  const [photoProcessing, setPhotoProcessing] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
 
   const {
     register,
@@ -53,6 +60,24 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
     },
   })
 
+  const handleFileSelected = useCallback(async (file: File) => {
+    setPhotoError(null)
+    setPhotoProcessing(true)
+    try {
+      const result = await processPhoto(file)
+      setPhoto(result)
+    } catch {
+      setPhotoError('Impossible de traiter l\'image')
+    } finally {
+      setPhotoProcessing(false)
+    }
+  }, [])
+
+  const handlePhotoRemove = useCallback(() => {
+    setPhoto(null)
+    setPhotoError(null)
+  }, [])
+
   function onSubmit(data: BoulderFormData) {
     addDraft({
       name: data.name,
@@ -63,6 +88,9 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
       height: data.height ?? null,
       exposure: data.exposure ?? null,
       strollerAccessible: data.strollerAccessible,
+      photoBlurHash: photo?.blurHash ?? null,
+      photoWidth: photo?.width ?? null,
+      photoHeight: photo?.height ?? null,
     })
 
     triggerTickFeedback()
@@ -230,6 +258,15 @@ export function BoulderForm({ onClose, onSuccess }: BoulderFormProps) {
         />
         <span className="text-sm text-foreground">Accessible poussette</span>
       </label>
+
+      {/* Photo (optional — Story 5.2) */}
+      <PhotoCapture
+        previewUrl={photo?.dataUrl ?? null}
+        isProcessing={photoProcessing}
+        error={photoError}
+        onFileSelected={handleFileSelected}
+        onRemove={handlePhotoRemove}
+      />
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
