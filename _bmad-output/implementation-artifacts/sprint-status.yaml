@@ -76,8 +76,8 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Contribution & Création de Blocs
-  epic-5: backlog
-  5-1-formulaire-de-creation-de-bloc-metadonnees: backlog
+  epic-5: in-progress
+  5-1-formulaire-de-creation-de-bloc-metadonnees: done
   5-2-capture-upload-photo: backlog
   5-3-geolocalisation-gps-precise: backlog
   5-4-editeur-de-trace-vectoriel-konva-canvas: backlog

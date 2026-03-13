@@ -1,0 +1,191 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { BoulderForm } from '@/components/boulder/boulder-form'
+import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
+
+vi.mock('@/lib/feedback', () => ({
+  triggerTickFeedback: vi.fn(),
+}))
+
+describe('BoulderForm', () => {
+  const defaultProps = {
+    onClose: vi.fn(),
+    onSuccess: vi.fn(),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useBoulderDraftStore.setState({ drafts: [] })
+  })
+
+  it('should render form with all fields', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    expect(screen.getByText('Nouveau bloc')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Nom/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Cotation/)).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: /style de grimpe/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/Secteur/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Description/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Hauteur/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Exposition/)).toBeInTheDocument()
+    expect(screen.getByText('Accessible poussette')).toBeInTheDocument()
+    expect(screen.getByText('Créer le bloc')).toBeInTheDocument()
+    expect(screen.getByText('Annuler')).toBeInTheDocument()
+  })
+
+  it('should render all 6 style chips', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    expect(screen.getByText('Dalle')).toBeInTheDocument()
+    expect(screen.getByText('Dévers')).toBeInTheDocument()
+    expect(screen.getByText('Toit')).toBeInTheDocument()
+    expect(screen.getByText('Arête')).toBeInTheDocument()
+    expect(screen.getByText('Traversée')).toBeInTheDocument()
+    expect(screen.getByText('Bloc')).toBeInTheDocument()
+
+    const radios = screen.getAllByRole('radio')
+    expect(radios).toHaveLength(6)
+  })
+
+  it('should render grade dropdown with all grades', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    const gradeSelect = screen.getByLabelText(/Cotation/) as HTMLSelectElement
+    // 26 grades in GRADE_SCALE + 1 placeholder option
+    expect(gradeSelect.options.length).toBe(27)
+    expect(gradeSelect.options[0].value).toBe('')
+    expect(gradeSelect.options[1].value).toBe('3a')
+  })
+
+  it('should render sector dropdown with mock sectors', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    const sectorSelect = screen.getByLabelText(/Secteur/) as HTMLSelectElement
+    // 6 mock sectors + 1 placeholder
+    expect(sectorSelect.options.length).toBe(7)
+  })
+
+  it('should call onClose when cancel is clicked', () => {
+    render(<BoulderForm {...defaultProps} />)
+    fireEvent.click(screen.getByText('Annuler'))
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('should call onClose when X button is clicked', () => {
+    render(<BoulderForm {...defaultProps} />)
+    fireEvent.click(screen.getByLabelText('Fermer'))
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('should show validation errors when submitting empty form', async () => {
+    render(<BoulderForm {...defaultProps} />)
+    fireEvent.click(screen.getByText('Créer le bloc'))
+
+    await waitFor(() => {
+      const errors = document.querySelectorAll('.text-destructive')
+      // At least name, grade, and style errors
+      expect(errors.length).toBeGreaterThanOrEqual(3)
+    })
+
+    expect(useBoulderDraftStore.getState().drafts).toHaveLength(0)
+  })
+
+  it('should submit form with valid required data', async () => {
+    const { triggerTickFeedback } = await import('@/lib/feedback')
+
+    render(<BoulderForm {...defaultProps} />)
+
+    // Fill name
+    fireEvent.change(screen.getByLabelText(/Nom/), {
+      target: { value: 'Le Test Bloc' },
+    })
+
+    // Select grade
+    fireEvent.change(screen.getByLabelText(/Cotation/), {
+      target: { value: '6a' },
+    })
+
+    // Select style
+    fireEvent.click(screen.getByText('Dalle'))
+
+    // Submit
+    fireEvent.click(screen.getByText('Créer le bloc'))
+
+    await waitFor(() => {
+      const drafts = useBoulderDraftStore.getState().drafts
+      expect(drafts).toHaveLength(1)
+      expect(drafts[0].name).toBe('Le Test Bloc')
+      expect(drafts[0].grade).toBe('6a')
+      expect(drafts[0].style).toBe('dalle')
+      expect(drafts[0].status).toBe('draft')
+    })
+
+    expect(triggerTickFeedback).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onSuccess).toHaveBeenCalledTimes(1)
+  })
+
+  it('should submit form with all optional fields', async () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    // Required fields
+    fireEvent.change(screen.getByLabelText(/Nom/), {
+      target: { value: 'Bloc Complet' },
+    })
+    fireEvent.change(screen.getByLabelText(/Cotation/), {
+      target: { value: '7a+' },
+    })
+    fireEvent.click(screen.getByText('Toit'))
+
+    // Optional fields
+    fireEvent.change(screen.getByLabelText(/Secteur/), {
+      target: { value: 'Bas Cuvier' },
+    })
+    fireEvent.change(screen.getByLabelText(/Description/), {
+      target: { value: 'Un toit très physique' },
+    })
+    fireEvent.change(screen.getByLabelText(/Hauteur/), {
+      target: { value: '4.5' },
+    })
+    fireEvent.change(screen.getByLabelText(/Exposition/), {
+      target: { value: 'ombre' },
+    })
+    fireEvent.click(screen.getByText('Accessible poussette'))
+
+    fireEvent.click(screen.getByText('Créer le bloc'))
+
+    await waitFor(() => {
+      const drafts = useBoulderDraftStore.getState().drafts
+      expect(drafts).toHaveLength(1)
+      expect(drafts[0].sector).toBe('Bas Cuvier')
+      expect(drafts[0].description).toBe('Un toit très physique')
+      expect(drafts[0].height).toBe(4.5)
+      expect(drafts[0].exposure).toBe('ombre')
+      expect(drafts[0].strollerAccessible).toBe(true)
+    })
+  })
+
+  it('should mark required fields with asterisk', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    // Required fields have * marker
+    const requiredMarkers = document.querySelectorAll('.text-destructive')
+    // Name *, Cotation *, Style * (rendered inside BoulderStyleSelector)
+    expect(requiredMarkers.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('should have accessible form structure', () => {
+    render(<BoulderForm {...defaultProps} />)
+
+    // Form should have labeled inputs
+    expect(screen.getByLabelText(/Nom/)).toHaveAttribute('id', 'boulder-name')
+    expect(screen.getByLabelText(/Cotation/)).toHaveAttribute('id', 'boulder-grade')
+    expect(screen.getByLabelText(/Description/)).toHaveAttribute('id', 'boulder-description')
+    expect(screen.getByLabelText(/Hauteur/)).toHaveAttribute('id', 'boulder-height')
+    expect(screen.getByLabelText(/Exposition/)).toHaveAttribute('id', 'boulder-exposure')
+
+    // Close button should have aria-label
+    expect(screen.getByLabelText('Fermer')).toBeInTheDocument()
+  })
+})

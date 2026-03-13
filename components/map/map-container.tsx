@@ -16,11 +16,13 @@ import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
 import { useTickStore } from '@/stores/tick-store'
+import { useAuthStore } from '@/stores/auth-store'
 import type { FilterState } from '@/stores/filter-store'
 import { useGeolocation, type GeoPosition } from '@/hooks/use-geolocation'
 import { useAutoLocate } from '@/hooks/use-auto-locate'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { SearchBar } from '@/components/search/search-bar'
+import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-drawer'
 import type { SearchResult } from '@/lib/search'
 import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
@@ -43,8 +45,10 @@ export function MapContainer({ theme }: MapContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const protocolRef = useRef<Protocol | null>(null)
+  const [showBoulderForm, setShowBoulderForm] = useState(false)
 
   const { center, zoom, setView, hasLocated, setHasLocated } = useMapStore()
+  const isAuthenticated = useAuthStore((s) => !!s.user)
 
   // Safe geolocation — NFR-04: no GPS in background
   const { locate } = useGeolocation(
@@ -237,8 +241,13 @@ export function MapContainer({ theme }: MapContainerProps) {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onLocate={locate}
+        onAdd={isAuthenticated ? () => setShowBoulderForm(true) : undefined}
       />
       <MapSheet />
+      <BoulderCreationDrawer
+        open={showBoulderForm}
+        onOpenChange={setShowBoulderForm}
+      />
     </div>
   )
 }
