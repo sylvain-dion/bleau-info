@@ -17,6 +17,7 @@ const validInput: BoulderDraftInput = {
   photoHeight: null,
   latitude: null,
   longitude: null,
+  topoDrawing: null,
 }
 
 describe('boulder-draft-store', () => {
@@ -190,6 +191,49 @@ describe('boulder-draft-store', () => {
       const draft = useBoulderDraftStore.getState().getDraft(id)
       expect(draft!.latitude).toBe(48.382619)
       expect(draft!.longitude).toBe(2.634521)
+    })
+  })
+
+  describe('topo drawing (Story 5.4)', () => {
+    it('should store topo drawing with draft', () => {
+      const topoDrawing = {
+        viewBox: '0 0 800 600',
+        elements: [
+          { type: 'path' as const, d: 'M 100 500 Q 200 400 300 300', label: 'route' as const },
+          { type: 'circle' as const, cx: 100, cy: 500, r: 14, label: 'start' as const },
+        ],
+      }
+      const id = useBoulderDraftStore.getState().addDraft({
+        ...validInput,
+        topoDrawing,
+      })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.topoDrawing).toEqual(topoDrawing)
+    })
+
+    it('should default topo drawing to null', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.topoDrawing).toBeNull()
+    })
+
+    it('should update topo drawing on existing draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      const topoDrawing = {
+        viewBox: '0 0 800 600',
+        elements: [
+          { type: 'path' as const, d: 'M 200 500 L 400 100', label: 'route' as const },
+        ],
+      }
+      useBoulderDraftStore.getState().updateDraft(id, { topoDrawing })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft!.topoDrawing).toEqual(topoDrawing)
     })
   })
 

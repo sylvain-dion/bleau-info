@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { BoulderStyleValue, BoulderExposureValue } from '@/lib/validations/boulder'
 import { mockBoulders } from '@/lib/data/mock-boulders'
+import type { TopoDrawing } from '@/lib/data/mock-topos'
 
 /** A locally-stored boulder draft awaiting sync / moderation. */
 export interface BoulderDraft {
@@ -24,6 +25,8 @@ export interface BoulderDraft {
   latitude: number | null
   /** GPS longitude (6 decimal places, ~11cm precision) */
   longitude: number | null
+  /** Vector topo drawing data (Story 5.4) */
+  topoDrawing: TopoDrawing | null
   status: 'draft' | 'pending'
   createdAt: string
   updatedAt: string
@@ -77,6 +80,7 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
           photoHeight: data.photoHeight ?? null,
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
+          topoDrawing: data.topoDrawing ?? null,
           id,
           status: 'draft',
           createdAt: now,

@@ -3,7 +3,7 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, CheckCircle, MapPin, X } from 'lucide-react'
+import { CheckCircle2, CheckCircle, MapPin, Pencil, X } from 'lucide-react'
 import {
   boulderFormSchema,
   BOULDER_EXPOSURES,
@@ -20,6 +20,7 @@ import { triggerTickFeedback } from '@/lib/feedback'
 import { processPhoto, type ProcessedPhoto } from '@/lib/image-processing'
 import { useTheme } from '@/lib/hooks/use-theme'
 import { formatLatitude, formatLongitude } from '@/lib/coordinates'
+import type { TopoDrawing } from '@/lib/data/mock-topos'
 import { BoulderStyleSelector } from './boulder-style-selector'
 import { PhotoCapture } from './photo-capture'
 
@@ -27,6 +28,14 @@ import { PhotoCapture } from './photo-capture'
 const LocationPicker = lazy(() =>
   import('./location-picker').then((m) => ({ default: m.LocationPicker }))
 )
+
+/** Lazy-loaded — konva is heavy (~80 kB), only load when editor opens */
+const TopoTraceEditor = lazy(() =>
+  import('../topo/topo-trace-editor').then((m) => ({ default: m.TopoTraceEditor }))
+)
+
+/** Default stroke color when no circuit is selected (orange / AD) */
+const DEFAULT_STROKE_COLOR = '#FF6B00'
 
 interface BoulderFormProps {
   onClose: () => void
@@ -67,6 +76,12 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
       : null
   )
   const [showLocationPicker, setShowLocationPicker] = useState(false)
+
+  // Topo trace state (Story 5.4)
+  const [topoDrawing, setTopoDrawing] = useState<TopoDrawing | null>(
+    existingDraft?.topoDrawing ?? null
+  )
+  const [showTraceEditor, setShowTraceEditor] = useState(false)
 
   const {
     register,
@@ -120,6 +135,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
       photoHeight: photo?.height ?? null,
       latitude: location?.latitude ?? null,
       longitude: location?.longitude ?? null,
+      topoDrawing: topoDrawing ?? null,
     }
 
     if (isEditMode && editDraftId) {
@@ -304,6 +320,78 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
         onFileSelected={handleFileSelected}
         onRemove={handlePhotoRemove}
       />
+
+      {/* Topo trace (optional — Story 5.4) */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium text-foreground">
+          Tracé <span className="font-normal text-muted-foreground">(optionnel)</span>
+        </p>
+
+        {topoDrawing ? (
+          <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">Tracé défini</p>
+              <p className="text-xs text-muted-foreground">
+                {topoDrawing.elements.filter((e) => e.type === 'path').length} ligne(s)
+                {topoDrawing.elements.some((e) => e.type === 'circle') && ' · Départ'}
+                {topoDrawing.elements.some((e) => e.type === 'polygon') && ' · Arrivée'}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-1">
+              <button
+                type="button"
+                onClick={() => setShowTraceEditor(true)}
+                disabled={!photo}
+                className="rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                onClick={() => setTopoDrawing(null)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Supprimer le tracé"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowTraceEditor(true)}
+            disabled={!photo}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input px-3 py-4 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50 disabled:hover:border-input disabled:hover:text-muted-foreground"
+          >
+            <Pencil className="h-4 w-4" />
+            Dessiner le tracé
+          </button>
+        )}
+
+        {!photo && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Ajoutez une photo pour dessiner le tracé
+          </p>
+        )}
+      </div>
+
+      {/* Topo trace editor overlay (lazy-loaded) */}
+      {showTraceEditor && photo && (
+        <Suspense fallback={null}>
+          <TopoTraceEditor
+            photoDataUrl={photo.dataUrl}
+            photoWidth={photo.width}
+            photoHeight={photo.height}
+            strokeColor={DEFAULT_STROKE_COLOR}
+            onConfirm={(drawing) => {
+              setTopoDrawing(drawing)
+              setShowTraceEditor(false)
+            }}
+            onCancel={() => setShowTraceEditor(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Location (optional — Story 5.3) */}
       <div>
