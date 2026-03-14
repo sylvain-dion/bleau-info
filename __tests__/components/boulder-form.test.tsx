@@ -19,6 +19,10 @@ vi.mock('@/components/boulder/location-picker', () => ({
   LocationPicker: vi.fn(() => null),
 }))
 
+vi.mock('@/components/topo/topo-trace-editor', () => ({
+  TopoTraceEditor: vi.fn(() => null),
+}))
+
 describe('BoulderForm', () => {
   const defaultProps = {
     onClose: vi.fn(),
@@ -203,6 +207,7 @@ describe('BoulderForm', () => {
         photoHeight: null,
         latitude: null,
         longitude: null,
+        topoDrawing: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -228,6 +233,7 @@ describe('BoulderForm', () => {
         photoHeight: null,
         latitude: null,
         longitude: null,
+        topoDrawing: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -255,6 +261,7 @@ describe('BoulderForm', () => {
         photoHeight: null,
         latitude: null,
         longitude: null,
+        topoDrawing: null,
       })
 
       render(<BoulderForm {...defaultProps} editDraftId={id} />)
@@ -368,6 +375,53 @@ describe('BoulderForm', () => {
         expect(drafts).toHaveLength(1)
         expect(drafts[0].latitude).toBeNull()
         expect(drafts[0].longitude).toBeNull()
+      })
+    })
+  })
+
+  describe('topo trace (Story 5.4)', () => {
+    it('should render trace button', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      expect(screen.getByText('Dessiner le tracé')).toBeInTheDocument()
+    })
+
+    it('should render trace label', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      expect(screen.getByText('Tracé')).toBeInTheDocument()
+    })
+
+    it('should disable trace button when no photo is uploaded', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      const traceButton = screen.getByText('Dessiner le tracé')
+      expect(traceButton).toBeDisabled()
+    })
+
+    it('should show hint text when no photo', () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      expect(screen.getByText('Ajoutez une photo pour dessiner le tracé')).toBeInTheDocument()
+    })
+
+    it('should submit null topoDrawing when no trace drawn', async () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Bloc Sans Tracé' },
+      })
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '5a' },
+      })
+      fireEvent.click(screen.getByText('Dalle'))
+
+      fireEvent.click(screen.getByText('Créer le bloc'))
+
+      await waitFor(() => {
+        const drafts = useBoulderDraftStore.getState().drafts
+        expect(drafts).toHaveLength(1)
+        expect(drafts[0].topoDrawing).toBeNull()
       })
     })
   })
