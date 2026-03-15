@@ -5,6 +5,14 @@ import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 
 vi.mock('@/lib/feedback', () => ({
   triggerTickFeedback: vi.fn(),
+  showDraftSavedToast: vi.fn(),
+  showDraftErrorToast: vi.fn(),
+}))
+
+vi.mock('@/lib/db/draft-photo-store', () => ({
+  savePhoto: vi.fn().mockResolvedValue(undefined),
+  loadPhoto: vi.fn().mockResolvedValue(null),
+  deletePhoto: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/hooks/use-theme', () => ({
@@ -375,6 +383,73 @@ describe('BoulderForm', () => {
         expect(drafts).toHaveLength(1)
         expect(drafts[0].latitude).toBeNull()
         expect(drafts[0].longitude).toBeNull()
+      })
+    })
+  })
+
+  describe('offline persistence (Story 5.5)', () => {
+    it('should show toast on successful submit', async () => {
+      const { showDraftSavedToast } = await import('@/lib/feedback')
+
+      render(<BoulderForm {...defaultProps} />)
+
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Toast Bloc' },
+      })
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '6a' },
+      })
+      fireEvent.click(screen.getByText('Dalle'))
+      fireEvent.click(screen.getByText('Créer le bloc'))
+
+      await waitFor(() => {
+        expect(showDraftSavedToast).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it('should call loadPhoto on edit mount', async () => {
+      const { loadPhoto } = await import('@/lib/db/draft-photo-store')
+
+      const id = useBoulderDraftStore.getState().addDraft({
+        name: 'Photo Bloc',
+        grade: '6a',
+        style: 'dalle',
+        sector: '',
+        description: '',
+        height: null,
+        exposure: null,
+        strollerAccessible: false,
+        photoBlurHash: null,
+        photoWidth: null,
+        photoHeight: null,
+        latitude: null,
+        longitude: null,
+        topoDrawing: null,
+      })
+
+      render(<BoulderForm {...defaultProps} editDraftId={id} />)
+
+      await waitFor(() => {
+        expect(loadPhoto).toHaveBeenCalledWith(id)
+      })
+    })
+
+    it('should set syncStatus to local on new draft', async () => {
+      render(<BoulderForm {...defaultProps} />)
+
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'Sync Bloc' },
+      })
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '5a' },
+      })
+      fireEvent.click(screen.getByText('Dalle'))
+      fireEvent.click(screen.getByText('Créer le bloc'))
+
+      await waitFor(() => {
+        const drafts = useBoulderDraftStore.getState().drafts
+        expect(drafts).toHaveLength(1)
+        expect(drafts[0].syncStatus).toBe('local')
       })
     })
   })

@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, CheckCircle, MapPin, Pencil, X } from 'lucide-react'
@@ -16,7 +16,15 @@ import {
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
 import { mockBoulders } from '@/lib/data/mock-boulders'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
-import { triggerTickFeedback } from '@/lib/feedback'
+import {
+  triggerTickFeedback,
+  showDraftSavedToast,
+  showDraftErrorToast,
+} from '@/lib/feedback'
+import {
+  savePhoto as savePhotoToDb,
+  loadPhoto as loadPhotoFromDb,
+} from '@/lib/db/draft-photo-store'
 import { processPhoto, type ProcessedPhoto } from '@/lib/image-processing'
 import { useTheme } from '@/lib/hooks/use-theme'
 import { formatLatitude, formatLongitude } from '@/lib/coordinates'
@@ -64,10 +72,39 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
 
   const { resolvedTheme } = useTheme()
 
-  // Photo state — data URL lives only in component state, not persisted
+  // Photo state — data URL restored from IndexedDB in edit mode (Story 5.5)
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
   const [photoProcessing, setPhotoProcessing] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [photoLoading, setPhotoLoading] = useState(!!editDraftId)
+
+  // Restore photo from IndexedDB when editing a draft (Story 5.5)
+  useEffect(() => {
+    if (!editDraftId || !existingDraft) return
+
+    let cancelled = false
+    setPhotoLoading(true)
+
+    loadPhotoFromDb(editDraftId)
+      .then((dataUrl) => {
+        if (cancelled || !dataUrl) {
+          setPhotoLoading(false)
+          return
+        }
+        setPhoto({
+          dataUrl,
+          width: existingDraft.photoWidth ?? 0,
+          height: existingDraft.photoHeight ?? 0,
+          blurHash: existingDraft.photoBlurHash ?? '',
+        })
+        setPhotoLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) setPhotoLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [editDraftId, existingDraft])
 
   // Location state (Story 5.3)
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(
@@ -120,7 +157,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
     setPhotoError(null)
   }, [])
 
-  function onSubmit(data: BoulderFormData) {
+  async function onSubmit(data: BoulderFormData) {
     const draftData = {
       name: data.name,
       grade: data.grade,
@@ -138,15 +175,28 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
       topoDrawing: topoDrawing ?? null,
     }
 
-    if (isEditMode && editDraftId) {
-      updateDraft(editDraftId, draftData)
-    } else {
-      addDraft(draftData)
-    }
+    try {
+      let draftId: string
 
-    triggerTickFeedback()
-    onSuccess?.()
-    onClose()
+      if (isEditMode && editDraftId) {
+        updateDraft(editDraftId, draftData)
+        draftId = editDraftId
+      } else {
+        draftId = addDraft(draftData)
+      }
+
+      // Persist photo blob to IndexedDB (Story 5.5)
+      if (photo?.dataUrl) {
+        await savePhotoToDb(draftId, photo.dataUrl)
+      }
+
+      triggerTickFeedback()
+      showDraftSavedToast()
+      onSuccess?.()
+      onClose()
+    } catch {
+      showDraftErrorToast()
+    }
   }
 
   return (
@@ -312,10 +362,10 @@ export function BoulderForm({ onClose, onSuccess, editDraftId }: BoulderFormProp
         <span className="text-sm text-foreground">Accessible poussette</span>
       </label>
 
-      {/* Photo (optional — Story 5.2) */}
+      {/* Photo (optional — Story 5.2, persistence — Story 5.5) */}
       <PhotoCapture
         previewUrl={photo?.dataUrl ?? null}
-        isProcessing={photoProcessing}
+        isProcessing={photoProcessing || photoLoading}
         error={photoError}
         onFileSelected={handleFileSelected}
         onRemove={handlePhotoRemove}

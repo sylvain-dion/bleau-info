@@ -17,8 +17,21 @@ vi.mock('@/lib/hooks/use-theme', () => ({
   }),
 }))
 
+vi.mock('@/lib/db/draft-photo-store', () => ({
+  savePhoto: vi.fn().mockResolvedValue(undefined),
+  loadPhoto: vi.fn().mockResolvedValue(null),
+  deletePhoto: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/lib/feedback', () => ({
+  triggerTickFeedback: vi.fn(),
+  showDraftSavedToast: vi.fn(),
+  showDraftErrorToast: vi.fn(),
+}))
+
 describe('BoulderDraftsSection', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     useBoulderDraftStore.setState({ drafts: [] })
   })
 
@@ -42,6 +55,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -51,7 +65,7 @@ describe('BoulderDraftsSection', () => {
     expect(screen.getByText('6A')).toBeInTheDocument() // formatted grade
     expect(screen.getByText(/Dalle/)).toBeInTheDocument()
     expect(screen.getByText(/Cul de Chien/)).toBeInTheDocument()
-    expect(screen.getByText('Brouillon')).toBeInTheDocument()
+    expect(screen.getByText('Local')).toBeInTheDocument()
   })
 
   it('should show draft count badge', () => {
@@ -69,6 +83,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
     useBoulderDraftStore.getState().addDraft({
       name: 'Bloc B',
@@ -84,6 +99,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -108,6 +124,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -135,6 +152,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -160,6 +178,7 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
     render(<BoulderDraftsSection />)
@@ -167,9 +186,9 @@ describe('BoulderDraftsSection', () => {
     expect(screen.getByLabelText('Modifier le brouillon Bloc Éditable')).toBeInTheDocument()
   })
 
-  it('should show pending status for pending drafts', () => {
-    const id = useBoulderDraftStore.getState().addDraft({
-      name: 'En Attente',
+  it('should show sync status pill for each draft', () => {
+    useBoulderDraftStore.getState().addDraft({
+      name: 'Local Bloc',
       grade: '5a',
       style: 'traverse',
       sector: '',
@@ -182,18 +201,73 @@ describe('BoulderDraftsSection', () => {
       photoHeight: null,
       latitude: null,
       longitude: null,
+      topoDrawing: null,
     })
 
-    // Manually set status to pending
-    useBoulderDraftStore.getState().updateDraft(id, {} as never)
+    render(<BoulderDraftsSection />)
+
+    // Default syncStatus is 'local'
+    const pill = screen.getByTestId('sync-status-pill')
+    expect(pill).toHaveTextContent('Local')
+  })
+
+  it('should show pending sync status', () => {
+    const id = useBoulderDraftStore.getState().addDraft({
+      name: 'Pending Bloc',
+      grade: '5a',
+      style: 'traverse',
+      sector: '',
+      description: '',
+      height: null,
+      exposure: null,
+      strollerAccessible: false,
+      photoBlurHash: null,
+      photoWidth: null,
+      photoHeight: null,
+      latitude: null,
+      longitude: null,
+      topoDrawing: null,
+    })
+
+    // Manually set syncStatus to pending
     useBoulderDraftStore.setState((state) => ({
       drafts: state.drafts.map((d) =>
-        d.id === id ? { ...d, status: 'pending' as const } : d
+        d.id === id ? { ...d, syncStatus: 'pending' as const } : d
       ),
     }))
 
     render(<BoulderDraftsSection />)
 
     expect(screen.getByText('En attente')).toBeInTheDocument()
+  })
+
+  it('should call deletePhoto when removing a draft', async () => {
+    const user = userEvent.setup()
+    const { deletePhoto } = await import('@/lib/db/draft-photo-store')
+
+    useBoulderDraftStore.getState().addDraft({
+      name: 'Bloc With Photo',
+      grade: '4a',
+      style: 'bloc',
+      sector: '',
+      description: '',
+      height: null,
+      exposure: null,
+      strollerAccessible: false,
+      photoBlurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+      photoWidth: 1200,
+      photoHeight: 800,
+      latitude: null,
+      longitude: null,
+      topoDrawing: null,
+    })
+
+    render(<BoulderDraftsSection />)
+
+    const deleteBtn = screen.getByLabelText('Supprimer le brouillon Bloc With Photo')
+    await user.click(deleteBtn)
+
+    expect(useBoulderDraftStore.getState().drafts).toHaveLength(0)
+    expect(deletePhoto).toHaveBeenCalledTimes(1)
   })
 })

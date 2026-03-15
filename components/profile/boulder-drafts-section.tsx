@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Mountain, Pencil, Trash2 } from 'lucide-react'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
+import type { BoulderDraft } from '@/stores/boulder-draft-store'
+import { deletePhoto } from '@/lib/db/draft-photo-store'
 import { STYLE_LABELS } from '@/lib/validations/boulder'
 import { formatGrade } from '@/lib/grades'
 import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-drawer'
@@ -18,6 +20,14 @@ export function BoulderDraftsSection() {
   const drafts = useBoulderDraftStore((s) => s.drafts)
   const removeDraft = useBoulderDraftStore((s) => s.removeDraft)
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
+
+  /** Remove draft from store + clean up photo from IndexedDB */
+  function handleDelete(draftId: string) {
+    removeDraft(draftId)
+    deletePhoto(draftId).catch(() => {
+      // Best-effort cleanup — IndexedDB may not be available
+    })
+  }
 
   if (drafts.length === 0) return null
 
@@ -57,16 +67,8 @@ export function BoulderDraftsSection() {
               </p>
             </div>
 
-            {/* Status pill */}
-            <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                draft.status === 'pending'
-                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                  : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              {draft.status === 'pending' ? 'En attente' : 'Brouillon'}
-            </span>
+            {/* Sync status pill (Story 5.5) */}
+            <SyncStatusPill syncStatus={draft.syncStatus} />
 
             {/* Edit */}
             <button
@@ -81,7 +83,7 @@ export function BoulderDraftsSection() {
             {/* Delete */}
             <button
               type="button"
-              onClick={() => removeDraft(draft.id)}
+              onClick={() => handleDelete(draft.id)}
               className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               aria-label={`Supprimer le brouillon ${draft.name}`}
             >
@@ -102,6 +104,45 @@ export function BoulderDraftsSection() {
         editDraftId={editingDraftId ?? undefined}
       />
     </div>
+  )
+}
+
+/** Visual config for each sync status */
+const SYNC_STATUS_CONFIG: Record<
+  BoulderDraft['syncStatus'],
+  { label: string; className: string }
+> = {
+  local: {
+    label: 'Local',
+    className: 'bg-muted text-muted-foreground',
+  },
+  pending: {
+    label: 'En attente',
+    className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  },
+  synced: {
+    label: 'Synchronisé',
+    className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  },
+  error: {
+    label: 'Erreur',
+    className: 'bg-destructive/10 text-destructive',
+  },
+}
+
+function SyncStatusPill({
+  syncStatus,
+}: {
+  syncStatus: BoulderDraft['syncStatus']
+}) {
+  const config = SYNC_STATUS_CONFIG[syncStatus]
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.className}`}
+      data-testid="sync-status-pill"
+    >
+      {config.label}
+    </span>
   )
 }
 
