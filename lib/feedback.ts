@@ -1,4 +1,5 @@
 import confetti from 'canvas-confetti'
+import { toast } from 'sonner'
 
 /**
  * Triggers celebratory feedback when a tick is logged.
@@ -30,4 +31,24 @@ export function triggerTickFeedback(): void {
   } catch {
     // Vibration API not supported — no-op
   }
+}
+
+/**
+ * Toast notification for successful draft save.
+ */
+export function showDraftSavedToast(): void {
+  toast.success('Brouillon sauvegardé', {
+    description: 'Votre bloc est enregistré localement.',
+    duration: 3000,
+  })
+}
+
+/**
+ * Toast notification for draft save error.
+ */
+export function showDraftErrorToast(message?: string): void {
+  toast.error('Erreur de sauvegarde', {
+    description: message ?? 'Impossible d\'enregistrer le brouillon.',
+    duration: 5000,
+  })
 }

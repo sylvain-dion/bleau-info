@@ -237,6 +237,25 @@ describe('boulder-draft-store', () => {
     })
   })
 
+  describe('syncStatus (Story 5.5)', () => {
+    it('should default syncStatus to local on new draft', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft).toBeDefined()
+      expect(draft!.syncStatus).toBe('local')
+    })
+
+    it('should preserve syncStatus through updates', () => {
+      const id = useBoulderDraftStore.getState().addDraft(validInput)
+
+      useBoulderDraftStore.getState().updateDraft(id, { name: 'Updated' })
+
+      const draft = useBoulderDraftStore.getState().getDraft(id)
+      expect(draft!.syncStatus).toBe('local')
+    })
+  })
+
   describe('isNameTaken', () => {
     it('should detect duplicate name in mock boulders', () => {
       // "La Marie-Rose" exists in "Cul de Chien" sector in mock data

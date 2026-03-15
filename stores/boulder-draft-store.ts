@@ -27,15 +27,17 @@ export interface BoulderDraft {
   longitude: number | null
   /** Vector topo drawing data (Story 5.4) */
   topoDrawing: TopoDrawing | null
+  /** Sync status for offline/online queue (Story 5.5) */
+  syncStatus: 'local' | 'pending' | 'synced' | 'error'
   status: 'draft' | 'pending'
   createdAt: string
   updatedAt: string
 }
 
-/** Input for creating a new draft (IDs and timestamps auto-generated). */
+/** Input for creating a new draft (IDs, timestamps, syncStatus auto-generated). */
 export type BoulderDraftInput = Omit<
   BoulderDraft,
-  'id' | 'status' | 'createdAt' | 'updatedAt'
+  'id' | 'status' | 'syncStatus' | 'createdAt' | 'updatedAt'
 >
 
 interface BoulderDraftState {
@@ -82,6 +84,7 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
           longitude: data.longitude ?? null,
           topoDrawing: data.topoDrawing ?? null,
           id,
+          syncStatus: 'local',
           status: 'draft',
           createdAt: now,
           updatedAt: now,
