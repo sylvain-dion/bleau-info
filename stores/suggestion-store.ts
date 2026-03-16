@@ -38,6 +38,8 @@ export interface BoulderSuggestion {
   latitude: number | null
   longitude: number | null
   topoDrawing: TopoDrawing | null
+  /** YouTube or Vimeo video URL (Story 5.7) */
+  videoUrl: string | null
 
   /* ── Status ── */
   /** Moderation outcome (stubbed — always 'pending' until Epic 7). */

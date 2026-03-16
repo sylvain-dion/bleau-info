@@ -24,6 +24,14 @@ export interface BoulderProperties {
   exposure: BoulderExposure
   /** Whether the boulder is accessible with a stroller */
   strollerAccessible: boolean
+  /** YouTube or Vimeo video URL (Story 5.7) */
+  videoUrl?: string
+  /** Multiple videos with credits (Story 5.7+) */
+  videos?: Array<{
+    videoUrl: string
+    climberName?: string
+    videographerName?: string
+  }>
 }
 
 /**
@@ -37,7 +45,11 @@ export const mockBoulders: FeatureCollection<Point, BoulderProperties> = {
   features: [
     // ── Cul de Chien (iconic sector) ──
     ...createSectorBoulders('Cul de Chien', 2.6345, 48.3815, [
-      { name: 'La Marie-Rose', grade: '6a', circuit: 'rouge', circuitNumber: 1, style: 'dalle', exposure: 'soleil', strollerAccessible: false },
+      { name: 'La Marie-Rose', grade: '6a', circuit: 'rouge', circuitNumber: 1, style: 'dalle', exposure: 'soleil', strollerAccessible: false, videoUrl: 'https://www.youtube.com/watch?v=KXcNPH4RnRY', videos: [
+        { videoUrl: 'https://www.youtube.com/watch?v=KXcNPH4RnRY', climberName: 'Jacky Godoffe', videographerName: 'Bleau.info' },
+        { videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', climberName: 'Alain Robert' },
+        { videoUrl: 'https://vimeo.com/123456789', videographerName: 'Pierre Vidal' },
+      ] },
       { name: 'Le Surplomb de la Marie-Rose', grade: '6b', circuit: 'rouge', circuitNumber: 2, style: 'devers', exposure: 'mi-ombre', strollerAccessible: false },
       { name: "L'Angle Ben's", grade: '6a+', circuit: 'rouge', circuitNumber: 3, style: 'arete', exposure: 'soleil', strollerAccessible: false },
       { name: 'La Dalle à Poly', grade: '4b', circuit: 'bleu', circuitNumber: 5, style: 'dalle', exposure: 'ombre', strollerAccessible: true },
@@ -141,6 +153,8 @@ function createSectorBoulders(
         style: boulder.style,
         exposure: boulder.exposure,
         strollerAccessible: boulder.strollerAccessible,
+        ...(boulder.videoUrl ? { videoUrl: boulder.videoUrl } : {}),
+        ...(boulder.videos ? { videos: boulder.videos } : {}),
       },
     }
   })

@@ -62,3 +62,13 @@ export function showSuggestionSentToast(): void {
     duration: 4000,
   })
 }
+
+/**
+ * Toast notification for successful video submission.
+ */
+export function showVideoSubmittedToast(): void {
+  toast.success('Vidéo soumise', {
+    description: 'En attente de validation par la communauté.',
+    duration: 4000,
+  })
+}

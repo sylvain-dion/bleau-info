@@ -1,0 +1,136 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+/** A user-submitted video for a boulder. */
+export interface VideoSubmission {
+  id: string
+  boulderId: string
+  videoUrl: string
+  climberName: string | null
+  videographerName: string | null
+  moderationStatus: 'pending' | 'approved' | 'rejected'
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** Fields required when creating a new submission. */
+export type VideoSubmissionInput = Pick<
+  VideoSubmission,
+  'boulderId' | 'videoUrl' | 'userId'
+> & {
+  climberName?: string | null
+  videographerName?: string | null
+}
+
+/** Updatable fields when editing an existing submission. */
+export type VideoSubmissionUpdate = Partial<
+  Pick<VideoSubmission, 'videoUrl' | 'climberName' | 'videographerName'>
+>
+
+interface VideoSubmissionState {
+  submissions: VideoSubmission[]
+
+  /** Create a new video submission. Returns the generated ID. */
+  addSubmission: (data: VideoSubmissionInput) => string
+
+  /** Update an existing submission's editable fields. */
+  updateSubmission: (id: string, data: VideoSubmissionUpdate) => void
+
+  /** Remove a submission by ID. */
+  removeSubmission: (id: string) => void
+
+  /** Get a single submission by ID. */
+  getSubmission: (id: string) => VideoSubmission | undefined
+
+  /** Get all submissions targeting a specific boulder. */
+  getSubmissionsForBoulder: (boulderId: string) => VideoSubmission[]
+
+  /** Get all submissions by a specific user. */
+  getSubmissionsForUser: (userId: string) => VideoSubmission[]
+
+  /** Get unique climber names across all submissions (for autocomplete). */
+  getUniqueClimberNames: () => string[]
+
+  /** Get unique videographer names across all submissions (for autocomplete). */
+  getUniqueVideographerNames: () => string[]
+}
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+export const useVideoSubmissionStore = create<VideoSubmissionState>()(
+  persist(
+    (set, get) => ({
+      submissions: [],
+
+      addSubmission: (data) => {
+        const id = generateId()
+        const now = new Date().toISOString()
+        const submission: VideoSubmission = {
+          id,
+          boulderId: data.boulderId,
+          videoUrl: data.videoUrl,
+          climberName: data.climberName ?? null,
+          videographerName: data.videographerName ?? null,
+          moderationStatus: 'pending',
+          userId: data.userId,
+          createdAt: now,
+          updatedAt: now,
+        }
+        set((state) => ({
+          submissions: [submission, ...state.submissions],
+        }))
+        return id
+      },
+
+      updateSubmission: (id, data) => {
+        set((state) => ({
+          submissions: state.submissions.map((s) =>
+            s.id === id
+              ? { ...s, ...data, updatedAt: new Date().toISOString() }
+              : s
+          ),
+        }))
+      },
+
+      removeSubmission: (id) => {
+        set((state) => ({
+          submissions: state.submissions.filter((s) => s.id !== id),
+        }))
+      },
+
+      getSubmission: (id) => {
+        return get().submissions.find((s) => s.id === id)
+      },
+
+      getSubmissionsForBoulder: (boulderId) => {
+        return get().submissions.filter((s) => s.boulderId === boulderId)
+      },
+
+      getSubmissionsForUser: (userId) => {
+        return get().submissions.filter((s) => s.userId === userId)
+      },
+
+      getUniqueClimberNames: () => {
+        const names = new Set<string>()
+        for (const s of get().submissions) {
+          if (s.climberName) names.add(s.climberName)
+        }
+        return Array.from(names).sort()
+      },
+
+      getUniqueVideographerNames: () => {
+        const names = new Set<string>()
+        for (const s of get().submissions) {
+          if (s.videographerName) names.add(s.videographerName)
+        }
+        return Array.from(names).sort()
+      },
+    }),
+    {
+      name: 'bleau-video-submissions',
+    }
+  )
+)

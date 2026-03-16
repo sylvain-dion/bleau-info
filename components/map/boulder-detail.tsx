@@ -27,6 +27,7 @@ import type {
 import { getTopoData } from '@/lib/data/mock-topos'
 import { formatGrade } from '@/lib/grades'
 import { TopoViewer } from '@/components/topo/topo-viewer'
+import { VideoCarousel } from '@/components/boulder/video-carousel'
 import { TickForm } from '@/components/boulder/tick-form'
 import { useTickStore, formatTickStyle } from '@/stores/tick-store'
 import { useAuthStore } from '@/stores/auth-store'
@@ -219,6 +220,12 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           <div className="border-t border-border pt-4">
             <TopoSection name={name} boulderId={properties.id} />
           </div>
+
+          {/* Video carousel (Story 5.7+) */}
+          <VideoCarousel
+            boulderId={properties.id}
+            mockVideos={properties.videos}
+          />
 
           {/* Tick logging section */}
           <div className="border-t border-border pt-4">
