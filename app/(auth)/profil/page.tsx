@@ -17,6 +17,7 @@ import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
+import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -139,6 +140,11 @@ export default function ProfilPage() {
       {/* Modification suggestions (Story 5.6) */}
       <div className="mb-6">
         <SuggestionsSection />
+      </div>
+
+      {/* Video submissions (Story 5.7+) */}
+      <div className="mb-6">
+        <VideoSubmissionsSection />
       </div>
 
       {/* Edit Form */}

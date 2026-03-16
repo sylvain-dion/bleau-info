@@ -3,6 +3,30 @@ import { render, screen } from '@testing-library/react'
 import { BoulderDetail } from '@/components/map/boulder-detail'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
 
+// Mock next/navigation (needed by VideoCarousel)
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
+// Mock video-submission-store (needed by VideoCarousel)
+const emptyArray: never[] = []
+vi.mock('@/stores/video-submission-store', () => ({
+  useVideoSubmissionStore: vi.fn((selector: (s: unknown) => unknown) => {
+    const state = {
+      submissions: emptyArray,
+      getSubmissionsForBoulder: () => emptyArray,
+      getSubmissionsForUser: () => emptyArray,
+      addSubmission: vi.fn(),
+      updateSubmission: vi.fn(),
+      getSubmission: () => undefined,
+      getUniqueClimberNames: () => emptyArray,
+      getUniqueVideographerNames: () => emptyArray,
+      removeSubmission: vi.fn(),
+    }
+    return selector(state)
+  }),
+}))
+
 // Mock react-zoom-pan-pinch to avoid DOM measurement issues in tests
 vi.mock('react-zoom-pan-pinch', () => ({
   TransformWrapper: ({ children }: { children: (utils: Record<string, () => void>) => React.ReactNode }) =>

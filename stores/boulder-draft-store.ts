@@ -27,6 +27,8 @@ export interface BoulderDraft {
   longitude: number | null
   /** Vector topo drawing data (Story 5.4) */
   topoDrawing: TopoDrawing | null
+  /** YouTube or Vimeo video URL (Story 5.7) */
+  videoUrl: string | null
   /** Sync status for offline/online queue (Story 5.5) */
   syncStatus: 'local' | 'pending' | 'synced' | 'error'
   status: 'draft' | 'pending'
@@ -83,6 +85,7 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
           topoDrawing: data.topoDrawing ?? null,
+          videoUrl: data.videoUrl ?? null,
           id,
           syncStatus: 'local',
           status: 'draft',

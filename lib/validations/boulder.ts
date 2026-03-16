@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { GRADE_SCALE } from '@/lib/grades'
+import { parseVideoUrl } from '@/lib/video'
 
 /**
  * Boulder climbing styles (FR-20).
@@ -121,6 +122,25 @@ export const boulderFormSchema = z.object({
     .pipe(z.enum(BOULDER_EXPOSURES).optional()),
 
   strollerAccessible: z.boolean().default(false),
+
+  /** YouTube or Vimeo video URL (Story 5.7) */
+  videoUrl: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .transform((val) => {
+      if (!val || val === '') return undefined
+      return val
+    })
+    .pipe(
+      z
+        .string()
+        .refine(
+          (val) => parseVideoUrl(val) !== null,
+          'URL YouTube ou Vimeo invalide'
+        )
+        .optional()
+    ),
 
   /** Photo metadata (Story 5.2) — only persisted fields, not the data URL */
   photoBlurHash: z.string().optional(),

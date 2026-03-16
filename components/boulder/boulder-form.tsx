@@ -3,7 +3,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, CheckCircle, MapPin, Pencil, X } from 'lucide-react'
+import { CheckCircle2, CheckCircle, MapPin, Pencil, Video, X } from 'lucide-react'
 import {
   boulderFormSchema,
   BOULDER_EXPOSURES,
@@ -37,6 +37,8 @@ import type { BoulderProperties } from '@/lib/data/mock-boulders'
 import { BoulderStyleSelector } from './boulder-style-selector'
 import { PhotoCapture } from './photo-capture'
 import { DiffBadge } from './diff-badge'
+import { VideoEmbed } from './video-embed'
+import { parseVideoUrl } from '@/lib/video'
 
 /** Lazy-loaded — maplibre-gl is heavy (~200 kB), only load when picker opens */
 const LocationPicker = lazy(() =>
@@ -167,6 +169,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<BoulderFormInput, unknown, BoulderFormData>({
     resolver: zodResolver(boulderFormSchema),
@@ -179,6 +182,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
       height: existingDraft?.height != null ? String(existingDraft.height) : es?.height != null ? String(es.height) : '',
       exposure: existingDraft?.exposure ?? es?.exposure ?? src?.exposure ?? '',
       strollerAccessible: existingDraft?.strollerAccessible ?? es?.strollerAccessible ?? src?.strollerAccessible ?? false,
+      videoUrl: existingDraft?.videoUrl ?? es?.videoUrl ?? src?.videoUrl ?? '',
     },
   })
 
@@ -187,6 +191,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
   const watchedGrade = useWatch({ control, name: 'grade' })
   const watchedSector = useWatch({ control, name: 'sector' })
   const watchedExposure = useWatch({ control, name: 'exposure' })
+  const watchedVideoUrl = useWatch({ control, name: 'videoUrl' })
 
   const handleFileSelected = useCallback(async (file: File) => {
     setPhotoError(null)
@@ -222,6 +227,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
       latitude: location?.latitude ?? null,
       longitude: location?.longitude ?? null,
       topoDrawing: topoDrawing ?? null,
+      videoUrl: data.videoUrl ?? null,
     }
 
     try {
@@ -556,6 +562,61 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
           />
         </Suspense>
       )}
+
+      {/* Video (optional — Story 5.7) */}
+      <div>
+        <p className="mb-1.5 flex items-center text-sm font-medium text-foreground">
+          Vidéo <span className="ml-1 font-normal text-muted-foreground">(optionnel)</span>
+          {isSuggestionMode && diffSource && 'videoUrl' in diffSource && (
+            <DiffBadge original={String((diffSource as { videoUrl?: string }).videoUrl ?? '')} current={watchedVideoUrl ?? ''} />
+          )}
+        </p>
+
+        {watchedVideoUrl && parseVideoUrl(watchedVideoUrl) ? (
+          <div className="space-y-2">
+            <VideoEmbed videoUrl={watchedVideoUrl} />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://youtube.com/watch?v=..."
+                className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                {...register('videoUrl')}
+              />
+              <button
+                type="button"
+                onClick={() => setValue('videoUrl', '')}
+                className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Supprimer la vidéo"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : watchedVideoUrl ? (
+          <div className="space-y-2">
+            <input
+              type="url"
+              placeholder="https://youtube.com/watch?v=..."
+              className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                errors.videoUrl ? 'border-destructive' : 'border-input'
+              }`}
+              {...register('videoUrl')}
+            />
+            {errors.videoUrl && (
+              <p className="text-xs text-destructive">{errors.videoUrl.message}</p>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setValue('videoUrl', 'https://')}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input px-3 py-4 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            <Video className="h-4 w-4" />
+            Ajouter une vidéo
+          </button>
+        )}
+      </div>
 
       {/* Location (optional — Story 5.3) */}
       <div>

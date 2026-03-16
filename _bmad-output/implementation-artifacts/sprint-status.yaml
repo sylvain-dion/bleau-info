@@ -83,7 +83,7 @@ development_status:
   5-4-editeur-de-trace-vectoriel-konva-canvas: done
   5-5-sauvegarde-en-brouillon-local-offline: done
   5-6-suggestion-de-modification-sur-bloc-existant: done
-  5-7-upload-video-de-demonstration: backlog
+  5-7-upload-video-de-demonstration: done
   epic-5-retrospective: optional
 
   # Epic 6: Offline & Synchronisation

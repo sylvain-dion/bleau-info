@@ -33,6 +33,20 @@ vi.mock('@/lib/hooks/use-theme', () => ({
   }),
 }))
 
+// Mock video-submission-store to prevent infinite loop
+const emptyArray: never[] = []
+vi.mock('@/stores/video-submission-store', () => ({
+  useVideoSubmissionStore: vi.fn((selector: (s: unknown) => unknown) => {
+    const state = {
+      submissions: emptyArray,
+      getSubmissionsForUser: () => emptyArray,
+      getSubmissionsForBoulder: () => emptyArray,
+      removeSubmission: vi.fn(),
+    }
+    return selector(state)
+  }),
+}))
+
 // Must import after mocks
 const { default: ProfilPage } = await import('@/app/(auth)/profil/page')
 
