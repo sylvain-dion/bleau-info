@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BoulderForm } from '@/components/boulder/boulder-form'
+import type { SuggestionTarget } from '@/components/boulder/boulder-form'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
+import { useSuggestionStore } from '@/stores/suggestion-store'
 
 vi.mock('@/lib/feedback', () => ({
   triggerTickFeedback: vi.fn(),
   showDraftSavedToast: vi.fn(),
   showDraftErrorToast: vi.fn(),
+  showSuggestionSentToast: vi.fn(),
 }))
 
 vi.mock('@/lib/db/draft-photo-store', () => ({
@@ -40,6 +43,7 @@ describe('BoulderForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useBoulderDraftStore.setState({ drafts: [] })
+    useSuggestionStore.setState({ suggestions: [] })
   })
 
   it('should render form with all fields', () => {
@@ -498,6 +502,135 @@ describe('BoulderForm', () => {
         expect(drafts).toHaveLength(1)
         expect(drafts[0].topoDrawing).toBeNull()
       })
+    })
+  })
+
+  describe('suggestion mode (Story 5.6)', () => {
+    const suggestionTarget: SuggestionTarget = {
+      id: 'cul-de-chien-1',
+      properties: {
+        id: 'cul-de-chien-1',
+        name: 'La Marie-Rose',
+        grade: '6a',
+        sector: 'Cul de Chien',
+        circuit: 'rouge',
+        circuitNumber: 1,
+        style: 'dalle',
+        exposure: 'soleil',
+        strollerAccessible: false,
+      },
+      coordinates: [2.6345, 48.3815],
+    }
+
+    it('should show suggestion header and button', () => {
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      expect(screen.getByText('Suggérer une modification')).toBeInTheDocument()
+      expect(screen.getByText('Envoyer la suggestion')).toBeInTheDocument()
+      expect(screen.queryByText('Nouveau bloc')).not.toBeInTheDocument()
+      expect(screen.queryByText('Créer le bloc')).not.toBeInTheDocument()
+    })
+
+    it('should pre-fill form with original boulder data', () => {
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      expect(screen.getByLabelText(/Nom/)).toHaveValue('La Marie-Rose')
+      expect(screen.getByLabelText(/Cotation/)).toHaveValue('6a')
+      expect(screen.getByLabelText(/Secteur/)).toHaveValue('Cul de Chien')
+      expect(screen.getByLabelText(/Exposition/)).toHaveValue('soleil')
+    })
+
+    it('should create suggestion on submit (not a draft)', async () => {
+      const { showSuggestionSentToast } = await import('@/lib/feedback')
+
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      // Change the grade
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '6a+' },
+      })
+
+      fireEvent.click(screen.getByText('Envoyer la suggestion'))
+
+      await waitFor(() => {
+        // Should create suggestion, NOT a draft
+        expect(useSuggestionStore.getState().suggestions).toHaveLength(1)
+        expect(useBoulderDraftStore.getState().drafts).toHaveLength(0)
+
+        const suggestion = useSuggestionStore.getState().suggestions[0]
+        expect(suggestion.originalBoulderId).toBe('cul-de-chien-1')
+        expect(suggestion.grade).toBe('6a+')
+        expect(suggestion.name).toBe('La Marie-Rose')
+        expect(suggestion.moderationStatus).toBe('pending')
+        expect(suggestion.syncStatus).toBe('local')
+      })
+
+      expect(showSuggestionSentToast).toHaveBeenCalledTimes(1)
+      expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+      expect(defaultProps.onSuccess).toHaveBeenCalledTimes(1)
+    })
+
+    it('should store original snapshot in suggestion', async () => {
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      // Change the name
+      fireEvent.change(screen.getByLabelText(/Nom/), {
+        target: { value: 'La Marie-Rose Modifiée' },
+      })
+
+      fireEvent.click(screen.getByText('Envoyer la suggestion'))
+
+      await waitFor(() => {
+        const suggestion = useSuggestionStore.getState().suggestions[0]
+        expect(suggestion.originalSnapshot).toEqual({
+          name: 'La Marie-Rose',
+          grade: '6a',
+          style: 'dalle',
+          sector: 'Cul de Chien',
+          exposure: 'soleil',
+          strollerAccessible: false,
+          latitude: 48.3815,
+          longitude: 2.6345,
+        })
+      })
+    })
+
+    it('should show diff badge when grade is changed', async () => {
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      // Initially no diff badge (values match)
+      expect(screen.queryByTestId('diff-badge')).not.toBeInTheDocument()
+
+      // Change the grade
+      fireEvent.change(screen.getByLabelText(/Cotation/), {
+        target: { value: '6b' },
+      })
+
+      await waitFor(() => {
+        const badges = screen.getAllByTestId('diff-badge')
+        expect(badges.length).toBeGreaterThanOrEqual(1)
+        // Should show the original grade
+        expect(badges.some((b) => b.textContent?.includes('6A'))).toBe(true)
+      })
+    })
+
+    it('should pre-fill location from boulder coordinates', () => {
+      render(
+        <BoulderForm {...defaultProps} suggestionFor={suggestionTarget} />
+      )
+
+      // Location should be pre-filled (coordinates [lng, lat] → {lat, lng})
+      expect(screen.getByText('Position définie')).toBeInTheDocument()
     })
   })
 })
