@@ -7,17 +7,19 @@ import type { SuggestionTarget } from './boulder-form'
 interface SuggestionDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** The existing boulder to suggest a modification for. */
-  suggestionFor: SuggestionTarget
+  /** The existing boulder to suggest a modification for (new suggestion mode). */
+  suggestionFor?: SuggestionTarget
+  /** When provided, the form edits an existing suggestion. */
+  editSuggestionId?: string
 }
 
 /**
- * Bottom-sheet drawer for suggesting a modification on an existing boulder.
+ * Bottom-sheet drawer for creating or editing a boulder modification suggestion.
  *
  * Uses Vaul Drawer for consistent mobile-first UX (same as BoulderCreationDrawer).
- * Wraps BoulderForm in suggestion mode.
+ * Wraps BoulderForm in suggestion mode (new or edit).
  */
-export function SuggestionDrawer({ open, onOpenChange, suggestionFor }: SuggestionDrawerProps) {
+export function SuggestionDrawer({ open, onOpenChange, suggestionFor, editSuggestionId }: SuggestionDrawerProps) {
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
@@ -26,7 +28,7 @@ export function SuggestionDrawer({ open, onOpenChange, suggestionFor }: Suggesti
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-2xl border-t border-border bg-background shadow-xl outline-none"
         >
           <Drawer.Title className="sr-only">
-            Suggérer une modification
+            {editSuggestionId ? 'Modifier la suggestion' : 'Suggérer une modification'}
           </Drawer.Title>
 
           {/* Drag handle */}
@@ -40,6 +42,7 @@ export function SuggestionDrawer({ open, onOpenChange, suggestionFor }: Suggesti
               onClose={() => onOpenChange(false)}
               onSuccess={() => onOpenChange(false)}
               suggestionFor={suggestionFor}
+              editSuggestionId={editSuggestionId}
             />
           </div>
         </Drawer.Content>

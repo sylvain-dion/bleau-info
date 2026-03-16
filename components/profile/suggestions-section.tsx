@@ -1,20 +1,23 @@
 'use client'
 
-import { MessageSquarePlus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { MessageSquarePlus, Pencil, Trash2 } from 'lucide-react'
 import { useSuggestionStore } from '@/stores/suggestion-store'
 import type { BoulderSuggestion } from '@/stores/suggestion-store'
 import { deletePhoto } from '@/lib/db/draft-photo-store'
 import { formatGrade } from '@/lib/grades'
+import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 
 /**
  * Displays the user's pending boulder modification suggestions on the profile page.
  *
  * Each suggestion shows proposed name, grade, original boulder reference, and moderation status.
- * Suggestions can be deleted individually. Renders nothing when empty.
+ * Suggestions can be edited (pen icon) or deleted individually. Renders nothing when empty.
  */
 export function SuggestionsSection() {
   const suggestions = useSuggestionStore((s) => s.suggestions)
   const removeSuggestion = useSuggestionStore((s) => s.removeSuggestion)
+  const [editingSuggestionId, setEditingSuggestionId] = useState<string | null>(null)
 
   /** Remove suggestion from store + clean up photo from IndexedDB */
   function handleDelete(suggestionId: string) {
@@ -64,6 +67,16 @@ export function SuggestionsSection() {
             {/* Moderation status pill */}
             <ModerationStatusPill status={suggestion.moderationStatus} />
 
+            {/* Edit */}
+            <button
+              type="button"
+              onClick={() => setEditingSuggestionId(suggestion.id)}
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              aria-label={`Modifier la suggestion ${suggestion.name}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+
             {/* Delete */}
             <button
               type="button"
@@ -80,6 +93,13 @@ export function SuggestionsSection() {
       <p className="mt-3 text-[11px] text-muted-foreground">
         Les suggestions sont en attente de modération par la communauté.
       </p>
+
+      {/* Edit drawer */}
+      <SuggestionDrawer
+        open={!!editingSuggestionId}
+        onOpenChange={(open) => { if (!open) setEditingSuggestionId(null) }}
+        editSuggestionId={editingSuggestionId ?? undefined}
+      />
     </div>
   )
 }

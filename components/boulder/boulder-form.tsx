@@ -18,7 +18,7 @@ import { GRADE_SCALE, formatGrade } from '@/lib/grades'
 import { mockBoulders } from '@/lib/data/mock-boulders'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { useSuggestionStore } from '@/stores/suggestion-store'
-import type { BoulderSuggestionInput } from '@/stores/suggestion-store'
+import type { BoulderSuggestionInput, BoulderSuggestionUpdate } from '@/stores/suggestion-store'
 import {
   triggerTickFeedback,
   showDraftSavedToast,
@@ -65,6 +65,8 @@ interface BoulderFormProps {
   editDraftId?: string
   /** When provided, the form suggests a modification on an existing boulder. */
   suggestionFor?: SuggestionTarget
+  /** When provided, the form edits an existing suggestion. */
+  editSuggestionId?: string
 }
 
 /**
@@ -73,21 +75,26 @@ interface BoulderFormProps {
  * Required: name, grade, climbing style.
  * Optional: sector, description, height, exposure, stroller access.
  *
- * Three modes:
+ * Four modes:
  * - Create: `addDraft` on submit (default)
- * - Edit: `editDraftId` → pre-fills from draft, `updateDraft` on submit
- * - Suggestion: `suggestionFor` → pre-fills from existing boulder, `addSuggestion` on submit
+ * - Edit draft: `editDraftId` → pre-fills from draft, `updateDraft` on submit
+ * - New suggestion: `suggestionFor` → pre-fills from existing boulder, `addSuggestion` on submit
+ * - Edit suggestion: `editSuggestionId` → pre-fills from existing suggestion, `updateSuggestion` on submit
  */
-export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: BoulderFormProps) {
+export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, editSuggestionId }: BoulderFormProps) {
   const addDraft = useBoulderDraftStore((s) => s.addDraft)
   const updateDraft = useBoulderDraftStore((s) => s.updateDraft)
   const getDraft = useBoulderDraftStore((s) => s.getDraft)
   const addSuggestion = useSuggestionStore((s) => s.addSuggestion)
+  const updateSuggestion = useSuggestionStore((s) => s.updateSuggestion)
+  const getSuggestion = useSuggestionStore((s) => s.getSuggestion)
   const sectors = useMemo(() => extractSectors(mockBoulders.features), [])
 
   const existingDraft = editDraftId ? getDraft(editDraftId) : undefined
+  const existingSuggestion = editSuggestionId ? getSuggestion(editSuggestionId) : undefined
   const isEditMode = !!existingDraft
-  const isSuggestionMode = !!suggestionFor
+  const isSuggestionMode = !!suggestionFor || !!existingSuggestion
+  const isEditSuggestionMode = !!existingSuggestion
 
   const { resolvedTheme } = useTheme()
 
@@ -95,16 +102,18 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
   const [photoProcessing, setPhotoProcessing] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
-  const [photoLoading, setPhotoLoading] = useState(!!editDraftId)
+  const [photoLoading, setPhotoLoading] = useState(!!editDraftId || !!editSuggestionId)
 
-  // Restore photo from IndexedDB when editing a draft (Story 5.5)
+  // Restore photo from IndexedDB when editing a draft or suggestion
+  const restorePhotoId = editDraftId ?? editSuggestionId
+  const restorePhotoSource = existingDraft ?? existingSuggestion
   useEffect(() => {
-    if (!editDraftId || !existingDraft) return
+    if (!restorePhotoId || !restorePhotoSource) return
 
     let cancelled = false
     setPhotoLoading(true)
 
-    loadPhotoFromDb(editDraftId)
+    loadPhotoFromDb(restorePhotoId)
       .then((dataUrl) => {
         if (cancelled || !dataUrl) {
           setPhotoLoading(false)
@@ -112,9 +121,9 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
         }
         setPhoto({
           dataUrl,
-          width: existingDraft.photoWidth ?? 0,
-          height: existingDraft.photoHeight ?? 0,
-          blurHash: existingDraft.photoBlurHash ?? '',
+          width: restorePhotoSource.photoWidth ?? 0,
+          height: restorePhotoSource.photoHeight ?? 0,
+          blurHash: restorePhotoSource.photoBlurHash ?? '',
         })
         setPhotoLoading(false)
       })
@@ -123,12 +132,15 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
       })
 
     return () => { cancelled = true }
-  }, [editDraftId, existingDraft])
+  }, [restorePhotoId, restorePhotoSource])
 
-  // Location state (Story 5.3) — pre-fill from draft or suggestion source
+  // Location state (Story 5.3) — pre-fill from draft, suggestion source, or existing suggestion
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(() => {
     if (existingDraft?.latitude != null && existingDraft?.longitude != null) {
       return { latitude: existingDraft.latitude, longitude: existingDraft.longitude }
+    }
+    if (existingSuggestion?.latitude != null && existingSuggestion?.longitude != null) {
+      return { latitude: existingSuggestion.latitude, longitude: existingSuggestion.longitude }
     }
     if (suggestionFor) {
       // GeoJSON coordinates are [lng, lat]
@@ -140,11 +152,15 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
 
   // Topo trace state (Story 5.4)
   const [topoDrawing, setTopoDrawing] = useState<TopoDrawing | null>(
-    existingDraft?.topoDrawing ?? null
+    existingDraft?.topoDrawing ?? existingSuggestion?.topoDrawing ?? null
   )
   const [showTraceEditor, setShowTraceEditor] = useState(false)
 
-  // Source for pre-fill: draft or suggestion target
+  // Source for DiffBadge comparison: originalSnapshot from suggestion target or existing suggestion
+  const diffSource = existingSuggestion?.originalSnapshot ?? suggestionFor?.properties ?? null
+
+  // Source for pre-fill: existing suggestion values > suggestion target properties > empty
+  const es = existingSuggestion
   const src = suggestionFor?.properties
 
   const {
@@ -155,14 +171,14 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
   } = useForm<BoulderFormInput, unknown, BoulderFormData>({
     resolver: zodResolver(boulderFormSchema),
     defaultValues: {
-      name: existingDraft?.name ?? src?.name ?? '',
-      grade: existingDraft?.grade ?? src?.grade ?? '',
-      style: existingDraft?.style ?? (src?.style as BoulderStyleValue) ?? ('' as BoulderStyleValue),
-      sector: existingDraft?.sector ?? src?.sector ?? '',
-      description: existingDraft?.description ?? '',
-      height: existingDraft?.height != null ? String(existingDraft.height) : '',
-      exposure: existingDraft?.exposure ?? src?.exposure ?? '',
-      strollerAccessible: existingDraft?.strollerAccessible ?? src?.strollerAccessible ?? false,
+      name: existingDraft?.name ?? es?.name ?? src?.name ?? '',
+      grade: existingDraft?.grade ?? es?.grade ?? src?.grade ?? '',
+      style: existingDraft?.style ?? es?.style ?? (src?.style as BoulderStyleValue) ?? ('' as BoulderStyleValue),
+      sector: existingDraft?.sector ?? es?.sector ?? src?.sector ?? '',
+      description: existingDraft?.description ?? es?.description ?? '',
+      height: existingDraft?.height != null ? String(existingDraft.height) : es?.height != null ? String(es.height) : '',
+      exposure: existingDraft?.exposure ?? es?.exposure ?? src?.exposure ?? '',
+      strollerAccessible: existingDraft?.strollerAccessible ?? es?.strollerAccessible ?? src?.strollerAccessible ?? false,
     },
   })
 
@@ -209,7 +225,22 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
     }
 
     try {
-      // ── Suggestion mode: create a suggestion linked to the original boulder ──
+      // ── Edit suggestion mode: update an existing suggestion ──
+      if (isEditSuggestionMode && editSuggestionId) {
+        const updateData: BoulderSuggestionUpdate = sharedFields
+        updateSuggestion(editSuggestionId, updateData)
+
+        if (photo?.dataUrl) {
+          await savePhotoToDb(editSuggestionId, photo.dataUrl)
+        }
+
+        showSuggestionSentToast()
+        onSuccess?.()
+        onClose()
+        return
+      }
+
+      // ── New suggestion mode: create a suggestion linked to the original boulder ──
       if (isSuggestionMode && suggestionFor) {
         const suggestionInput: BoulderSuggestionInput = {
           originalBoulderId: suggestionFor.id,
@@ -268,7 +299,7 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-foreground">
           {isSuggestionMode
-            ? 'Suggérer une modification'
+            ? (isEditSuggestionMode ? 'Modifier la suggestion' : 'Suggérer une modification')
             : isEditMode
               ? 'Modifier le brouillon'
               : 'Nouveau bloc'}
@@ -287,8 +318,8 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
       <div>
         <label htmlFor="boulder-name" className="mb-1.5 flex items-center text-sm font-medium text-foreground">
           Nom <span className="text-destructive">*</span>
-          {isSuggestionMode && src && (
-            <DiffBadge original={src.name} current={watchedName} />
+          {isSuggestionMode && diffSource && (
+            <DiffBadge original={diffSource.name} current={watchedName} />
           )}
         </label>
         <input
@@ -310,8 +341,8 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
       <div>
         <label htmlFor="boulder-grade" className="mb-1.5 flex items-center text-sm font-medium text-foreground">
           Cotation <span className="text-destructive">*</span>
-          {isSuggestionMode && src && (
-            <DiffBadge original={src.grade} current={watchedGrade} formatValue={formatGrade} />
+          {isSuggestionMode && diffSource && (
+            <DiffBadge original={diffSource.grade} current={watchedGrade} formatValue={formatGrade} />
           )}
         </label>
         <select
@@ -350,8 +381,8 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
       <div>
         <label htmlFor="boulder-sector" className="mb-1.5 flex items-center text-sm font-medium text-foreground">
           Secteur <span className="font-normal text-muted-foreground">(optionnel)</span>
-          {isSuggestionMode && src && (
-            <DiffBadge original={src.sector} current={watchedSector ?? ''} />
+          {isSuggestionMode && diffSource && (
+            <DiffBadge original={diffSource.sector} current={watchedSector ?? ''} />
           )}
         </label>
         <select
@@ -604,8 +635,8 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor }: 
         >
           <CheckCircle2 className="h-4 w-4" />
           {isSubmitting
-            ? (isSuggestionMode ? 'Envoi...' : isEditMode ? 'Enregistrement...' : 'Création...')
-            : (isSuggestionMode ? 'Envoyer la suggestion' : isEditMode ? 'Enregistrer' : 'Créer le bloc')}
+            ? (isSuggestionMode ? (isEditSuggestionMode ? 'Enregistrement...' : 'Envoi...') : isEditMode ? 'Enregistrement...' : 'Création...')
+            : (isSuggestionMode ? (isEditSuggestionMode ? 'Enregistrer' : 'Envoyer la suggestion') : isEditMode ? 'Enregistrer' : 'Créer le bloc')}
         </button>
       </div>
     </form>

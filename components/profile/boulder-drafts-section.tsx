@@ -135,7 +135,7 @@ function SyncStatusPill({
 }: {
   syncStatus: BoulderDraft['syncStatus']
 }) {
-  const config = SYNC_STATUS_CONFIG[syncStatus]
+  const config = SYNC_STATUS_CONFIG[syncStatus] ?? SYNC_STATUS_CONFIG.local
   return (
     <span
       className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.className}`}

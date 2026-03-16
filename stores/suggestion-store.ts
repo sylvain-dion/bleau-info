@@ -55,11 +55,19 @@ export type BoulderSuggestionInput = Omit<
   'id' | 'moderationStatus' | 'syncStatus' | 'createdAt' | 'updatedAt'
 >
 
+/** Updatable fields when editing an existing suggestion. */
+export type BoulderSuggestionUpdate = Partial<
+  Omit<BoulderSuggestion, 'id' | 'originalBoulderId' | 'originalSnapshot' | 'moderationStatus' | 'syncStatus' | 'createdAt' | 'updatedAt'>
+>
+
 interface SuggestionState {
   suggestions: BoulderSuggestion[]
 
   /** Create a new suggestion. Returns the generated ID. */
   addSuggestion: (data: BoulderSuggestionInput) => string
+
+  /** Update an existing suggestion's proposed values. */
+  updateSuggestion: (id: string, data: BoulderSuggestionUpdate) => void
 
   /** Remove a suggestion by ID. */
   removeSuggestion: (id: string) => void
@@ -94,6 +102,16 @@ export const useSuggestionStore = create<SuggestionState>()(
         }
         set((state) => ({ suggestions: [suggestion, ...state.suggestions] }))
         return id
+      },
+
+      updateSuggestion: (id, data) => {
+        set((state) => ({
+          suggestions: state.suggestions.map((s) =>
+            s.id === id
+              ? { ...s, ...data, updatedAt: new Date().toISOString() }
+              : s
+          ),
+        }))
       },
 
       removeSuggestion: (id) => {
