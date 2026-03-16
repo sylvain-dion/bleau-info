@@ -52,3 +52,13 @@ export function showDraftErrorToast(message?: string): void {
     duration: 5000,
   })
 }
+
+/**
+ * Toast notification for successful suggestion submission.
+ */
+export function showSuggestionSentToast(): void {
+  toast.success('Suggestion envoyée', {
+    description: 'Vous serez notifié du résultat.',
+    duration: 4000,
+  })
+}

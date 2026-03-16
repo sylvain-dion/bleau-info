@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Plus,
+  Pencil,
   Bookmark,
   BookmarkCheck,
 } from 'lucide-react'
@@ -31,6 +32,7 @@ import { useTickStore, formatTickStyle } from '@/stores/tick-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useListStore } from '@/stores/list-store'
 import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
+import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -96,6 +98,7 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
     properties
   const [showTickForm, setShowTickForm] = useState(false)
   const [showListMenu, setShowListMenu] = useState(false)
+  const [showSuggestionDrawer, setShowSuggestionDrawer] = useState(false)
   const { user } = useAuthStore()
   const isBoulderCompleted = useTickStore((s) => s.isBoulderCompleted)
   const getTicksForBoulder = useTickStore((s) => s.getTicksForBoulder)
@@ -273,6 +276,35 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
               </p>
             )}
           </div>
+
+          {/* Suggest modification (Story 5.6) */}
+          <div className="border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setShowSuggestionDrawer(true)}
+              disabled={!user}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted min-touch"
+            >
+              <Pencil className="h-4 w-4" />
+              Suggérer une modification
+            </button>
+            {!user && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Connectez-vous pour suggérer des modifications
+              </p>
+            )}
+          </div>
+
+          {/* Suggestion drawer (Story 5.6) */}
+          <SuggestionDrawer
+            open={showSuggestionDrawer}
+            onOpenChange={setShowSuggestionDrawer}
+            suggestionFor={{
+              id: properties.id,
+              properties,
+              coordinates,
+            }}
+          />
         </>
       )}
     </div>

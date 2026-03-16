@@ -16,6 +16,7 @@ import { TrustScoreCard } from '@/components/profile/trust-score-card'
 import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
+import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -133,6 +134,11 @@ export default function ProfilPage() {
       {/* Boulder drafts */}
       <div className="mb-6">
         <BoulderDraftsSection />
+      </div>
+
+      {/* Modification suggestions (Story 5.6) */}
+      <div className="mb-6">
+        <SuggestionsSection />
       </div>
 
       {/* Edit Form */}

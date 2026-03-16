@@ -1,81 +1,78 @@
 'use client'
 
 import { useState } from 'react'
-import { Mountain, Pencil, Trash2 } from 'lucide-react'
-import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
-import type { BoulderDraft } from '@/stores/boulder-draft-store'
+import { MessageSquarePlus, Pencil, Trash2 } from 'lucide-react'
+import { useSuggestionStore } from '@/stores/suggestion-store'
+import type { BoulderSuggestion } from '@/stores/suggestion-store'
 import { deletePhoto } from '@/lib/db/draft-photo-store'
-import { STYLE_LABELS } from '@/lib/validations/boulder'
 import { formatGrade } from '@/lib/grades'
-import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-drawer'
+import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 
 /**
- * Displays the user's local boulder drafts on the profile page.
+ * Displays the user's pending boulder modification suggestions on the profile page.
  *
- * Each draft shows name, grade, style, and creation date.
- * Drafts can be edited (pen icon) or deleted individually.
- * Renders nothing when empty.
+ * Each suggestion shows proposed name, grade, original boulder reference, and moderation status.
+ * Suggestions can be edited (pen icon) or deleted individually. Renders nothing when empty.
  */
-export function BoulderDraftsSection() {
-  const drafts = useBoulderDraftStore((s) => s.drafts)
-  const removeDraft = useBoulderDraftStore((s) => s.removeDraft)
-  const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
+export function SuggestionsSection() {
+  const suggestions = useSuggestionStore((s) => s.suggestions)
+  const removeSuggestion = useSuggestionStore((s) => s.removeSuggestion)
+  const [editingSuggestionId, setEditingSuggestionId] = useState<string | null>(null)
 
-  /** Remove draft from store + clean up photo from IndexedDB */
-  function handleDelete(draftId: string) {
-    removeDraft(draftId)
-    deletePhoto(draftId).catch(() => {
+  /** Remove suggestion from store + clean up photo from IndexedDB */
+  function handleDelete(suggestionId: string) {
+    removeSuggestion(suggestionId)
+    deletePhoto(suggestionId).catch(() => {
       // Best-effort cleanup — IndexedDB may not be available
     })
   }
 
-  if (drafts.length === 0) return null
+  if (suggestions.length === 0) return null
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-center gap-2">
-        <Mountain className="h-4 w-4 text-primary" />
+        <MessageSquarePlus className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-semibold text-foreground">
-          Mes brouillons de blocs
+          Mes suggestions
         </h2>
         <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-          {drafts.length}
+          {suggestions.length}
         </span>
       </div>
 
       <ul className="space-y-2" role="list">
-        {drafts.map((draft) => (
+        {suggestions.map((suggestion) => (
           <li
-            key={draft.id}
+            key={suggestion.id}
             className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5"
           >
             {/* Grade badge */}
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
-              {formatGrade(draft.grade)}
+              {formatGrade(suggestion.grade)}
             </span>
 
             {/* Info */}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
-                {draft.name}
+                {suggestion.name}
               </p>
               <p className="text-xs text-muted-foreground">
-                {STYLE_LABELS[draft.style]}
-                {draft.sector ? ` · ${draft.sector}` : ''}
+                Modification de {suggestion.originalSnapshot.name}
                 {' · '}
-                {formatDate(draft.createdAt)}
+                {formatDate(suggestion.createdAt)}
               </p>
             </div>
 
-            {/* Sync status pill (Story 5.5) */}
-            <SyncStatusPill syncStatus={draft.syncStatus} />
+            {/* Moderation status pill */}
+            <ModerationStatusPill status={suggestion.moderationStatus} />
 
             {/* Edit */}
             <button
               type="button"
-              onClick={() => setEditingDraftId(draft.id)}
+              onClick={() => setEditingSuggestionId(suggestion.id)}
               className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-              aria-label={`Modifier le brouillon ${draft.name}`}
+              aria-label={`Modifier la suggestion ${suggestion.name}`}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -83,9 +80,9 @@ export function BoulderDraftsSection() {
             {/* Delete */}
             <button
               type="button"
-              onClick={() => handleDelete(draft.id)}
+              onClick={() => handleDelete(suggestion.id)}
               className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-              aria-label={`Supprimer le brouillon ${draft.name}`}
+              aria-label={`Supprimer la suggestion ${suggestion.name}`}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -94,52 +91,48 @@ export function BoulderDraftsSection() {
       </ul>
 
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Les brouillons sont sauvegardés localement. Ils seront synchronisés avec le serveur lors d&apos;une prochaine mise à jour.
+        Les suggestions sont en attente de modération par la communauté.
       </p>
 
       {/* Edit drawer */}
-      <BoulderCreationDrawer
-        open={!!editingDraftId}
-        onOpenChange={(open) => { if (!open) setEditingDraftId(null) }}
-        editDraftId={editingDraftId ?? undefined}
+      <SuggestionDrawer
+        open={!!editingSuggestionId}
+        onOpenChange={(open) => { if (!open) setEditingSuggestionId(null) }}
+        editSuggestionId={editingSuggestionId ?? undefined}
       />
     </div>
   )
 }
 
-/** Visual config for each sync status */
-const SYNC_STATUS_CONFIG: Record<
-  BoulderDraft['syncStatus'],
+/** Visual config for each moderation status */
+const MODERATION_STATUS_CONFIG: Record<
+  BoulderSuggestion['moderationStatus'],
   { label: string; className: string }
 > = {
-  local: {
-    label: 'Local',
-    className: 'bg-muted text-muted-foreground',
-  },
   pending: {
     label: 'En attente',
     className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
-  synced: {
-    label: 'Synchronisé',
+  approved: {
+    label: 'Approuvée',
     className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   },
-  error: {
-    label: 'Erreur',
+  rejected: {
+    label: 'Rejetée',
     className: 'bg-destructive/10 text-destructive',
   },
 }
 
-function SyncStatusPill({
-  syncStatus,
+function ModerationStatusPill({
+  status,
 }: {
-  syncStatus: BoulderDraft['syncStatus']
+  status: BoulderSuggestion['moderationStatus']
 }) {
-  const config = SYNC_STATUS_CONFIG[syncStatus] ?? SYNC_STATUS_CONFIG.local
+  const config = MODERATION_STATUS_CONFIG[status]
   return (
     <span
       className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.className}`}
-      data-testid="sync-status-pill"
+      data-testid="moderation-status-pill"
     >
       {config.label}
     </span>
