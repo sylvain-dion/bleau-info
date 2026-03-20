@@ -7,6 +7,7 @@ import type { BoulderSuggestion } from '@/stores/suggestion-store'
 import { deletePhoto } from '@/lib/db/draft-photo-store'
 import { formatGrade } from '@/lib/grades'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
+import { SyncStatusPill } from '@/components/ui/sync-status-pill'
 
 /**
  * Displays the user's pending boulder modification suggestions on the profile page.
@@ -64,7 +65,10 @@ export function SuggestionsSection() {
               </p>
             </div>
 
-            {/* Moderation status pill */}
+            {/* Sync + moderation status pills */}
+            {suggestion.syncStatus !== 'synced' && (
+              <SyncStatusPill syncStatus={suggestion.syncStatus} />
+            )}
             <ModerationStatusPill status={suggestion.moderationStatus} />
 
             {/* Edit */}

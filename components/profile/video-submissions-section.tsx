@@ -7,6 +7,7 @@ import type { VideoSubmission } from '@/stores/video-submission-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { parseVideoUrl } from '@/lib/video'
 import { VideoSubmissionDrawer } from '@/components/boulder/video-submission-drawer'
+import { SyncStatusPill } from '@/components/ui/sync-status-pill'
 
 /**
  * Displays the user's video submissions on the profile page.
@@ -107,7 +108,10 @@ function VideoSubmissionRow({
         </p>
       </div>
 
-      {/* Status pill */}
+      {/* Sync + moderation status pills */}
+      {submission.syncStatus !== 'synced' && (
+        <SyncStatusPill syncStatus={submission.syncStatus} />
+      )}
       <ModerationPill status={submission.moderationStatus} />
 
       {/* Edit */}

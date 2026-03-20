@@ -1,11 +1,13 @@
 'use client'
 
 import { useNetworkStatus } from '@/lib/hooks/use-network-status'
-import { WifiOff, Download } from 'lucide-react'
+import { usePendingSyncCount } from '@/lib/hooks/use-pending-sync-count'
+import { WifiOff, Download, Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function OfflineStatus() {
   const { isOffline, hasDownloadedContent } = useNetworkStatus()
+  const { pendingCount } = usePendingSyncCount()
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -44,6 +46,17 @@ export function OfflineStatus() {
       >
         <WifiOff className="h-4 w-4" aria-hidden="true" />
         <span>Offline</span>
+        {pendingCount > 0 && (
+          <>
+            <span className="text-zinc-300" aria-hidden="true">
+              •
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="text-xs">{pendingCount} en attente</span>
+            </div>
+          </>
+        )}
         {hasDownloadedContent && (
           <>
             <span className="text-zinc-300" aria-hidden="true">

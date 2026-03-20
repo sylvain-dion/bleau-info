@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { SyncStatus } from '@/lib/sync/types'
 
 /** A user-submitted video for a boulder. */
 export interface VideoSubmission {
@@ -9,6 +10,8 @@ export interface VideoSubmission {
   climberName: string | null
   videographerName: string | null
   moderationStatus: 'pending' | 'approved' | 'rejected'
+  /** Sync queue status (Story 6.2) */
+  syncStatus: SyncStatus
   userId: string
   createdAt: string
   updatedAt: string
@@ -54,6 +57,12 @@ interface VideoSubmissionState {
 
   /** Get unique videographer names across all submissions (for autocomplete). */
   getUniqueVideographerNames: () => string[]
+
+  /** Update sync status for a submission */
+  setSyncStatus: (id: string, status: SyncStatus) => void
+
+  /** Get all submissions that need syncing */
+  getUnsyncedSubmissions: () => VideoSubmission[]
 }
 
 function generateId(): string {
@@ -75,6 +84,7 @@ export const useVideoSubmissionStore = create<VideoSubmissionState>()(
           climberName: data.climberName ?? null,
           videographerName: data.videographerName ?? null,
           moderationStatus: 'pending',
+          syncStatus: 'local',
           userId: data.userId,
           createdAt: now,
           updatedAt: now,
@@ -127,6 +137,20 @@ export const useVideoSubmissionStore = create<VideoSubmissionState>()(
           if (s.videographerName) names.add(s.videographerName)
         }
         return Array.from(names).sort()
+      },
+
+      setSyncStatus: (id, status) => {
+        set((state) => ({
+          submissions: state.submissions.map((s) =>
+            s.id === id ? { ...s, syncStatus: status } : s
+          ),
+        }))
+      },
+
+      getUnsyncedSubmissions: () => {
+        return get().submissions.filter(
+          (s) => s.syncStatus === 'local' || s.syncStatus === 'error'
+        )
       },
     }),
     {

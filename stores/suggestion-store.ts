@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { BoulderStyleValue, BoulderExposureValue } from '@/lib/validations/boulder'
 import type { TopoDrawing } from '@/lib/data/mock-topos'
+import type { SyncStatus } from '@/lib/sync/types'
 
 /** Snapshot of the original boulder data at the time the suggestion was made. */
 export interface OriginalBoulderSnapshot {
@@ -79,6 +80,12 @@ interface SuggestionState {
 
   /** Get all suggestions targeting a specific boulder. */
   getSuggestionsForBoulder: (boulderId: string) => BoulderSuggestion[]
+
+  /** Update sync status for a suggestion */
+  setSyncStatus: (id: string, status: SyncStatus) => void
+
+  /** Get all suggestions that need syncing */
+  getUnsyncedSuggestions: () => BoulderSuggestion[]
 }
 
 /** Simple unique ID generator (same pattern as boulder-draft-store). */
@@ -129,6 +136,20 @@ export const useSuggestionStore = create<SuggestionState>()(
       getSuggestionsForBoulder: (boulderId) => {
         return get().suggestions.filter(
           (s) => s.originalBoulderId === boulderId
+        )
+      },
+
+      setSyncStatus: (id, status) => {
+        set((state) => ({
+          suggestions: state.suggestions.map((s) =>
+            s.id === id ? { ...s, syncStatus: status } : s
+          ),
+        }))
+      },
+
+      getUnsyncedSuggestions: () => {
+        return get().suggestions.filter(
+          (s) => s.syncStatus === 'local' || s.syncStatus === 'error'
         )
       },
     }),

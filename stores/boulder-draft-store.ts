@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { BoulderStyleValue, BoulderExposureValue } from '@/lib/validations/boulder'
 import { mockBoulders } from '@/lib/data/mock-boulders'
 import type { TopoDrawing } from '@/lib/data/mock-topos'
+import type { SyncStatus } from '@/lib/sync/types'
 
 /** A locally-stored boulder draft awaiting sync / moderation. */
 export interface BoulderDraft {
@@ -62,6 +63,12 @@ interface BoulderDraftState {
    * Checks both mock data and local drafts for soft uniqueness.
    */
   isNameTaken: (name: string, sector: string) => boolean
+
+  /** Update sync status for a draft */
+  setSyncStatus: (draftId: string, status: SyncStatus) => void
+
+  /** Get all drafts that need syncing */
+  getUnsyncedDrafts: () => BoulderDraft[]
 }
 
 /** Simple unique ID generator (same pattern as tick-store). */
@@ -114,6 +121,20 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
 
       getDraft: (id) => {
         return get().drafts.find((d) => d.id === id)
+      },
+
+      setSyncStatus: (draftId, status) => {
+        set((state) => ({
+          drafts: state.drafts.map((d) =>
+            d.id === draftId ? { ...d, syncStatus: status } : d
+          ),
+        }))
+      },
+
+      getUnsyncedDrafts: () => {
+        return get().drafts.filter(
+          (d) => d.syncStatus === 'local' || d.syncStatus === 'error'
+        )
       },
 
       isNameTaken: (name, sector) => {
