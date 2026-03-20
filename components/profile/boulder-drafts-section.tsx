@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { Mountain, Pencil, Trash2 } from 'lucide-react'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
-import type { BoulderDraft } from '@/stores/boulder-draft-store'
 import { deletePhoto } from '@/lib/db/draft-photo-store'
 import { STYLE_LABELS } from '@/lib/validations/boulder'
 import { formatGrade } from '@/lib/grades'
 import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-drawer'
+import { SyncStatusPill } from '@/components/ui/sync-status-pill'
 
 /**
  * Displays the user's local boulder drafts on the profile page.
@@ -104,45 +104,6 @@ export function BoulderDraftsSection() {
         editDraftId={editingDraftId ?? undefined}
       />
     </div>
-  )
-}
-
-/** Visual config for each sync status */
-const SYNC_STATUS_CONFIG: Record<
-  BoulderDraft['syncStatus'],
-  { label: string; className: string }
-> = {
-  local: {
-    label: 'Local',
-    className: 'bg-muted text-muted-foreground',
-  },
-  pending: {
-    label: 'En attente',
-    className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  },
-  synced: {
-    label: 'Synchronisé',
-    className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  },
-  error: {
-    label: 'Erreur',
-    className: 'bg-destructive/10 text-destructive',
-  },
-}
-
-function SyncStatusPill({
-  syncStatus,
-}: {
-  syncStatus: BoulderDraft['syncStatus']
-}) {
-  const config = SYNC_STATUS_CONFIG[syncStatus] ?? SYNC_STATUS_CONFIG.local
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.className}`}
-      data-testid="sync-status-pill"
-    >
-      {config.label}
-    </span>
   )
 }
 

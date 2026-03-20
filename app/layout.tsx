@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { AuthListener } from '@/components/auth/auth-listener'
 import { UserMenu } from '@/components/auth/user-menu'
 import { ToasterProvider } from '@/components/layout/toaster-provider'
+import { SyncProvider } from '@/components/layout/sync-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -80,6 +81,7 @@ export default function RootLayout({
         </header>
         <AuthListener />
         <OfflineStatus />
+        <SyncProvider />
         <ToasterProvider />
         {children}
         <Analytics />

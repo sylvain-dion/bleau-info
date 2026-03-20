@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Tick, TickStyle } from '@/lib/validations/tick'
+import type { SyncStatus } from '@/lib/sync/types'
 
 interface TickState {
   /** All logged ticks, newest first */
   ticks: Tick[]
 
   /** Add a new tick to the store */
-  addTick: (tick: Omit<Tick, 'id' | 'createdAt'>) => string
+  addTick: (tick: Omit<Tick, 'id' | 'createdAt' | 'syncStatus'>) => string
 
   /** Remove a tick by ID (undo support) */
   removeTick: (tickId: string) => void
@@ -20,6 +21,12 @@ interface TickState {
 
   /** Get the set of all completed boulder IDs (for map layer) */
   getCompletedBoulderIds: () => Set<string>
+
+  /** Update sync status for a tick */
+  setSyncStatus: (tickId: string, status: SyncStatus) => void
+
+  /** Get all ticks that need syncing */
+  getUnsyncedTicks: () => Tick[]
 }
 
 /** Generate a simple unique ID (no crypto needed for local storage) */
@@ -37,6 +44,7 @@ export const useTickStore = create<TickState>()(
         const tick: Tick = {
           ...tickData,
           id,
+          syncStatus: 'local',
           createdAt: new Date().toISOString(),
         }
         set((state) => ({ ticks: [tick, ...state.ticks] }))
@@ -59,6 +67,20 @@ export const useTickStore = create<TickState>()(
 
       getCompletedBoulderIds: () => {
         return new Set(get().ticks.map((t) => t.boulderId))
+      },
+
+      setSyncStatus: (tickId, status) => {
+        set((state) => ({
+          ticks: state.ticks.map((t) =>
+            t.id === tickId ? { ...t, syncStatus: status } : t
+          ),
+        }))
+      },
+
+      getUnsyncedTicks: () => {
+        return get().ticks.filter(
+          (t) => t.syncStatus === 'local' || t.syncStatus === 'error'
+        )
       },
     }),
     {

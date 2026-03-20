@@ -92,3 +92,34 @@ export function showSectorDownloadErrorToast(sectorName: string): void {
     duration: 5000,
   })
 }
+
+/**
+ * Toast notification for sync started.
+ */
+export function showSyncStartedToast(): void {
+  toast.loading('Synchronisation en cours...', {
+    id: 'sync-progress',
+    duration: 60000,
+  })
+}
+
+/**
+ * Toast notification for successful full sync.
+ */
+export function showSyncCompleteToast(count: number): void {
+  toast.dismiss('sync-progress')
+  toast.success(`Synchronisation terminée • ${count} élément${count > 1 ? 's' : ''} envoyé${count > 1 ? 's' : ''}`, {
+    duration: 4000,
+  })
+}
+
+/**
+ * Toast notification for partial sync (some items failed).
+ */
+export function showSyncPartialToast(synced: number, failed: number): void {
+  toast.dismiss('sync-progress')
+  toast.warning(`${synced} synchronisé${synced > 1 ? 's' : ''}, ${failed} en erreur`, {
+    description: 'Les éléments en erreur seront retentés automatiquement.',
+    duration: 5000,
+  })
+}
