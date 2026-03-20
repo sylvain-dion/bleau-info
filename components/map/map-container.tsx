@@ -26,6 +26,7 @@ import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-dra
 import type { SearchResult } from '@/lib/search'
 import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
+import { DownloadProgress } from '@/components/offline/download-progress'
 
 interface MapContainerProps {
   /** Current resolved theme ('light' or 'dark') */
@@ -244,6 +245,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         onAdd={isAuthenticated ? () => setShowBoulderForm(true) : undefined}
       />
       <MapSheet />
+      <DownloadProgress />
       <BoulderCreationDrawer
         open={showBoulderForm}
         onOpenChange={setShowBoulderForm}

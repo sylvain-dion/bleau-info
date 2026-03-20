@@ -34,6 +34,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { useListStore } from '@/stores/list-store'
 import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
+import { SectorDownloadButton } from '@/components/offline/sector-download-button'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -219,6 +220,11 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           {/* Topo viewer or placeholder */}
           <div className="border-t border-border pt-4">
             <TopoSection name={name} boulderId={properties.id} />
+          </div>
+
+          {/* Sector download (Story 6.1) */}
+          <div className="border-t border-border pt-4">
+            <SectorDownloadButton sectorName={sector} />
           </div>
 
           {/* Video carousel (Story 5.7+) */}

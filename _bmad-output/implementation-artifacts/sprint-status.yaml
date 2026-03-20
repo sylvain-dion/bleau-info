@@ -76,7 +76,7 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Contribution & Création de Blocs
-  epic-5: in-progress
+  epic-5: done
   5-1-formulaire-de-creation-de-bloc-metadonnees: done
   5-2-capture-upload-photo: done
   5-3-geolocalisation-gps-precise: done
@@ -87,8 +87,8 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Offline & Synchronisation
-  epic-6: backlog
-  6-1-telechargement-pack-secteur: backlog
+  epic-6: in-progress
+  6-1-telechargement-pack-secteur: in-progress
   6-2-synchronisation-automatique-en-background: backlog
   6-3-hard-reset-cache-resynchronisation: backlog
   6-4-gestion-de-lespace-de-stockage: backlog
