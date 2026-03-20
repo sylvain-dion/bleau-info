@@ -72,3 +72,23 @@ export function showVideoSubmittedToast(): void {
     duration: 4000,
   })
 }
+
+/**
+ * Toast notification for successful sector download.
+ */
+export function showSectorDownloadedToast(sectorName: string): void {
+  toast.success(`Secteur ${sectorName} disponible offline`, {
+    description: 'Données accessibles sans connexion.',
+    duration: 4000,
+  })
+}
+
+/**
+ * Toast notification for sector download error.
+ */
+export function showSectorDownloadErrorToast(sectorName: string): void {
+  toast.error('Erreur de téléchargement', {
+    description: `Impossible de télécharger le secteur ${sectorName}.`,
+    duration: 5000,
+  })
+}
