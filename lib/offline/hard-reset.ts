@@ -17,6 +17,7 @@ const ZUSTAND_KEYS = [
   'bleau-video-submissions',
   'bleau-annotations',
   'bleau-lists',
+  'bleau-conflicts',
 ] as const
 
 /** IndexedDB database names managed by the app */

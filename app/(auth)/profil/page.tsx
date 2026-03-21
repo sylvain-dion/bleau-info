@@ -17,6 +17,7 @@ import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { StorageManager } from '@/components/offline/storage-manager'
+import { ConflictList } from '@/components/sync/conflict-list'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
@@ -255,6 +256,15 @@ export default function ProfilPage() {
           <DataExportButton />
           <DeleteAccountDialog />
         </div>
+      </div>
+
+      {/* Conflits de synchronisation */}
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-1 text-sm font-semibold text-foreground">Conflits de synchronisation</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Résolvez les conflits géographiques détectés lors de la synchronisation.
+        </p>
+        <ConflictList />
       </div>
 
       {/* Stockage Offline */}

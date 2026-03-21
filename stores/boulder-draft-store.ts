@@ -31,7 +31,7 @@ export interface BoulderDraft {
   /** YouTube or Vimeo video URL (Story 5.7) */
   videoUrl: string | null
   /** Sync status for offline/online queue (Story 5.5) */
-  syncStatus: 'local' | 'pending' | 'synced' | 'error'
+  syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
   status: 'draft' | 'pending'
   createdAt: string
   updatedAt: string
