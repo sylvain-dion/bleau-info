@@ -1,5 +1,6 @@
 import confetti from 'canvas-confetti'
 import { toast } from 'sonner'
+import { formatBytes } from '@/lib/offline/storage-quota'
 
 /**
  * Triggers celebratory feedback when a tick is logged.
@@ -132,5 +133,26 @@ export function showSyncPartialToast(synced: number, failed: number): void {
 export function showHardResetToast(): void {
   toast.success('Cache vidé • Données à jour', {
     duration: 4000,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Storage Manager (Story 6.4)
+// ---------------------------------------------------------------------------
+
+/** Show success toast after a sector pack is removed */
+export function showSectorRemovedToast(sectorName: string, freedBytes: number): void {
+  const freed = formatBytes(freedBytes)
+  toast.success(`Pack supprimé • ${freed} libérés`, {
+    description: sectorName,
+    duration: 4000,
+  })
+}
+
+/** Show error toast when sector removal fails */
+export function showSectorRemoveErrorToast(sectorName: string): void {
+  toast.error('Erreur de suppression', {
+    description: `Impossible de supprimer le pack "${sectorName}".`,
+    duration: 5000,
   })
 }
