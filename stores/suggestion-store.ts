@@ -46,7 +46,7 @@ export interface BoulderSuggestion {
   /** Moderation outcome (stubbed — always 'pending' until Epic 7). */
   moderationStatus: 'pending' | 'approved' | 'rejected'
   /** Sync queue status, same pattern as BoulderDraft (Story 5.5). */
-  syncStatus: 'local' | 'pending' | 'synced' | 'error'
+  syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
 
   createdAt: string
   updatedAt: string

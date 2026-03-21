@@ -156,3 +156,23 @@ export function showSectorRemoveErrorToast(sectorName: string): void {
     duration: 5000,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Conflict Resolution (Story 6.5)
+// ---------------------------------------------------------------------------
+
+/** Show warning toast when geographic conflicts are detected during sync */
+export function showConflictDetectedToast(count: number): void {
+  toast.warning(
+    `${count} conflit${count > 1 ? 's' : ''} détecté${count > 1 ? 's' : ''}`,
+    {
+      description: 'Vérification manuelle nécessaire dans votre profil.',
+      duration: 6000,
+    }
+  )
+}
+
+/** Show success toast when a conflict is resolved */
+export function showConflictResolvedToast(): void {
+  toast.success('Conflit résolu', { duration: 3000 })
+}

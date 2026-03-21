@@ -81,7 +81,7 @@ export interface Tick {
   tickDate: string
   personalNote: string
   /** Sync queue status (Story 6.2) */
-  syncStatus: 'local' | 'pending' | 'synced' | 'error'
+  syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
   createdAt: string
 }
 

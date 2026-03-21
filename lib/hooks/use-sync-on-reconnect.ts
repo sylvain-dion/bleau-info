@@ -8,6 +8,7 @@ import {
   showSyncStartedToast,
   showSyncCompleteToast,
   showSyncPartialToast,
+  showConflictDetectedToast,
 } from '@/lib/feedback'
 import { usePendingSyncCount } from './use-pending-sync-count'
 
@@ -58,10 +59,16 @@ export function useSyncOnReconnect(): void {
 
       if (result.total === 0) return
 
-      if (result.failed === 0) {
+      if (result.conflicts > 0) {
+        showConflictDetectedToast(result.conflicts)
+      }
+
+      if (result.failed === 0 && result.conflicts === 0) {
         showSyncCompleteToast(result.synced)
-      } else {
+      } else if (result.failed > 0) {
         showSyncPartialToast(result.synced, result.failed)
+      } else if (result.synced > 0) {
+        showSyncCompleteToast(result.synced)
       }
     }, 500)
 

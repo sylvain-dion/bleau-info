@@ -8,11 +8,12 @@ import { useVideoSubmissionStore } from '@/stores/video-submission-store'
 
 /** Build a mock adapter where every method resolves */
 function createSuccessAdapter(): SyncAdapter {
+  const ok = { status: 'synced' as const }
   return {
-    syncDraft: vi.fn().mockResolvedValue(undefined),
-    syncSuggestion: vi.fn().mockResolvedValue(undefined),
-    syncTick: vi.fn().mockResolvedValue(undefined),
-    syncVideo: vi.fn().mockResolvedValue(undefined),
+    syncDraft: vi.fn().mockResolvedValue(ok),
+    syncSuggestion: vi.fn().mockResolvedValue(ok),
+    syncTick: vi.fn().mockResolvedValue(ok),
+    syncVideo: vi.fn().mockResolvedValue(ok),
   }
 }
 
@@ -60,7 +61,7 @@ describe('SyncManager', () => {
   it('returns zeros when no unsynced items', async () => {
     const manager = new SyncManager(createSuccessAdapter())
     const result = await manager.syncAll()
-    expect(result).toEqual({ synced: 0, failed: 0, total: 0 })
+    expect(result).toEqual({ synced: 0, failed: 0, conflicts: 0, total: 0 })
   })
 
   it('syncs items across all stores', async () => {
@@ -102,7 +103,7 @@ describe('SyncManager', () => {
 
     const adapter = createSuccessAdapter()
     // Make adapter slow
-    adapter.syncDraft = vi.fn(() => new Promise((r) => setTimeout(r, 1000)))
+    adapter.syncDraft = vi.fn(() => new Promise((r) => setTimeout(() => r({ status: 'synced' }), 1000)))
 
     const manager = new SyncManager(adapter)
 
@@ -111,7 +112,7 @@ describe('SyncManager', () => {
     // Second sync should return immediately with zeros
     const second = await manager.syncAll()
 
-    expect(second).toEqual({ synced: 0, failed: 0, total: 0 })
+    expect(second).toEqual({ synced: 0, failed: 0, conflicts: 0, total: 0 })
 
     // Advance timers so first can complete
     await vi.advanceTimersByTimeAsync(1500)
