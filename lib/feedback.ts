@@ -123,3 +123,14 @@ export function showSyncPartialToast(synced: number, failed: number): void {
     duration: 5000,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Hard Reset (Story 6.3)
+// ---------------------------------------------------------------------------
+
+/** Show success toast after hard reset + reload */
+export function showHardResetToast(): void {
+  toast.success('Cache vidé • Données à jour', {
+    duration: 4000,
+  })
+}

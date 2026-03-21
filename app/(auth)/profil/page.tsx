@@ -15,6 +15,7 @@ import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { TrustScoreCard } from '@/components/profile/trust-score-card'
 import { DataExportButton } from '@/components/profile/data-export-button'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
+import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
@@ -253,6 +254,15 @@ export default function ProfilPage() {
           <DataExportButton />
           <DeleteAccountDialog />
         </div>
+      </div>
+
+      {/* Maintenance */}
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Maintenance</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          En cas de problème, videz le cache local pour forcer une resynchronisation complète.
+        </p>
+        <HardResetDialog />
       </div>
     </div>
   )
