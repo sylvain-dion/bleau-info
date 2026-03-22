@@ -104,5 +104,14 @@ development_status:
   7-4-actions-de-moderation-valider-rejeter-corrections: done
   7-5-auto-validation-pour-trusted-users: done
   7-6-suspension-des-droits-decriture-ban: done
-  7-7-moderation-collaborative-en-temps-reel: in-progress
+  7-7-moderation-collaborative-en-temps-reel: done
   epic-7-retrospective: optional
+
+  # Phase 2 — Epic 13: Page Secteur & Vue Liste
+  epic-13: in-progress
+  13-1-page-secteur-informations-agregees: in-progress
+  13-2-vue-liste-des-blocs: backlog
+  13-3-tri-des-blocs: backlog
+  13-4-filtres-avances: backlog
+  13-5-recherche-intra-secteur: backlog
+  13-6-page-secteur-offline: backlog

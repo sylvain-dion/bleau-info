@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Mountain } from 'lucide-react'
 import {
   getAllSectorSlugs,
   getBouldersBySector,
-  getSectorNameFromSlug,
+  getSectorDetail,
 } from '@/lib/data/boulder-service'
+import { SectorHeader } from '@/components/sector/sector-header'
+import { SectorTabsContainer } from '@/components/sector/sector-tabs'
 
 /**
  * ISR: regenerate sector pages every hour.
@@ -29,22 +30,30 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const name = getSectorNameFromSlug(slug)
+  const sector = getSectorDetail(slug)
 
-  if (!name) {
+  if (!sector) {
     return { title: 'Secteur introuvable — Bleau.info' }
   }
 
+  const gradeRange =
+    sector.gradeMin && sector.gradeMax
+      ? ` · ${sector.gradeMin} à ${sector.gradeMax}`
+      : ''
+
   return {
-    title: `${name} — Secteur — Bleau.info`,
-    description: `Tous les blocs d'escalade du secteur ${name} à Fontainebleau. Cotations, styles et topos.`,
+    title: `${sector.name} — ${sector.boulderCount} blocs${gradeRange} — Bleau.info`,
+    description: `Explorez les ${sector.boulderCount} blocs d'escalade du secteur ${sector.name} à Fontainebleau. Cotations, styles, circuits et topos.`,
   }
 }
 
 /**
- * Sector listing page — ISR-generated.
+ * Sector hub page — ISR-generated (Story 13.1).
  *
- * Lists all boulders in a sector, sorted by grade.
+ * Rich header with aggregated stats + tabbed interface.
+ * Blocs tab shows the existing grouped boulder list.
+ * Other tabs (Circuits, Météo, Activité, Stats) are placeholders
+ * activated progressively as Epics 9, 10, 11, 12 are delivered.
  */
 export default async function SecteurPage({
   params,
@@ -52,9 +61,9 @@ export default async function SecteurPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const name = getSectorNameFromSlug(slug)
+  const sector = getSectorDetail(slug)
 
-  if (!name) notFound()
+  if (!sector) notFound()
 
   const boulders = getBouldersBySector(slug).sort((a, b) =>
     a.grade.localeCompare(b.grade)
@@ -62,32 +71,12 @@ export default async function SecteurPage({
 
   const gradeGroups = groupByGradePrefix(boulders)
 
-  return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
-      {/* Back nav */}
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Carte
-      </Link>
-
-      {/* Header */}
-      <div className="mb-6">
-        <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-          <Mountain className="h-4 w-4" />
-          <span className="text-xs font-medium uppercase tracking-wider">
-            Secteur
-          </span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {name}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {boulders.length} bloc{boulders.length > 1 ? 's' : ''}
-        </p>
-      </div>
+  const blocsContent = (
+    <>
+      {/* Boulder count */}
+      <p className="mb-3 text-xs text-muted-foreground">
+        {boulders.length} bloc{boulders.length > 1 ? 's' : ''}
+      </p>
 
       {/* Boulder list grouped by grade prefix */}
       <div className="space-y-6">
@@ -131,10 +120,13 @@ export default async function SecteurPage({
           Voir le secteur sur la carte →
         </Link>
       </div>
+    </>
+  )
 
-      <p className="mt-8 text-center text-[10px] text-muted-foreground/50">
-        Généré le {new Date().toISOString()}
-      </p>
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-6">
+      <SectorHeader sector={sector} />
+      <SectorTabsContainer blocsContent={blocsContent} />
     </main>
   )
 }
@@ -145,11 +137,23 @@ export default async function SecteurPage({
 
 interface GradeGroup {
   prefix: string
-  items: Array<{ id: string; name: string; grade: string; style: string; circuit: string | null }>
+  items: Array<{
+    id: string
+    name: string
+    grade: string
+    style: string
+    circuit: string | null
+  }>
 }
 
 function groupByGradePrefix(
-  boulders: Array<{ id: string; name: string; grade: string; style: string; circuit: string | null }>
+  boulders: Array<{
+    id: string
+    name: string
+    grade: string
+    style: string
+    circuit: string | null
+  }>
 ): GradeGroup[] {
   const groups = new Map<string, GradeGroup['items']>()
 
