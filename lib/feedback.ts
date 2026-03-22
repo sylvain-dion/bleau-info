@@ -204,3 +204,15 @@ export function showCorrectionsRequestedToast(name: string): void {
     duration: 4000,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Auto-Validation (Story 7.5)
+// ---------------------------------------------------------------------------
+
+/** Show toast when a submission is auto-validated (trusted user) */
+export function showAutoValidatedToast(name: string): void {
+  toast.success('Publication instantanée ⚡', {
+    description: `"${name}" est publié — votre statut Trusted le permet.`,
+    duration: 5000,
+  })
+}

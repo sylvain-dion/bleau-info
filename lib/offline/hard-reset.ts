@@ -18,6 +18,7 @@ const ZUSTAND_KEYS = [
   'bleau-annotations',
   'bleau-lists',
   'bleau-conflicts',
+  'bleau-audit-log',
 ] as const
 
 /** IndexedDB database names managed by the app */
