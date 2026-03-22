@@ -92,8 +92,8 @@ development_status:
   6-2-synchronisation-automatique-en-background: done
   6-3-hard-reset-cache-resynchronisation: done
   6-4-gestion-de-lespace-de-stockage: done
-  6-5-gestion-des-conflits-last-write-wins-manual-merge: in-progress
-  6-6-incremental-static-regeneration-isr: backlog
+  6-5-gestion-des-conflits-last-write-wins-manual-merge: done
+  6-6-incremental-static-regeneration-isr: in-progress
   epic-6-retrospective: optional
 
   # Epic 7: Modération & Qualité
