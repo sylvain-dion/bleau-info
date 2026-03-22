@@ -19,6 +19,7 @@ const ZUSTAND_KEYS = [
   'bleau-lists',
   'bleau-conflicts',
   'bleau-audit-log',
+  'bleau-bans',
 ] as const
 
 /** IndexedDB database names managed by the app */
