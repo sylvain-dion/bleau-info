@@ -176,3 +176,31 @@ export function showConflictDetectedToast(count: number): void {
 export function showConflictResolvedToast(): void {
   toast.success('Conflit résolu', { duration: 3000 })
 }
+
+// ---------------------------------------------------------------------------
+// Moderation Actions (Story 7.4)
+// ---------------------------------------------------------------------------
+
+/** Show success toast when a submission is approved */
+export function showApprovedToast(name: string): void {
+  toast.success(`"${name}" validé`, {
+    description: 'Le bloc a été ajouté à la base.',
+    duration: 4000,
+  })
+}
+
+/** Show toast when a submission is rejected */
+export function showRejectedToast(name: string): void {
+  toast('Soumission rejetée', {
+    description: `"${name}" a été rejeté.`,
+    duration: 4000,
+  })
+}
+
+/** Show toast when corrections are requested */
+export function showCorrectionsRequestedToast(name: string): void {
+  toast.warning('Corrections demandées', {
+    description: `L'auteur de "${name}" sera notifié.`,
+    duration: 4000,
+  })
+}

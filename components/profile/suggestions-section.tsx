@@ -125,6 +125,10 @@ const MODERATION_STATUS_CONFIG: Record<
     label: 'Rejetée',
     className: 'bg-destructive/10 text-destructive',
   },
+  changes_requested: {
+    label: 'Corrections',
+    className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  },
 }
 
 function ModerationStatusPill({

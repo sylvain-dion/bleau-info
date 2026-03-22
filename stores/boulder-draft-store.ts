@@ -34,7 +34,7 @@ export interface BoulderDraft {
   potentialDuplicate: boolean
   /** Sync status for offline/online queue (Story 5.5) */
   syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
-  status: 'draft' | 'pending'
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'changes_requested'
   createdAt: string
   updatedAt: string
 }
