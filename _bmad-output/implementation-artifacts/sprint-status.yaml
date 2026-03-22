@@ -98,8 +98,8 @@ development_status:
 
   # Epic 7: Modération & Qualité
   epic-7: in-progress
-  7-1-detection-automatique-des-doublons: in-progress
-  7-2-file-dattente-de-moderation: backlog
+  7-1-detection-automatique-des-doublons: done
+  7-2-file-dattente-de-moderation: in-progress
   7-3-comparaison-side-by-side-diff-visuel: backlog
   7-4-actions-de-moderation-valider-rejeter-corrections: backlog
   7-5-auto-validation-pour-trusted-users: backlog
