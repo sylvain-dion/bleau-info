@@ -1,8 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Zap, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuditLogStore } from '@/stores/audit-log-store'
+
+/** Stable selector — returns the raw entries array */
+const selectEntries = (s: ReturnType<typeof useAuditLogStore.getState>) =>
+  s.entries
 
 /**
  * Collapsible section showing auto-validated submissions.
@@ -11,7 +15,11 @@ import { useAuditLogStore } from '@/stores/audit-log-store'
  * the author was a trusted user.
  */
 export function AutoValidationHistory() {
-  const autoApproved = useAuditLogStore((s) => s.getAutoApproved())
+  const entries = useAuditLogStore(selectEntries)
+  const autoApproved = useMemo(
+    () => entries.filter((e) => e.action === 'auto_approved'),
+    [entries]
+  )
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (autoApproved.length === 0) return null
