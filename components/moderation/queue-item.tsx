@@ -8,9 +8,12 @@ import {
   FilePlus2,
 } from 'lucide-react'
 import type { QueueItem } from '@/lib/moderation/queue-service'
+import { PresenceBadge } from './presence-badge'
 
 interface QueueItemCardProps {
   item: QueueItem
+  /** Name of another moderator reviewing this item (if any) */
+  reviewerName?: string
   onSelect: (item: QueueItem) => void
 }
 
@@ -20,7 +23,7 @@ interface QueueItemCardProps {
  * Shows: name, grade, sector, author, date, reason, photo indicator.
  * Potential duplicates get a distinct red accent.
  */
-export function QueueItemCard({ item, onSelect }: QueueItemCardProps) {
+export function QueueItemCard({ item, reviewerName, onSelect }: QueueItemCardProps) {
   const isUrgent = item.potentialDuplicate
 
   return (
@@ -87,6 +90,9 @@ export function QueueItemCard({ item, onSelect }: QueueItemCardProps) {
             <Clock className="h-3 w-3" />
             {formatRelativeDate(item.submittedAt)}
           </span>
+
+          {/* Presence indicator */}
+          {reviewerName && <PresenceBadge reviewerName={reviewerName} />}
         </div>
       </div>
     </button>
