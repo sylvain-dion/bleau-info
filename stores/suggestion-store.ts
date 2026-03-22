@@ -44,7 +44,7 @@ export interface BoulderSuggestion {
 
   /* ── Status ── */
   /** Moderation outcome (stubbed — always 'pending' until Epic 7). */
-  moderationStatus: 'pending' | 'approved' | 'rejected'
+  moderationStatus: 'pending' | 'approved' | 'rejected' | 'changes_requested'
   /** Sync queue status, same pattern as BoulderDraft (Story 5.5). */
   syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
 
@@ -86,6 +86,9 @@ interface SuggestionState {
 
   /** Get all suggestions that need syncing */
   getUnsyncedSuggestions: () => BoulderSuggestion[]
+
+  /** Update moderation status for a suggestion */
+  setModerationStatus: (id: string, status: BoulderSuggestion['moderationStatus']) => void
 }
 
 /** Simple unique ID generator (same pattern as boulder-draft-store). */
@@ -151,6 +154,14 @@ export const useSuggestionStore = create<SuggestionState>()(
         return get().suggestions.filter(
           (s) => s.syncStatus === 'local' || s.syncStatus === 'error'
         )
+      },
+
+      setModerationStatus: (id, status) => {
+        set((state) => ({
+          suggestions: state.suggestions.map((s) =>
+            s.id === id ? { ...s, moderationStatus: status } : s
+          ),
+        }))
       },
     }),
     {

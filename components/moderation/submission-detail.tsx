@@ -1,16 +1,18 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { X, Eye, GitCompare, MapPin, ArrowRight } from 'lucide-react'
+import { X, Eye, GitCompare, MapPin } from 'lucide-react'
 import { buildSubmissionDiff, type DiffField } from '@/lib/moderation/diff-service'
 import type { QueueItem } from '@/lib/moderation/queue-service'
 import { MiniMapDiff } from './mini-map-diff'
+import { ModerationActions } from './moderation-actions'
 
 type ViewMode = 'side-by-side' | 'unified'
 
 interface SubmissionDetailProps {
   item: QueueItem
   onClose: () => void
+  onActionComplete?: () => void
 }
 
 /**
@@ -20,7 +22,7 @@ interface SubmissionDetailProps {
  * or just proposed values for new creations.
  * Changed fields are highlighted. Geographic fields show a mini-map.
  */
-export function SubmissionDetail({ item, onClose }: SubmissionDetailProps) {
+export function SubmissionDetail({ item, onClose, onActionComplete }: SubmissionDetailProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('side-by-side')
   const diff = useMemo(() => buildSubmissionDiff(item), [item])
 
@@ -122,6 +124,12 @@ export function SubmissionDetail({ item, onClose }: SubmissionDetailProps) {
           </div>
         )}
       </div>
+
+      {/* Moderation actions (Story 7.4) */}
+      <ModerationActions
+        item={item}
+        onActionComplete={onActionComplete ?? onClose}
+      />
     </div>
   )
 }

@@ -100,8 +100,8 @@ development_status:
   epic-7: in-progress
   7-1-detection-automatique-des-doublons: done
   7-2-file-dattente-de-moderation: done
-  7-3-comparaison-side-by-side-diff-visuel: in-progress
-  7-4-actions-de-moderation-valider-rejeter-corrections: backlog
+  7-3-comparaison-side-by-side-diff-visuel: done
+  7-4-actions-de-moderation-valider-rejeter-corrections: in-progress
   7-5-auto-validation-pour-trusted-users: backlog
   7-6-suspension-des-droits-decriture-ban: backlog
   7-7-moderation-collaborative-en-temps-reel: backlog

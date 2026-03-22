@@ -26,8 +26,9 @@ export default function ModerationPage() {
     sector: null,
   })
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  const allItems = useMemo(() => collectQueueItems(), [])
+  const allItems = useMemo(() => collectQueueItems(), [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const filteredItems = useMemo(
     () => filterQueueItems(allItems, filters),
     [allItems, filters]
@@ -86,11 +87,15 @@ export default function ModerationPage() {
         <EmptyQueueState />
       )}
 
-      {/* Side-by-side diff detail (Story 7.3) */}
+      {/* Side-by-side diff detail + actions (Story 7.3 / 7.4) */}
       {selectedItem && (
         <SubmissionDetail
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
+          onActionComplete={() => {
+            setSelectedItem(null)
+            setRefreshKey((k) => k + 1)
+          }}
         />
       )}
     </div>
