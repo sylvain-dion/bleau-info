@@ -34,9 +34,11 @@ import { useTheme } from '@/lib/hooks/use-theme'
 import { formatLatitude, formatLongitude } from '@/lib/coordinates'
 import type { TopoDrawing } from '@/lib/data/mock-topos'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
+import { useDuplicateDetection } from '@/lib/hooks/use-duplicate-detection'
 import { BoulderStyleSelector } from './boulder-style-selector'
 import { PhotoCapture } from './photo-capture'
 import { DiffBadge } from './diff-badge'
+import { DuplicateWarning } from './duplicate-warning'
 import { VideoEmbed } from './video-embed'
 import { parseVideoUrl } from '@/lib/video'
 
@@ -99,6 +101,10 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
   const isEditSuggestionMode = !!existingSuggestion
 
   const { resolvedTheme } = useTheme()
+
+  // Duplicate detection (Story 7.1) — only for new drafts (not suggestions/edits)
+  const isNewDraftMode = !isEditMode && !isSuggestionMode
+  const duplicateDetection = useDuplicateDetection()
 
   // Photo state — data URL restored from IndexedDB in edit mode (Story 5.5)
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
@@ -282,7 +288,11 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
         updateDraft(editDraftId, sharedFields)
         draftId = editDraftId
       } else {
-        draftId = addDraft(sharedFields)
+        const hasDuplicates = duplicateDetection.candidates.length > 0 && duplicateDetection.dismissed
+        draftId = addDraft({
+          ...sharedFields,
+          potentialDuplicate: hasDuplicates,
+        })
       }
 
       // Persist photo blob to IndexedDB (Story 5.5)
@@ -674,11 +684,26 @@ export function BoulderForm({ onClose, onSuccess, editDraftId, suggestionFor, ed
             onConfirm={(coords) => {
               setLocation(coords)
               setShowLocationPicker(false)
+              if (isNewDraftMode) {
+                duplicateDetection.checkDuplicates(coords.latitude, coords.longitude)
+              }
             }}
             onCancel={() => setShowLocationPicker(false)}
           />
         </Suspense>
       )}
+
+      {/* Duplicate warning (Story 7.1) */}
+      {isNewDraftMode &&
+        duplicateDetection.hasChecked &&
+        !duplicateDetection.dismissed &&
+        duplicateDetection.candidates.length > 0 && (
+          <DuplicateWarning
+            candidates={duplicateDetection.candidates}
+            onDismiss={duplicateDetection.dismiss}
+            onCancel={onClose}
+          />
+        )}
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">

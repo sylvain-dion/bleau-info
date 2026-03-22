@@ -30,6 +30,8 @@ export interface BoulderDraft {
   topoDrawing: TopoDrawing | null
   /** YouTube or Vimeo video URL (Story 5.7) */
   videoUrl: string | null
+  /** Flagged as potential duplicate during creation (Story 7.1) */
+  potentialDuplicate: boolean
   /** Sync status for offline/online queue (Story 5.5) */
   syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
   status: 'draft' | 'pending'
@@ -93,6 +95,7 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
           longitude: data.longitude ?? null,
           topoDrawing: data.topoDrawing ?? null,
           videoUrl: data.videoUrl ?? null,
+          potentialDuplicate: data.potentialDuplicate ?? false,
           id,
           syncStatus: 'local',
           status: 'draft',
