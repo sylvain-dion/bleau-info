@@ -93,12 +93,12 @@ development_status:
   6-3-hard-reset-cache-resynchronisation: done
   6-4-gestion-de-lespace-de-stockage: done
   6-5-gestion-des-conflits-last-write-wins-manual-merge: done
-  6-6-incremental-static-regeneration-isr: in-progress
+  6-6-incremental-static-regeneration-isr: done
   epic-6-retrospective: optional
 
   # Epic 7: Modération & Qualité
-  epic-7: backlog
-  7-1-detection-automatique-des-doublons: backlog
+  epic-7: in-progress
+  7-1-detection-automatique-des-doublons: in-progress
   7-2-file-dattente-de-moderation: backlog
   7-3-comparaison-side-by-side-diff-visuel: backlog
   7-4-actions-de-moderation-valider-rejeter-corrections: backlog
