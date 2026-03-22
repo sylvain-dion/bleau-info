@@ -12,6 +12,7 @@ import {
 import { QueueItemCard } from '@/components/moderation/queue-item'
 import { QueueFiltersBar } from '@/components/moderation/queue-filters'
 import { SubmissionDetail } from '@/components/moderation/submission-detail'
+import { AutoValidationHistory } from '@/components/moderation/auto-validation-history'
 
 /**
  * Moderation queue page — `/admin/moderation`
@@ -98,6 +99,9 @@ export default function ModerationPage() {
           }}
         />
       )}
+
+      {/* Auto-validation history (Story 7.5) */}
+      <AutoValidationHistory />
     </div>
   )
 }
