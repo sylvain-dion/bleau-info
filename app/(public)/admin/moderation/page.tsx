@@ -11,6 +11,7 @@ import {
 } from '@/lib/moderation/queue-service'
 import { QueueItemCard } from '@/components/moderation/queue-item'
 import { QueueFiltersBar } from '@/components/moderation/queue-filters'
+import { SubmissionDetail } from '@/components/moderation/submission-detail'
 
 /**
  * Moderation queue page — `/admin/moderation`
@@ -85,23 +86,12 @@ export default function ModerationPage() {
         <EmptyQueueState />
       )}
 
-      {/* Selected item detail placeholder (Story 7.3 will add side-by-side) */}
+      {/* Side-by-side diff detail (Story 7.3) */}
       {selectedItem && (
-        <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <p className="text-sm font-medium text-foreground">
-            {selectedItem.name} sélectionné
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            La comparaison side-by-side sera disponible dans la Story 7.3.
-          </p>
-          <button
-            type="button"
-            onClick={() => setSelectedItem(null)}
-            className="mt-2 text-xs text-primary hover:underline"
-          >
-            Fermer
-          </button>
-        </div>
+        <SubmissionDetail
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+        />
       )}
     </div>
   )
