@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Zap, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuditLogStore } from '@/stores/audit-log-store'
 
@@ -21,8 +21,11 @@ export function AutoValidationHistory() {
     [entries]
   )
   const [isExpanded, setIsExpanded] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  if (autoApproved.length === 0) return null
+  useEffect(() => setMounted(true), [])
+
+  if (!mounted || autoApproved.length === 0) return null
 
   const displayed = isExpanded ? autoApproved : autoApproved.slice(0, 3)
 
