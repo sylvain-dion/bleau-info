@@ -13,6 +13,8 @@ import { QueueItemCard } from '@/components/moderation/queue-item'
 import { QueueFiltersBar } from '@/components/moderation/queue-filters'
 import { SubmissionDetail } from '@/components/moderation/submission-detail'
 import { AutoValidationHistory } from '@/components/moderation/auto-validation-history'
+import { ActiveModerators } from '@/components/moderation/active-moderators'
+import { useModerationPresence } from '@/lib/hooks/use-moderation-presence'
 
 /**
  * Moderation queue page — `/admin/moderation`
@@ -28,6 +30,7 @@ export default function ModerationPage() {
   })
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const presence = useModerationPresence()
 
   const allItems = useMemo(() => collectQueueItems(), [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const filteredItems = useMemo(
@@ -56,6 +59,7 @@ export default function ModerationPage() {
             </span>
           )}
         </div>
+        <ActiveModerators />
       </div>
 
       {/* Filters */}
@@ -78,7 +82,11 @@ export default function ModerationPage() {
             <QueueItemCard
               key={item.id}
               item={item}
-              onSelect={setSelectedItem}
+              reviewerName={presence.getOtherReviewer(item.id)?.name}
+              onSelect={(selected) => {
+                presence.reviewItem(selected.id)
+                setSelectedItem(selected)
+              }}
             />
           ))}
         </div>
@@ -92,8 +100,12 @@ export default function ModerationPage() {
       {selectedItem && (
         <SubmissionDetail
           item={selectedItem}
-          onClose={() => setSelectedItem(null)}
+          onClose={() => {
+            presence.stopReview()
+            setSelectedItem(null)
+          }}
           onActionComplete={() => {
+            presence.stopReview()
             setSelectedItem(null)
             setRefreshKey((k) => k + 1)
           }}

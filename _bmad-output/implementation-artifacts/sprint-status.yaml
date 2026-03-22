@@ -103,6 +103,6 @@ development_status:
   7-3-comparaison-side-by-side-diff-visuel: done
   7-4-actions-de-moderation-valider-rejeter-corrections: done
   7-5-auto-validation-pour-trusted-users: done
-  7-6-suspension-des-droits-decriture-ban: in-progress
-  7-7-moderation-collaborative-en-temps-reel: backlog
+  7-6-suspension-des-droits-decriture-ban: done
+  7-7-moderation-collaborative-en-temps-reel: in-progress
   epic-7-retrospective: optional
