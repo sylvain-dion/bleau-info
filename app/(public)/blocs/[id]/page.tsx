@@ -14,6 +14,8 @@ import {
   getBoulderById,
   toSlug,
 } from '@/lib/data/boulder-service'
+import { BoulderActionBar } from '@/components/boulder/boulder-action-bar'
+import { VideoCarousel } from '@/components/boulder/video-carousel'
 
 /**
  * ISR revalidation: regenerate page every hour.
@@ -72,7 +74,7 @@ export default async function BlocPage({
   const sectorSlug = toSlug(boulder.sector)
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-4 pb-20 pt-6">
       {/* Back nav */}
       <Link
         href={`/secteurs/${sectorSlug}`}
@@ -137,44 +139,22 @@ export default async function BlocPage({
         </section>
       )}
 
-      {/* Videos */}
-      {boulder.videos && boulder.videos.length > 0 && (
-        <section className="mb-6">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">
-            Vidéos ({boulder.videos.length})
-          </h2>
-          <div className="space-y-2">
-            {boulder.videos.map((video, i) => (
-              <a
-                key={i}
-                href={video.videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm transition-colors hover:bg-muted"
-              >
-                <span className="text-foreground">
-                  {video.climberName ?? `Vidéo ${i + 1}`}
-                </span>
-                {video.videographerName && (
-                  <span className="text-xs text-muted-foreground">
-                    par {video.videographerName}
-                  </span>
-                )}
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Videos — same carousel as map view */}
+      <VideoCarousel
+        boulderId={boulder.id}
+        mockVideos={boulder.videos}
+      />
 
-      {/* Map link */}
-      <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <Link
-          href={`/?lat=${boulder.latitude}&lng=${boulder.longitude}&zoom=18`}
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          Voir sur la carte →
-        </Link>
-      </div>
+      {/* Action bar (client component) */}
+      <BoulderActionBar
+        boulderId={boulder.id}
+        boulderName={boulder.name}
+        grade={boulder.grade}
+        style={boulder.style}
+        sector={boulder.sector}
+        latitude={boulder.latitude}
+        longitude={boulder.longitude}
+      />
 
       {/* ISR timestamp (dev helper, hidden in production) */}
       <p className="mt-8 text-center text-[10px] text-muted-foreground/50">
