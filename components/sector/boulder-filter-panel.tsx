@@ -128,31 +128,13 @@ export function BoulderFilterPanel({
       </div>
 
       <div className="space-y-3 px-4 pb-4">
-        {/* Grade range */}
+        {/* Grade range slider */}
         <FilterSection label="Cotation">
-          <div className="flex items-center gap-2">
-            <select
-              value={filters.gradeMin}
-              onChange={(e) => onChange({ ...filters, gradeMin: e.target.value })}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            >
-              <option value="">Min</option>
-              {GRADE_OPTIONS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-            <span className="text-xs text-muted-foreground">→</span>
-            <select
-              value={filters.gradeMax}
-              onChange={(e) => onChange({ ...filters, gradeMax: e.target.value })}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            >
-              <option value="">Max</option>
-              {GRADE_OPTIONS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
+          <GradeRangeSlider
+            gradeMin={filters.gradeMin}
+            gradeMax={filters.gradeMax}
+            onChange={(min, max) => onChange({ ...filters, gradeMin: min, gradeMax: max })}
+          />
         </FilterSection>
 
         {/* Circuit */}
@@ -314,5 +296,102 @@ function PillToggle({
     >
       {label}
     </button>
+  )
+}
+
+/**
+ * Dual-handle grade range slider.
+ *
+ * Uses two native range inputs overlaid on a shared track.
+ * Maps grade strings to/from indices in GRADE_OPTIONS.
+ */
+function GradeRangeSlider({
+  gradeMin,
+  gradeMax,
+  onChange,
+}: {
+  gradeMin: string
+  gradeMax: string
+  onChange: (min: string, max: string) => void
+}) {
+  const minIdx = gradeMin ? GRADE_OPTIONS.indexOf(gradeMin) : 0
+  const maxIdx = gradeMax ? GRADE_OPTIONS.indexOf(gradeMax) : GRADE_OPTIONS.length - 1
+  const safeMin = minIdx >= 0 ? minIdx : 0
+  const safeMax = maxIdx >= 0 ? maxIdx : GRADE_OPTIONS.length - 1
+  const last = GRADE_OPTIONS.length - 1
+
+  const isDefault = safeMin === 0 && safeMax === last
+
+  function handleMinChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = Number(e.target.value)
+    const clamped = Math.min(val, safeMax)
+    const newMin = clamped === 0 ? '' : GRADE_OPTIONS[clamped]
+    const newMax = safeMax === last ? '' : GRADE_OPTIONS[safeMax]
+    onChange(newMin, newMax)
+  }
+
+  function handleMaxChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = Number(e.target.value)
+    const clamped = Math.max(val, safeMin)
+    const newMin = safeMin === 0 ? '' : GRADE_OPTIONS[safeMin]
+    const newMax = clamped === last ? '' : GRADE_OPTIONS[clamped]
+    onChange(newMin, newMax)
+  }
+
+  // Percentage positions for the active range highlight
+  const leftPct = (safeMin / last) * 100
+  const rightPct = 100 - (safeMax / last) * 100
+
+  return (
+    <div>
+      {/* Labels */}
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs font-medium text-foreground">
+          {GRADE_OPTIONS[safeMin]}
+        </span>
+        {!isDefault && (
+          <span className="text-[10px] text-muted-foreground">
+            {GRADE_OPTIONS[safeMin]} → {GRADE_OPTIONS[safeMax]}
+          </span>
+        )}
+        <span className="text-xs font-medium text-foreground">
+          {GRADE_OPTIONS[safeMax]}
+        </span>
+      </div>
+
+      {/* Slider track */}
+      <div className="relative h-6">
+        {/* Background track */}
+        <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-muted" />
+
+        {/* Active range highlight */}
+        <div
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+          style={{ left: `${leftPct}%`, right: `${rightPct}%` }}
+        />
+
+        {/* Min handle */}
+        <input
+          type="range"
+          min={0}
+          max={last}
+          value={safeMin}
+          onChange={handleMinChange}
+          className="pointer-events-none absolute top-0 h-6 w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:bg-background [&::-webkit-slider-thumb]:shadow-sm"
+          style={{ zIndex: safeMin > last - 5 ? 5 : 3 }}
+        />
+
+        {/* Max handle */}
+        <input
+          type="range"
+          min={0}
+          max={last}
+          value={safeMax}
+          onChange={handleMaxChange}
+          className="pointer-events-none absolute top-0 h-6 w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:bg-background [&::-webkit-slider-thumb]:shadow-sm"
+          style={{ zIndex: 4 }}
+        />
+      </div>
+    </div>
   )
 }
