@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { toSlug } from '@/lib/data/boulder-service'
 import {
   Mountain,
   MapPin,
@@ -117,7 +119,12 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           <h2 className="text-lg font-bold text-foreground">{name}</h2>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span>{sector}</span>
+            <Link
+              href={`/secteurs/${toSlug(sector)}`}
+              className="hover:text-foreground hover:underline"
+            >
+              {sector}
+            </Link>
           </div>
         </div>
 

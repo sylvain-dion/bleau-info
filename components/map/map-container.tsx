@@ -26,6 +26,7 @@ import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-dra
 import type { SearchResult } from '@/lib/search'
 import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
+import { SectorContextBar } from './sector-context-bar'
 import { DownloadProgress } from '@/components/offline/download-progress'
 
 interface MapContainerProps {
@@ -244,6 +245,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         onLocate={locate}
         onAdd={isAuthenticated ? () => setShowBoulderForm(true) : undefined}
       />
+      <SectorContextBar mapRef={mapRef} />
       <MapSheet />
       <DownloadProgress />
       <BoulderCreationDrawer

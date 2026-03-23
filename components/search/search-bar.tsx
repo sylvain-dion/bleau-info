@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
-import { Search, X, MapPin, Mountain } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, X, MapPin, Mountain, ArrowRight } from 'lucide-react'
 import { useSearchStore } from '@/stores/search-store'
 import type { SearchResult } from '@/lib/search'
 
@@ -11,6 +12,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ onSelect }: SearchBarProps) {
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { query, results, isOpen, highlightedIndex, setQuery, setOpen, setHighlightedIndex, clear } =
@@ -19,11 +21,18 @@ export function SearchBar({ onSelect }: SearchBarProps) {
   /** Handle result selection */
   const handleSelect = useCallback(
     (result: SearchResult) => {
+      // Sectors → navigate to sector page
+      if (result.type === 'sector' && result.slug) {
+        clear()
+        inputRef.current?.blur()
+        router.push(`/secteurs/${result.slug}`)
+        return
+      }
       onSelect(result)
       clear()
       inputRef.current?.blur()
     },
-    [onSelect, clear]
+    [onSelect, clear, router]
   )
 
   /** Keyboard navigation */
@@ -151,8 +160,11 @@ export function SearchBar({ onSelect }: SearchBarProps) {
               </div>
 
               {/* Type badge */}
-              <span className="shrink-0 text-xs text-muted-foreground">
+              <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                 {result.type === 'sector' ? 'Secteur' : 'Bloc'}
+                {result.type === 'sector' && (
+                  <ArrowRight className="h-3 w-3" />
+                )}
               </span>
             </button>
           ))}
