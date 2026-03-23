@@ -14,6 +14,7 @@ export interface BoulderListItem {
   style: string
   circuit: string | null
   circuitNumber: number | null
+  exposure: string | null
 }
 
 interface BoulderListCardProps {
