@@ -14,6 +14,8 @@ interface AddToListMenuProps {
   boulderGrade: string
   isOpen: boolean
   onClose: () => void
+  /** Render as inline content (no absolute positioning, for use inside drawers) */
+  inline?: boolean
 }
 
 /**
@@ -26,6 +28,7 @@ export function AddToListMenu({
   boulderGrade,
   isOpen,
   onClose,
+  inline,
 }: AddToListMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -83,7 +86,10 @@ export function AddToListMenu({
       ref={menuRef}
       role="dialog"
       aria-label="Ajouter à une liste"
-      className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-popover p-1 shadow-xl"
+      className={inline
+        ? 'w-full p-1'
+        : 'absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-popover p-1 shadow-xl'
+      }
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-3 py-2">

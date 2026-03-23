@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Drawer } from 'vaul'
 import {
   CheckCircle2,
   Plus,
@@ -31,30 +32,25 @@ export interface BoulderActionBarProps {
   properties?: BoulderProperties
   /** Coordinates tuple for SuggestionDrawer */
   coordinates?: [number, number]
-  /** Compact layout for inline use (map bottom sheet) */
-  compact?: boolean
 }
 
 /**
  * Shared action bar for boulder detail views.
  *
- * Provides tick, bookmark, suggest, and map-link actions.
- * Works on both the static /blocs/[id] page and the map bottom sheet.
+ * Fixed at the bottom of the viewport with 4 actions:
+ * Tick (drawer), Lists (drawer), Suggest (drawer), Map (link).
  */
 export function BoulderActionBar({
   boulderId,
   boulderName,
   grade,
-  style,
-  sector,
   latitude,
   longitude,
   properties,
   coordinates,
-  compact,
 }: BoulderActionBarProps) {
-  const [showTickForm, setShowTickForm] = useState(false)
-  const [showListMenu, setShowListMenu] = useState(false)
+  const [showTickDrawer, setShowTickDrawer] = useState(false)
+  const [showListDrawer, setShowListDrawer] = useState(false)
   const [showSuggestionDrawer, setShowSuggestionDrawer] = useState(false)
 
   const { user } = useAuthStore()
@@ -67,158 +63,109 @@ export function BoulderActionBar({
   const isBookmarked = isBoulderInAnyList(boulderId)
   const lastTick = boulderTicks[0]
 
-  const wrapperClass = compact
-    ? 'flex items-center gap-2'
-    : 'fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 py-3'
-
-  const buttonClass = compact
-    ? 'flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted'
-    : 'flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+  const buttonClass =
+    'flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted'
 
   return (
     <>
-      <div className={wrapperClass}>
-        {compact ? null : (
-          <div className="flex items-center justify-around">
-            {/* Tick action */}
-            {showTickForm ? (
-              <div className="w-full">
-                <TickForm
-                  boulderId={boulderId}
-                  boulderName={boulderName}
-                  boulderGrade={grade}
-                  onClose={() => setShowTickForm(false)}
-                />
-              </div>
+      {/* Fixed bottom bar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 py-3">
+        <div className="flex items-center justify-around">
+          {/* Tick action */}
+          <button
+            type="button"
+            onClick={() => setShowTickDrawer(true)}
+            className={buttonClass}
+          >
+            {isCompleted ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowTickForm(true)}
-                  className={buttonClass}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  ) : (
-                    <Plus className="h-5 w-5" />
-                  )}
-                  <span>
-                    {isCompleted && lastTick
-                      ? formatTickStyle(lastTick.tickStyle)
-                      : 'Croix'}
-                  </span>
-                </button>
-
-                {/* Bookmark action */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowListMenu(!showListMenu)}
-                    className={buttonClass}
-                  >
-                    {isBookmarked ? (
-                      <BookmarkCheck className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Bookmark className="h-5 w-5" />
-                    )}
-                    <span>Listes</span>
-                  </button>
-                  <AddToListMenu
-                    boulderId={boulderId}
-                    boulderName={boulderName}
-                    boulderGrade={grade}
-                    isOpen={showListMenu}
-                    onClose={() => setShowListMenu(false)}
-                  />
-                </div>
-
-                {/* Suggest modification */}
-                <button
-                  type="button"
-                  onClick={() => setShowSuggestionDrawer(true)}
-                  disabled={!user}
-                  className={buttonClass}
-                >
-                  <Pencil className="h-5 w-5" />
-                  <span>Modifier</span>
-                </button>
-
-                {/* View on map */}
-                <Link
-                  href={`/?lat=${latitude}&lng=${longitude}&zoom=18`}
-                  className={buttonClass}
-                >
-                  <MapPin className="h-5 w-5" />
-                  <span>Carte</span>
-                </Link>
-              </>
+              <Plus className="h-5 w-5" />
             )}
-          </div>
-        )}
-
-        {compact && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowTickForm(true)}
-              className={buttonClass}
-            >
-              {isCompleted ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
+            <span>
               {isCompleted && lastTick
                 ? formatTickStyle(lastTick.tickStyle)
                 : 'Croix'}
-            </button>
+            </span>
+          </button>
 
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowListMenu(!showListMenu)}
-                className={buttonClass}
-              >
-                {isBookmarked ? (
-                  <BookmarkCheck className="h-4 w-4 text-primary" />
-                ) : (
-                  <Bookmark className="h-4 w-4" />
-                )}
-                Listes
-              </button>
+          {/* Bookmark action */}
+          <div className="flex flex-1 justify-center">
+            <button
+              type="button"
+              onClick={() => setShowListDrawer(true)}
+              className={buttonClass}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-5 w-5 text-primary" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
+              <span>Listes</span>
+            </button>
+          </div>
+
+          {/* Suggest modification */}
+          <button
+            type="button"
+            onClick={() => setShowSuggestionDrawer(true)}
+            disabled={!user}
+            className={buttonClass}
+          >
+            <Pencil className="h-5 w-5" />
+            <span>Modifier</span>
+          </button>
+
+          {/* View on map */}
+          <Link
+            href={`/?lat=${latitude}&lng=${longitude}&zoom=18`}
+            className={buttonClass}
+          >
+            <MapPin className="h-5 w-5" />
+            <span>Carte</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Tick form drawer */}
+      <Drawer.Root open={showTickDrawer} onOpenChange={setShowTickDrawer}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+          <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-background shadow-xl outline-none">
+            <Drawer.Title className="sr-only">Logger une croix</Drawer.Title>
+            <div className="mx-auto mb-2 mt-3 h-1 w-10 rounded-full bg-muted" />
+            <div className="px-4 pb-8">
+              <TickForm
+                boulderId={boulderId}
+                boulderName={boulderName}
+                boulderGrade={grade}
+                onClose={() => setShowTickDrawer(false)}
+              />
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
+      {/* Lists drawer */}
+      <Drawer.Root open={showListDrawer} onOpenChange={setShowListDrawer}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+          <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-background shadow-xl outline-none">
+            <Drawer.Title className="sr-only">Mes listes</Drawer.Title>
+            <div className="mx-auto mb-2 mt-3 h-1 w-10 rounded-full bg-muted" />
+            <div className="pb-8">
               <AddToListMenu
                 boulderId={boulderId}
                 boulderName={boulderName}
                 boulderGrade={grade}
-                isOpen={showListMenu}
-                onClose={() => setShowListMenu(false)}
+                isOpen={true}
+                onClose={() => setShowListDrawer(false)}
+                inline
               />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowSuggestionDrawer(true)}
-              disabled={!user}
-              className={buttonClass}
-            >
-              <Pencil className="h-4 w-4" />
-              Modifier
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Tick form overlay (compact mode) */}
-      {compact && showTickForm && (
-        <div className="mt-2">
-          <TickForm
-            boulderId={boulderId}
-            boulderName={boulderName}
-            boulderGrade={grade}
-            onClose={() => setShowTickForm(false)}
-          />
-        </div>
-      )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* Suggestion drawer */}
       <SuggestionDrawer
