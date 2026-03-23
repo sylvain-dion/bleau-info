@@ -6,6 +6,8 @@ import { AuthListener } from '@/components/auth/auth-listener'
 import { UserMenu } from '@/components/auth/user-menu'
 import { ToasterProvider } from '@/components/layout/toaster-provider'
 import { SyncProvider } from '@/components/layout/sync-provider'
+import Link from 'next/link'
+import { Mountain } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -73,7 +75,18 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="text-xl font-bold text-foreground">Bleau.info</div>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-xl font-bold text-foreground">
+              Bleau.info
+            </Link>
+            <Link
+              href="/secteurs"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Mountain className="h-3.5 w-3.5" />
+              Secteurs
+            </Link>
+          </div>
           <div className="flex items-center gap-2">
             <UserMenu />
             <ThemeToggle />

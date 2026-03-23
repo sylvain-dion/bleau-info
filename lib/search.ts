@@ -1,5 +1,6 @@
 import { mockBoulders } from '@/lib/data/mock-boulders'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
+import { toSlug } from '@/lib/data/boulder-service'
 
 /** Search result types */
 export type SearchResultType = 'sector' | 'boulder'
@@ -18,6 +19,8 @@ export interface SearchResult {
   bounds?: [number, number, number, number]
   /** Boulder properties (only for boulder results) */
   properties?: BoulderProperties
+  /** URL slug for sector results */
+  slug?: string
 }
 
 /** Pre-computed sector data derived from mock boulders */
@@ -102,6 +105,7 @@ export function searchBouldersAndSectors(
         center: sector.center,
         zoom: 15,
         bounds: sector.bounds,
+        slug: toSlug(sector.name),
       })
     }
   }
