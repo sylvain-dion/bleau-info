@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { Check, Zap, Eye, Dumbbell, Star, Target } from 'lucide-react'
 import { useTickStore } from '@/stores/tick-store'
@@ -48,25 +49,33 @@ const TICK_STYLE_ICONS: Record<string, typeof Zap> = {
  *
  * Shows name, grade, style, circuit badge, and user status
  * (tick indicator + list badges). Taps navigate to boulder detail.
+ *
+ * IMPORTANT: Zustand selectors must return stable references.
+ * We select raw arrays and derive values with useMemo.
  */
 export function BoulderListCard({ boulder }: BoulderListCardProps) {
-  const isTicked = useTickStore((s) => s.isBoulderCompleted(boulder.id))
-  const ticksForBoulder = useTickStore((s) => s.getTicksForBoulder(boulder.id))
-  const listsForBoulder = useListStore((s) => s.getListsForBoulder(boulder.id))
+  // Stable selectors — select raw data, not derived
+  const ticks = useTickStore((s) => s.ticks)
+  const lists = useListStore((s) => s.lists)
 
-  const latestTick = ticksForBoulder[0]
-  const TickIcon = latestTick
-    ? TICK_STYLE_ICONS[latestTick.tickStyle]
-    : null
+  const { isTicked, tickStyle } = useMemo(() => {
+    const tick = ticks.find((t) => t.boulderId === boulder.id)
+    return { isTicked: !!tick, tickStyle: tick?.tickStyle ?? null }
+  }, [ticks, boulder.id])
 
-  const isInProject = listsForBoulder.some((lid) => {
-    const list = useListStore.getState().lists.find((l) => l.id === lid)
-    return list?.emoji === '🎯'
-  })
-  const isInFavorite = listsForBoulder.some((lid) => {
-    const list = useListStore.getState().lists.find((l) => l.id === lid)
-    return list?.emoji === '⭐'
-  })
+  const { isInProject, isInFavorite } = useMemo(() => {
+    let project = false
+    let favorite = false
+    for (const list of lists) {
+      if (list.items.some((item) => item.boulderId === boulder.id)) {
+        if (list.emoji === '🎯') project = true
+        if (list.emoji === '⭐') favorite = true
+      }
+    }
+    return { isInProject: project, isInFavorite: favorite }
+  }, [lists, boulder.id])
+
+  const TickIcon = tickStyle ? TICK_STYLE_ICONS[tickStyle] ?? Check : null
 
   return (
     <Link
@@ -100,7 +109,6 @@ export function BoulderListCard({ boulder }: BoulderListCardProps) {
           <p className="truncate text-sm font-medium text-foreground">
             {boulder.name}
           </p>
-          {/* List badges */}
           {isInProject && (
             <Target className="h-3 w-3 shrink-0 text-amber-500" aria-label="Projet" />
           )}
@@ -114,17 +122,13 @@ export function BoulderListCard({ boulder }: BoulderListCardProps) {
       </div>
 
       {/* Tick indicator */}
-      {isTicked && TickIcon && (
+      {isTicked && (
         <div className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 dark:bg-emerald-900/30">
-          <TickIcon className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-            Fait
-          </span>
-        </div>
-      )}
-      {isTicked && !TickIcon && (
-        <div className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 dark:bg-emerald-900/30">
-          <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          {TickIcon ? (
+            <TickIcon className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          ) : (
+            <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          )}
           <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
             Fait
           </span>

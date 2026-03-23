@@ -76,7 +76,7 @@ export default async function SecteurPage({
       circuitNumber: b.circuitNumber,
     }))
 
-  const blocsContent = <BoulderListView boulders={boulders} />
+  const blocsContent = <BoulderListView boulders={boulders} sectorSlug={slug} />
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
