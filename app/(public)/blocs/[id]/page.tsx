@@ -14,6 +14,7 @@ import {
   getBoulderById,
   toSlug,
 } from '@/lib/data/boulder-service'
+import { BoulderActionBar } from '@/components/boulder/boulder-action-bar'
 
 /**
  * ISR revalidation: regenerate page every hour.
@@ -166,15 +167,16 @@ export default async function BlocPage({
         </section>
       )}
 
-      {/* Map link */}
-      <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <Link
-          href={`/?lat=${boulder.latitude}&lng=${boulder.longitude}&zoom=18`}
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          Voir sur la carte →
-        </Link>
-      </div>
+      {/* Action bar (client component) */}
+      <BoulderActionBar
+        boulderId={boulder.id}
+        boulderName={boulder.name}
+        grade={boulder.grade}
+        style={boulder.style}
+        sector={boulder.sector}
+        latitude={boulder.latitude}
+        longitude={boulder.longitude}
+      />
 
       {/* ISR timestamp (dev helper, hidden in production) */}
       <p className="mt-8 text-center text-[10px] text-muted-foreground/50">
