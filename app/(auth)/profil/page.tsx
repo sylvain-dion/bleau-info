@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { User, Save, CheckCircle2, AlertCircle } from 'lucide-react'
+import { User, Save, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useTickStore } from '@/stores/tick-store'
 import { createClient } from '@/lib/supabase/client'
@@ -21,6 +21,7 @@ import { ConflictList } from '@/components/sync/conflict-list'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
+import { CommentsSection } from '@/components/profile/comments-section'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -148,6 +149,15 @@ export default function ProfilPage() {
       {/* Video submissions (Story 5.7+) */}
       <div className="mb-6">
         <VideoSubmissionsSection />
+
+        {/* Comments */}
+        <div className="border-t border-border pt-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <MessageSquare className="h-4 w-4" />
+            Mes commentaires
+          </h3>
+          <CommentsSection />
+        </div>
       </div>
 
       {/* Edit Form */}

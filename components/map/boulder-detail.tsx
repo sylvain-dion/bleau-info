@@ -37,6 +37,7 @@ import { useListStore } from '@/stores/list-store'
 import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 import { SectorDownloadButton } from '@/components/offline/sector-download-button'
+import { CommentSection } from '@/components/boulder/comment-section'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -239,6 +240,11 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
             boulderId={properties.id}
             mockVideos={properties.videos}
           />
+
+          {/* Comments (Story 8.1) */}
+          <div className="border-t border-border pt-4">
+            <CommentSection boulderId={properties.id} boulderName={name} />
+          </div>
 
           {/* Tick logging section */}
           <div className="border-t border-border pt-4">
