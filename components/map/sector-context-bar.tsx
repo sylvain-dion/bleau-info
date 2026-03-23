@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Mountain, ChevronRight } from 'lucide-react'
 import { toSlug } from '@/lib/data/boulder-service'
@@ -35,6 +35,7 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
   const selectedFeatureId = useMapStore((s) => s.selectedFeatureId)
   const isSheetOpen = selectedFeatureId != null
   const [sector, setSector] = useState<VisibleSector | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateSector = useCallback(() => {
     const map = mapRef.current
@@ -98,22 +99,32 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
     const map = mapRef.current
     if (!map) return
 
-    map.on('moveend', updateSector)
-    map.on('zoomend', updateSector)
-
-    // Initial check
-    if (map.loaded()) {
-      updateSector()
-    } else {
-      map.on('load', updateSector)
+    const debouncedUpdate = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(updateSector, 200)
     }
+
+    map.on('moveend', debouncedUpdate)
+    map.on('zoomend', debouncedUpdate)
+
+    // Initial check after short delay to ensure map is ready
+    const timer = setTimeout(updateSector, 500)
 
     return () => {
-      map.off('moveend', updateSector)
-      map.off('zoomend', updateSector)
-      map.off('load', updateSector)
+      clearTimeout(timer)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      map.off('moveend', debouncedUpdate)
+      map.off('zoomend', debouncedUpdate)
     }
   }, [mapRef, updateSector])
+
+  // Re-check when bottom sheet closes
+  useEffect(() => {
+    if (!isSheetOpen) {
+      const timer = setTimeout(updateSector, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isSheetOpen, updateSector])
 
   if (!sector || isSheetOpen) return null
 
