@@ -109,8 +109,8 @@ development_status:
 
   # Phase 2 — Epic 13: Page Secteur & Vue Liste
   epic-13: in-progress
-  13-1-page-secteur-informations-agregees: in-progress
-  13-2-vue-liste-des-blocs: backlog
+  13-1-page-secteur-informations-agregees: done
+  13-2-vue-liste-des-blocs: in-progress
   13-3-tri-des-blocs: backlog
   13-4-filtres-avances: backlog
   13-5-recherche-intra-secteur: backlog

@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import {
   getAllSectorSlugs,
   getBouldersBySector,
@@ -8,6 +7,7 @@ import {
 } from '@/lib/data/boulder-service'
 import { SectorHeader } from '@/components/sector/sector-header'
 import { SectorTabsContainer } from '@/components/sector/sector-tabs'
+import { BoulderListView } from '@/components/sector/boulder-list-view'
 
 /**
  * ISR: regenerate sector pages every hour.
@@ -65,63 +65,18 @@ export default async function SecteurPage({
 
   if (!sector) notFound()
 
-  const boulders = getBouldersBySector(slug).sort((a, b) =>
-    a.grade.localeCompare(b.grade)
-  )
+  const boulders = getBouldersBySector(slug)
+    .sort((a, b) => a.grade.localeCompare(b.grade))
+    .map((b) => ({
+      id: b.id,
+      name: b.name,
+      grade: b.grade,
+      style: b.style,
+      circuit: b.circuit,
+      circuitNumber: b.circuitNumber,
+    }))
 
-  const gradeGroups = groupByGradePrefix(boulders)
-
-  const blocsContent = (
-    <>
-      {/* Boulder count */}
-      <p className="mb-3 text-xs text-muted-foreground">
-        {boulders.length} bloc{boulders.length > 1 ? 's' : ''}
-      </p>
-
-      {/* Boulder list grouped by grade prefix */}
-      <div className="space-y-6">
-        {gradeGroups.map(({ prefix, items }) => (
-          <section key={prefix}>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {prefix}
-            </h2>
-            <div className="space-y-1">
-              {items.map((b) => (
-                <Link
-                  key={b.id}
-                  href={`/blocs/${b.id}`}
-                  className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {b.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {STYLE_LABELS[b.style] ?? b.style}
-                      {b.circuit && ` · Circuit ${b.circuit}`}
-                    </p>
-                  </div>
-                  <span className="ml-3 shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                    {b.grade}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-
-      {/* Map link */}
-      <div className="mt-8 rounded-xl border border-border bg-card p-4 text-center">
-        <Link
-          href="/"
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          Voir le secteur sur la carte →
-        </Link>
-      </div>
-    </>
-  )
+  const blocsContent = <BoulderListView boulders={boulders} />
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
@@ -131,49 +86,3 @@ export default async function SecteurPage({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-interface GradeGroup {
-  prefix: string
-  items: Array<{
-    id: string
-    name: string
-    grade: string
-    style: string
-    circuit: string | null
-  }>
-}
-
-function groupByGradePrefix(
-  boulders: Array<{
-    id: string
-    name: string
-    grade: string
-    style: string
-    circuit: string | null
-  }>
-): GradeGroup[] {
-  const groups = new Map<string, GradeGroup['items']>()
-
-  for (const b of boulders) {
-    const prefix = b.grade.charAt(0)
-    const label = `${prefix}e niveau`
-    if (!groups.has(label)) groups.set(label, [])
-    groups.get(label)!.push(b)
-  }
-
-  return Array.from(groups.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([prefix, items]) => ({ prefix, items }))
-}
-
-const STYLE_LABELS: Record<string, string> = {
-  dalle: 'Dalle',
-  devers: 'Dévers',
-  toit: 'Toit',
-  arete: 'Arête',
-  traverse: 'Traversée',
-  bloc: 'Bloc',
-}
