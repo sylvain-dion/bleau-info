@@ -131,7 +131,8 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
   return (
     <Link
       href={`/secteurs/${toSlug(sector.name)}`}
-      className="absolute inset-x-4 bottom-4 z-20 flex items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur transition-colors hover:bg-muted"
+      className="absolute bottom-4 z-20 flex w-full max-w-[425px] items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur transition-colors hover:bg-muted"
+      style={{ left: 'calc(50% - min(425px, 100% - 32px) / 2)' }}
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
         <Mountain className="h-4 w-4 text-primary" />
