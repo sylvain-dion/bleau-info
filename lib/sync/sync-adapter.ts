@@ -14,4 +14,5 @@ export interface SyncAdapter {
   syncSuggestion(id: string): Promise<SyncItemResponse>
   syncTick(id: string): Promise<SyncItemResponse>
   syncVideo(id: string): Promise<SyncItemResponse>
+  syncComment(id: string): Promise<SyncItemResponse>
 }

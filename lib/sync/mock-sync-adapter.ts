@@ -104,4 +104,9 @@ export class MockSyncAdapter implements SyncAdapter {
     await simulateUpload('video', id)
     return { status: 'synced' }
   }
+
+  async syncComment(id: string): Promise<SyncItemResponse> {
+    await simulateUpload('comment', id)
+    return { status: 'synced' }
+  }
 }

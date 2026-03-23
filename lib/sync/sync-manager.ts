@@ -13,6 +13,7 @@ import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { useSuggestionStore } from '@/stores/suggestion-store'
 import { useTickStore } from '@/stores/tick-store'
 import { useVideoSubmissionStore } from '@/stores/video-submission-store'
+import { useCommentStore } from '@/stores/comment-store'
 import { useConflictStore } from '@/stores/conflict-store'
 
 const MAX_RETRIES = 5
@@ -47,6 +48,11 @@ function collectUnsyncedItems(): SyncQueueItem[] {
     items.push({ id: v.id, type: 'video', retryCount: 0 })
   }
 
+  const comments = useCommentStore.getState().getUnsyncedComments()
+  for (const c of comments) {
+    items.push({ id: c.id, type: 'comment', retryCount: 0 })
+  }
+
   return items
 }
 
@@ -69,6 +75,9 @@ function setItemStatus(
     case 'video':
       useVideoSubmissionStore.getState().setSyncStatus(id, status)
       break
+    case 'comment':
+      useCommentStore.getState().setSyncStatus(id, status)
+      break
   }
 }
 
@@ -87,6 +96,8 @@ function callAdapter(
       return adapter.syncTick(id)
     case 'video':
       return adapter.syncVideo(id)
+    case 'comment':
+      return adapter.syncComment(id)
   }
 }
 

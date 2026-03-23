@@ -16,6 +16,7 @@ import {
 } from '@/lib/data/boulder-service'
 import { BoulderActionBar } from '@/components/boulder/boulder-action-bar'
 import { VideoCarousel } from '@/components/boulder/video-carousel'
+import { CommentSection } from '@/components/boulder/comment-section'
 
 /**
  * ISR revalidation: regenerate page every hour.
@@ -143,6 +144,12 @@ export default async function BlocPage({
       <VideoCarousel
         boulderId={boulder.id}
         mockVideos={boulder.videos}
+      />
+
+      {/* Comments */}
+      <CommentSection
+        boulderId={boulder.id}
+        boulderName={boulder.name}
       />
 
       {/* Action bar (client component) */}

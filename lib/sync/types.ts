@@ -2,7 +2,7 @@
 export type SyncStatus = 'local' | 'pending' | 'synced' | 'conflict' | 'error'
 
 /** Item types that can be synced */
-export type SyncItemType = 'draft' | 'suggestion' | 'tick' | 'video'
+export type SyncItemType = 'draft' | 'suggestion' | 'tick' | 'video' | 'comment'
 
 /** An item in the sync queue */
 export interface SyncQueueItem {

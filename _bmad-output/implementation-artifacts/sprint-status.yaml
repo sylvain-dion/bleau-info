@@ -116,4 +116,8 @@ development_status:
   13-5-recherche-intra-secteur: done
   13-6-page-secteur-offline: done
   13-7-barre-dactions-complete-fiche-bloc: done
-  13-8-points-dacces-page-secteur-navigabilite: in-progress
+  13-8-points-dacces-page-secteur-navigabilite: done
+
+  # Phase 2 — Epic 8: Commentaires & Conditions
+  epic-8: in-progress
+  8-1-publier-un-commentaire-sur-un-bloc: in-progress

@@ -216,3 +216,12 @@ export function showAutoValidatedToast(name: string): void {
     duration: 5000,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Comments (Story 8.1)
+// ---------------------------------------------------------------------------
+
+/** Show toast when a comment is posted */
+export function showCommentPostedToast(): void {
+  toast.success('Commentaire publié', { duration: 3000 })
+}
