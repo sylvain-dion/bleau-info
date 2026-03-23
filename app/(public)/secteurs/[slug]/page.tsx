@@ -5,9 +5,7 @@ import {
   getBouldersBySector,
   getSectorDetail,
 } from '@/lib/data/boulder-service'
-import { SectorHeader } from '@/components/sector/sector-header'
-import { SectorTabsContainer } from '@/components/sector/sector-tabs'
-import { BoulderListView } from '@/components/sector/boulder-list-view'
+import { OfflineSectorWrapper } from '@/components/sector/offline-sector-wrapper'
 
 /**
  * ISR: regenerate sector pages every hour.
@@ -48,12 +46,11 @@ export async function generateMetadata({
 }
 
 /**
- * Sector hub page — ISR-generated (Story 13.1).
+ * Sector hub page — ISR-generated with offline-first support.
  *
- * Rich header with aggregated stats + tabbed interface.
- * Blocs tab shows the existing grouped boulder list.
- * Other tabs (Circuits, Météo, Activité, Stats) are placeholders
- * activated progressively as Epics 9, 10, 11, 12 are delivered.
+ * Server renders sector data for SEO + online users.
+ * Client-side OfflineSectorWrapper detects offline state and
+ * falls back to IndexedDB data when the pack is cached (Story 13.6).
  */
 export default async function SecteurPage({
   params,
@@ -77,13 +74,14 @@ export default async function SecteurPage({
       exposure: b.exposure,
     }))
 
-  const blocsContent = <BoulderListView boulders={boulders} sectorSlug={slug} />
-
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
-      <SectorHeader sector={sector} />
-      <SectorTabsContainer blocsContent={blocsContent} />
+      <OfflineSectorWrapper
+        serverSector={sector}
+        serverBoulders={boulders}
+        sectorSlug={slug}
+        sectorName={sector.name}
+      />
     </main>
   )
 }
-
