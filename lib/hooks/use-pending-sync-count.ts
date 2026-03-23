@@ -3,6 +3,7 @@ import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
 import { useSuggestionStore } from '@/stores/suggestion-store'
 import { useTickStore } from '@/stores/tick-store'
 import { useVideoSubmissionStore } from '@/stores/video-submission-store'
+import { useCommentStore } from '@/stores/comment-store'
 
 /**
  * Aggregate unsynced item count across all stores.
@@ -18,6 +19,7 @@ export function usePendingSyncCount(): {
   const suggestions = useSuggestionStore((s) => s.suggestions)
   const ticks = useTickStore((s) => s.ticks)
   const submissions = useVideoSubmissionStore((s) => s.submissions)
+  const comments = useCommentStore((s) => s.comments)
 
   const pendingCount = useMemo(() => {
     let count = 0
@@ -34,9 +36,12 @@ export function usePendingSyncCount(): {
     for (const v of submissions) {
       if (v.syncStatus === 'local' || v.syncStatus === 'error') count++
     }
+    for (const c of comments) {
+      if (c.syncStatus === 'local' || c.syncStatus === 'error') count++
+    }
 
     return count
-  }, [drafts, suggestions, ticks, submissions])
+  }, [drafts, suggestions, ticks, submissions, comments])
 
   return { pendingCount, hasPending: pendingCount > 0 }
 }
