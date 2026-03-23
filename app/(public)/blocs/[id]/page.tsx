@@ -73,7 +73,7 @@ export default async function BlocPage({
   const sectorSlug = toSlug(boulder.sector)
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-4 pb-20 pt-6">
       {/* Back nav */}
       <Link
         href={`/secteurs/${sectorSlug}`}

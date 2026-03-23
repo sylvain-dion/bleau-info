@@ -69,7 +69,7 @@ export function BoulderActionBar({
 
   const wrapperClass = compact
     ? 'flex items-center gap-2'
-    : 'sticky bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 py-3'
+    : 'fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 py-3'
 
   const buttonClass = compact
     ? 'flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted'
