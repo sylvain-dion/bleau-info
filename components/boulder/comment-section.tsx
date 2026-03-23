@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { MessageSquare, Clock, Wifi } from 'lucide-react'
 import { useCommentStore } from '@/stores/comment-store'
 import { SyncStatusPill } from '@/components/ui/sync-status-pill'
@@ -17,7 +18,14 @@ interface CommentSectionProps {
  * with sync status indicators for offline support.
  */
 export function CommentSection({ boulderId, boulderName }: CommentSectionProps) {
-  const comments = useCommentStore((s) => s.getCommentsForBoulder(boulderId))
+  const allComments = useCommentStore((s) => s.comments)
+  const comments = useMemo(
+    () =>
+      allComments
+        .filter((c) => c.boulderId === boulderId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [allComments, boulderId]
+  )
 
   return (
     <section className="mb-6">
