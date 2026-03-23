@@ -122,7 +122,7 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Filtres
           {isFiltered && !showFilters && (
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
               {countActiveFilters(filters)}
             </span>
           )}
