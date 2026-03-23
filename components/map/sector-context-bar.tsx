@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Mountain, ChevronRight } from 'lucide-react'
 import { toSlug } from '@/lib/data/boulder-service'
+import { mockBoulders } from '@/lib/data/mock-boulders'
 import { useMapStore } from '@/stores/map-store'
 import type { Map as MaplibreMap } from 'maplibre-gl'
 
@@ -14,17 +15,21 @@ interface SectorContextBarProps {
 interface VisibleSector {
   name: string
   count: number
+  total: number
 }
 
-const ZOOM_THRESHOLD = 15
+const ZOOM_THRESHOLD = 13
 
 /**
  * Contextual bar showing the dominant sector when zoomed in on the map.
  *
- * Appears at the bottom of the map when:
- * - Zoom ≥ 15
- * - A single sector has > 60% of visible boulders
- * - No bottom sheet is open
+ * Computes which boulders fall within the current viewport bounds,
+ * groups them by sector, and shows the dominant sector (>60%) if any.
+ *
+ * Hidden when:
+ * - Zoom < 13
+ * - No single sector dominates (multiple sectors equally visible)
+ * - Bottom sheet is open (boulder selected)
  */
 export function SectorContextBar({ mapRef }: SectorContextBarProps) {
   const selectedFeatureId = useMapStore((s) => s.selectedFeatureId)
@@ -41,37 +46,47 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
       return
     }
 
-    // Query visible features from the boulders layer
-    const features = map.queryRenderedFeatures(undefined, {
-      layers: ['boulder-markers'],
-    })
+    // Get the viewport bounds
+    const bounds = map.getBounds()
+    const west = bounds.getWest()
+    const south = bounds.getSouth()
+    const east = bounds.getEast()
+    const north = bounds.getNorth()
 
-    if (!features || features.length === 0) {
-      setSector(null)
-      return
+    // Count boulders per sector within viewport
+    const counts = new Map<string, { visible: number; total: number }>()
+
+    // First pass: count total boulders per sector
+    for (const feature of mockBoulders.features) {
+      const name = feature.properties.sector
+      if (!counts.has(name)) {
+        counts.set(name, { visible: 0, total: 0 })
+      }
+      counts.get(name)!.total++
     }
 
-    // Group by sector
-    const counts = new Map<string, number>()
-    for (const f of features) {
-      const name = f.properties?.sector as string
-      if (name) {
-        counts.set(name, (counts.get(name) ?? 0) + 1)
+    // Second pass: count visible boulders (within viewport)
+    let totalVisible = 0
+    for (const feature of mockBoulders.features) {
+      const [lng, lat] = feature.geometry.coordinates
+      if (lng >= west && lng <= east && lat >= south && lat <= north) {
+        const name = feature.properties.sector
+        counts.get(name)!.visible++
+        totalVisible++
       }
     }
 
-    if (counts.size === 0) {
+    if (totalVisible === 0) {
       setSector(null)
       return
     }
 
-    // Find dominant sector (> 60% of visible boulders)
-    const total = features.length
+    // Find dominant sector (>60% of visible boulders)
     let dominant: VisibleSector | null = null
 
-    for (const [name, count] of counts) {
-      if (count / total > 0.6) {
-        dominant = { name, count }
+    for (const [name, data] of counts) {
+      if (data.visible > 0 && data.visible / totalVisible > 0.6) {
+        dominant = { name, count: data.visible, total: data.total }
         break
       }
     }
@@ -87,11 +102,16 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
     map.on('zoomend', updateSector)
 
     // Initial check
-    updateSector()
+    if (map.loaded()) {
+      updateSector()
+    } else {
+      map.on('load', updateSector)
+    }
 
     return () => {
       map.off('moveend', updateSector)
       map.off('zoomend', updateSector)
+      map.off('load', updateSector)
     }
   }, [mapRef, updateSector])
 
@@ -108,7 +128,7 @@ export function SectorContextBar({ mapRef }: SectorContextBarProps) {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{sector.name}</p>
         <p className="text-xs text-muted-foreground">
-          {sector.count} blocs visibles
+          {sector.total} blocs
         </p>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
