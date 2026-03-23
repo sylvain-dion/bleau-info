@@ -26,14 +26,18 @@ export const EMPTY_FILTERS: BoulderFilters = {
 }
 
 export function hasActiveFilters(f: BoulderFilters): boolean {
-  return (
-    f.gradeMin !== '' ||
-    f.gradeMax !== '' ||
-    f.circuits.length > 0 ||
-    f.styles.length > 0 ||
-    f.exposures.length > 0 ||
-    f.status !== 'all'
-  )
+  return countActiveFilters(f) > 0
+}
+
+/** Count the number of active filter categories */
+export function countActiveFilters(f: BoulderFilters): number {
+  let count = 0
+  if (f.gradeMin !== '' || f.gradeMax !== '') count++
+  if (f.circuits.length > 0) count++
+  if (f.styles.length > 0) count++
+  if (f.exposures.length > 0) count++
+  if (f.status !== 'all') count++
+  return count
 }
 
 // ---------------------------------------------------------------------------

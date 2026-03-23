@@ -12,6 +12,7 @@ import {
   BoulderFilterPanel,
   applyFilters,
   hasActiveFilters,
+  countActiveFilters,
   EMPTY_FILTERS,
   type BoulderFilters,
 } from './boulder-filter-panel'
@@ -122,7 +123,7 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
           Filtres
           {isFiltered && !showFilters && (
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-              {filtered.length}
+              {countActiveFilters(filters)}
             </span>
           )}
         </button>
