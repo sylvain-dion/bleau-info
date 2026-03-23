@@ -74,6 +74,7 @@ export default async function SecteurPage({
       style: b.style,
       circuit: b.circuit,
       circuitNumber: b.circuitNumber,
+      exposure: b.exposure,
     }))
 
   const blocsContent = <BoulderListView boulders={boulders} sectorSlug={slug} />

@@ -2,11 +2,19 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { SlidersHorizontal } from 'lucide-react'
 import { BoulderListCard, type BoulderListItem } from './boulder-list-card'
 import {
   BoulderSortSelector,
   type SortOption,
 } from './boulder-sort-selector'
+import {
+  BoulderFilterPanel,
+  applyFilters,
+  hasActiveFilters,
+  EMPTY_FILTERS,
+  type BoulderFilters,
+} from './boulder-filter-panel'
 import { useTickStore } from '@/stores/tick-store'
 import { useListStore } from '@/stores/list-store'
 
@@ -20,29 +28,31 @@ interface GradeGroup {
   items: BoulderListItem[]
 }
 
-const STORAGE_KEY_PREFIX = 'bleau-sort-'
+const SORT_STORAGE_KEY = 'bleau-sort-'
 
 /**
- * Full boulder list for a sector with sort selector.
+ * Full boulder list for a sector with sort + filter controls.
  *
- * Sorts client-side. Sort preference persisted in sessionStorage
- * per sector. Grade-grouped view only applies for grade sorts.
+ * Filters and sorts client-side. Sort preference persisted in
+ * sessionStorage per sector. Grade-grouped view for grade sorts.
  */
 export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) {
   const [sort, setSort] = useState<SortOption>('grade-asc')
+  const [filters, setFilters] = useState<BoulderFilters>(EMPTY_FILTERS)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Restore sort preference from sessionStorage
   useEffect(() => {
-    const stored = sessionStorage.getItem(STORAGE_KEY_PREFIX + sectorSlug)
+    const stored = sessionStorage.getItem(SORT_STORAGE_KEY + sectorSlug)
     if (stored) setSort(stored as SortOption)
   }, [sectorSlug])
 
   function handleSortChange(newSort: SortOption) {
     setSort(newSort)
-    sessionStorage.setItem(STORAGE_KEY_PREFIX + sectorSlug, newSort)
+    sessionStorage.setItem(SORT_STORAGE_KEY + sectorSlug, newSort)
   }
 
-  // Stable selectors for sort computations
+  // Stable selectors
   const ticks = useTickStore((s) => s.ticks)
   const lists = useListStore((s) => s.lists)
 
@@ -61,9 +71,25 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
     return ids
   }, [lists])
 
+  const favoriteBoulderIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const list of lists) {
+      if (list.emoji === '⭐') {
+        for (const item of list.items) ids.add(item.boulderId)
+      }
+    }
+    return ids
+  }, [lists])
+
+  // Filter → Sort pipeline
+  const filtered = useMemo(
+    () => applyFilters(boulders, filters, tickedIds, projectBoulderIds, favoriteBoulderIds),
+    [boulders, filters, tickedIds, projectBoulderIds, favoriteBoulderIds]
+  )
+
   const sorted = useMemo(
-    () => sortBoulders(boulders, sort, tickedIds, projectBoulderIds),
-    [boulders, sort, tickedIds, projectBoulderIds]
+    () => sortBoulders(filtered, sort, tickedIds, projectBoulderIds),
+    [filtered, sort, tickedIds, projectBoulderIds]
   )
 
   const isGradeSort = sort === 'grade-asc' || sort === 'grade-desc'
@@ -72,19 +98,66 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
     [sorted, isGradeSort, sort]
   )
 
+  const isFiltered = hasActiveFilters(filters)
+
   return (
     <>
-      {/* Count + sort */}
-      <div className="flex items-baseline justify-between">
-        <p className="mb-1 text-xs text-muted-foreground">
-          {boulders.length} bloc{boulders.length > 1 ? 's' : ''}
+      {/* Count + filter toggle */}
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {isFiltered
+            ? `${filtered.length} / ${boulders.length} blocs`
+            : `${boulders.length} bloc${boulders.length > 1 ? 's' : ''}`}
         </p>
+        <button
+          type="button"
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+            showFilters || isFiltered
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtres
+          {isFiltered && !showFilters && (
+            <span className="rounded-full bg-primary px-1 py-0.5 text-[9px] text-primary-foreground">
+              !
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Filter panel (collapsible) */}
+      {showFilters && (
+        <BoulderFilterPanel
+          filters={filters}
+          onChange={setFilters}
+          totalCount={boulders.length}
+          filteredCount={filtered.length}
+        />
+      )}
 
       <BoulderSortSelector value={sort} onChange={handleSortChange} />
 
+      {/* Empty state */}
+      {sorted.length === 0 && isFiltered && (
+        <div className="rounded-lg border border-dashed border-border py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Aucun bloc ne correspond aux filtres.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="mt-2 text-xs font-medium text-primary hover:underline"
+          >
+            Réinitialiser les filtres
+          </button>
+        </div>
+      )}
+
       {/* Grouped list (grade sorts) */}
-      {groups ? (
+      {groups && sorted.length > 0 ? (
         <div className="space-y-6">
           {groups.map(({ label, items }) => (
             <section key={label}>
@@ -99,14 +172,14 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
             </section>
           ))}
         </div>
-      ) : (
+      ) : sorted.length > 0 ? (
         /* Flat list (other sorts) */
         <div className="space-y-1">
           {sorted.map((b) => (
             <BoulderListCard key={b.id} boulder={b} />
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Map link */}
       <div className="mt-8 rounded-xl border border-border bg-card p-4 text-center">
