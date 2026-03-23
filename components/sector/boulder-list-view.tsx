@@ -68,8 +68,8 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
 
   const isGradeSort = sort === 'grade-asc' || sort === 'grade-desc'
   const groups = useMemo(
-    () => (isGradeSort ? groupByGradePrefix(sorted) : null),
-    [sorted, isGradeSort]
+    () => (isGradeSort ? groupByGradePrefix(sorted, sort === 'grade-desc') : null),
+    [sorted, isGradeSort, sort]
   )
 
   return (
@@ -163,7 +163,7 @@ function sortBoulders(
 // Grouping
 // ---------------------------------------------------------------------------
 
-function groupByGradePrefix(boulders: BoulderListItem[]): GradeGroup[] {
+function groupByGradePrefix(boulders: BoulderListItem[], descending = false): GradeGroup[] {
   const groups = new Map<string, BoulderListItem[]>()
 
   for (const b of boulders) {
@@ -174,6 +174,6 @@ function groupByGradePrefix(boulders: BoulderListItem[]): GradeGroup[] {
   }
 
   return Array.from(groups.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => descending ? b.localeCompare(a) : a.localeCompare(b))
     .map(([label, items]) => ({ label, items }))
 }
