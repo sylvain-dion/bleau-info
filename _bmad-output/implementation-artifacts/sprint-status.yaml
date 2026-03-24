@@ -125,4 +125,9 @@ development_status:
   8-3-afficher-commentaires-conditions-fiche-bloc: done
   8-4-signaler-commentaire-inapproprie: done
   8-5-modifier-supprimer-son-commentaire: done
-  8-6-cache-offline-commentaires-pack-secteur: in-progress
+  8-6-cache-offline-commentaires-pack-secteur: done
+  epic-8-retrospective: optional
+
+  # Phase 2 — Epic 9: Circuits & Parcours guidés
+  epic-9: in-progress
+  9-1-afficher-circuits-officiels-sur-carte: in-progress
