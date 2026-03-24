@@ -1,30 +1,78 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Route, Hash, ArrowRight, Map } from 'lucide-react'
-import { getCircuitsForSector, type CircuitInfo } from '@/lib/data/mock-circuits'
-import { CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
-import { toSlug } from '@/lib/data/boulder-service'
+import {
+  Route,
+  Hash,
+  ArrowLeft,
+  Map,
+  CheckCircle2,
+  Circle,
+  ListChecks,
+} from 'lucide-react'
+import {
+  getCircuitsForSector,
+  type CircuitInfo,
+} from '@/lib/data/mock-circuits'
+import { getBoulderById, toSlug } from '@/lib/data/boulder-service'
+import { CIRCUIT_COLORS, type CircuitColor } from '@/lib/data/mock-boulders'
+import { useTickStore } from '@/stores/tick-store'
+
+const CIRCUIT_LABELS: Record<CircuitColor, string> = {
+  jaune: 'Jaune',
+  bleu: 'Bleu',
+  rouge: 'Rouge',
+  blanc: 'Blanc',
+  orange: 'Orange',
+  noir: 'Noir',
+}
 
 interface SectorCircuitsTabProps {
   sectorName: string
-  sectorSlug?: string
 }
 
 /**
- * Circuits tab for the sector page.
+ * Circuits tab content with list → detail navigation.
  *
- * Lists all circuits in the sector with color swatch, grade range,
- * boulder count, and a visual indicator.
+ * List view: shows all circuits in the sector.
+ * Detail view: shows ordered boulder list with completion + log button.
  */
-export function SectorCircuitsTab({ sectorName, sectorSlug }: SectorCircuitsTabProps) {
-  const slug = sectorSlug ?? toSlug(sectorName)
+export function SectorCircuitsTab({ sectorName }: SectorCircuitsTabProps) {
+  const [selectedCircuitId, setSelectedCircuitId] = useState<string | null>(null)
+
   const circuits = useMemo(
     () => getCircuitsForSector(sectorName),
     [sectorName]
   )
 
+  const selected = selectedCircuitId
+    ? circuits.find((c) => c.id === selectedCircuitId) ?? null
+    : null
+
+  if (selected) {
+    return (
+      <CircuitDetailView
+        circuit={selected}
+        onBack={() => setSelectedCircuitId(null)}
+      />
+    )
+  }
+
+  return <CircuitListView circuits={circuits} onSelect={setSelectedCircuitId} />
+}
+
+// ---------------------------------------------------------------------------
+// Circuit list view
+// ---------------------------------------------------------------------------
+
+function CircuitListView({
+  circuits,
+  onSelect,
+}: {
+  circuits: CircuitInfo[]
+  onSelect: (id: string) => void
+}) {
   if (circuits.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -39,47 +87,108 @@ export function SectorCircuitsTab({ sectorName, sectorSlug }: SectorCircuitsTabP
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        {circuits.length} circuit{circuits.length > 1 ? 's' : ''} dans ce secteur
+        {circuits.length} circuit{circuits.length > 1 ? 's' : ''}
       </p>
 
       {circuits.map((circuit) => (
-        <CircuitCard key={circuit.id} circuit={circuit} sectorSlug={slug} />
+        <button
+          key={circuit.id}
+          type="button"
+          onClick={() => onSelect(circuit.id)}
+          className="flex w-full items-center gap-3 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:bg-muted/50"
+        >
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: circuit.hexColor + '20' }}
+          >
+            <div
+              className="h-5 w-5 rounded-full"
+              style={{
+                backgroundColor: circuit.hexColor,
+                border: circuit.color === 'blanc' ? '1px solid #d4d4d8' : undefined,
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-semibold text-foreground">
+              Circuit {CIRCUIT_LABELS[circuit.color]}
+            </span>
+            <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                {circuit.boulderCount} blocs
+              </span>
+              <span>
+                {circuit.gradeRange.min} → {circuit.gradeRange.max}
+              </span>
+            </div>
+          </div>
+          <span className="text-muted-foreground">›</span>
+        </button>
       ))}
-
-      <p className="pt-2 text-center text-[11px] text-muted-foreground">
-        Les circuits sont également visibles sur la carte
-      </p>
     </div>
   )
 }
 
-function CircuitCard({ circuit, sectorSlug }: { circuit: CircuitInfo; sectorSlug: string }) {
-  const colorLabel = CIRCUIT_LABEL[circuit.color] ?? circuit.color
+// ---------------------------------------------------------------------------
+// Circuit detail view (inside tab)
+// ---------------------------------------------------------------------------
+
+function CircuitDetailView({
+  circuit,
+  onBack,
+}: {
+  circuit: CircuitInfo
+  onBack: () => void
+}) {
+  const sectorSlug = toSlug(circuit.sector)
+  const ticks = useTickStore((s) => s.ticks)
+  const tickedIds = useMemo(
+    () => new Set(ticks.map((t) => t.boulderId)),
+    [ticks]
+  )
+
+  const boulders = useMemo(
+    () => circuit.boulderIds.map((id) => getBoulderById(id)).filter(Boolean),
+    [circuit.boulderIds]
+  )
+
+  const completedCount = boulders.filter((b) => b && tickedIds.has(b.id)).length
+  const progressPercent =
+    boulders.length > 0 ? Math.round((completedCount / boulders.length) * 100) : 0
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center gap-3">
-        {/* Color swatch */}
+    <div>
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Tous les circuits
+      </button>
+
+      {/* Header */}
+      <div className="mb-4 flex items-center gap-3">
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundColor: circuit.hexColor + '20' }}
         >
           <div
-            className="h-5 w-5 rounded-full"
-            style={{ backgroundColor: circuit.hexColor }}
+            className="h-6 w-6 rounded-full"
+            style={{
+              backgroundColor: circuit.hexColor,
+              border: circuit.color === 'blanc' ? '2px solid #d4d4d8' : undefined,
+            }}
           />
         </div>
-
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <span className="text-sm font-semibold text-foreground">
-            Circuit {colorLabel}
-          </span>
-          <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Hash className="h-3 w-3" />
-              {circuit.boulderCount} blocs
-            </span>
+        <div>
+          <h2 className="text-lg font-bold text-foreground">
+            Circuit {CIRCUIT_LABELS[circuit.color]}
+          </h2>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>{circuit.boulderCount} blocs</span>
             <span>
               {circuit.gradeRange.min} → {circuit.gradeRange.max}
             </span>
@@ -87,36 +196,75 @@ function CircuitCard({ circuit, sectorSlug }: { circuit: CircuitInfo; sectorSlug
         </div>
       </div>
 
-      {/* Boulder list preview */}
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {circuit.boulderIds.map((_, i) => (
-          <span
-            key={i}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white"
-            style={{ backgroundColor: circuit.hexColor }}
-          >
-            {i + 1}
-          </span>
-        ))}
+      {/* Progress */}
+      {completedCount > 0 && (
+        <div className="mb-4 rounded-lg border border-border bg-card p-3">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Progression</span>
+            <span className="font-bold text-primary">
+              {completedCount}/{boulders.length} — {progressPercent}%
+            </span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="mb-4 flex gap-2">
+        <Link
+          href={`/?circuit=${circuit.color}&sector=${sectorSlug}`}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <Map className="h-3.5 w-3.5" />
+          Voir sur la carte
+        </Link>
+        <button
+          type="button"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+        >
+          <ListChecks className="h-3.5 w-3.5" />
+          Loguer l&apos;enchaînement
+        </button>
       </div>
 
-      {/* Action: view on map */}
-      <Link
-        href={`/?circuit=${circuit.color}&sector=${sectorSlug}`}
-        className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-      >
-        <Map className="h-3.5 w-3.5" />
-        Voir sur la carte
-      </Link>
+      {/* Boulder list */}
+      <div className="space-y-1">
+        {boulders.map((boulder, index) => {
+          if (!boulder) return null
+          const isCompleted = tickedIds.has(boulder.id)
+
+          return (
+            <Link
+              key={boulder.id}
+              href={`/blocs/${boulder.id}`}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/50"
+            >
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: circuit.hexColor }}
+              >
+                {index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {boulder.name}
+                </p>
+                <p className="text-xs text-muted-foreground">{boulder.grade}</p>
+              </div>
+              {isCompleted ? (
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+              ) : (
+                <Circle className="h-5 w-5 shrink-0 text-muted-foreground/30" />
+              )}
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
-}
-
-const CIRCUIT_LABEL: Record<string, string> = {
-  jaune: 'Jaune',
-  bleu: 'Bleu',
-  rouge: 'Rouge',
-  blanc: 'Blanc',
-  orange: 'Orange',
-  noir: 'Noir',
 }

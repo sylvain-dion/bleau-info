@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, Search, X, Map, ListChecks } from 'lucide-react'
+import { SlidersHorizontal, Search, X } from 'lucide-react'
 import { BoulderListCard, type BoulderListItem } from './boulder-list-card'
 import {
   BoulderSortSelector,
@@ -18,14 +18,10 @@ import {
 } from './boulder-filter-panel'
 import { useTickStore } from '@/stores/tick-store'
 import { useListStore } from '@/stores/list-store'
-import { CIRCUIT_COLORS, type CircuitColor } from '@/lib/data/mock-boulders'
-import { getCircuitsForSector, type CircuitInfo } from '@/lib/data/mock-circuits'
-import { toSlug } from '@/lib/data/boulder-service'
 
 interface BoulderListViewProps {
   boulders: BoulderListItem[]
   sectorSlug: string
-  sectorName?: string
 }
 
 interface GradeGroup {
@@ -33,41 +29,20 @@ interface GradeGroup {
   items: BoulderListItem[]
 }
 
-interface CircuitGroup {
-  color: CircuitColor | 'none'
-  label: string
-  hexColor: string
-  gradeRange: string
-  count: number
-  items: BoulderListItem[]
-  circuitInfo?: CircuitInfo
-}
-
 const SORT_STORAGE_KEY = 'bleau-sort-'
-
-const CIRCUIT_LABELS: Record<string, string> = {
-  jaune: 'Circuit Jaune',
-  bleu: 'Circuit Bleu',
-  rouge: 'Circuit Rouge',
-  blanc: 'Circuit Blanc',
-  orange: 'Circuit Orange',
-  noir: 'Circuit Noir',
-  none: 'Hors circuit',
-}
 
 /**
  * Full boulder list for a sector with sort + filter controls.
  *
- * Supports grade grouping, circuit grouping with color headers,
- * and inline circuit color filter pills.
+ * Filters and sorts client-side. Sort preference persisted in
+ * sessionStorage per sector. Grade-grouped view for grade sorts.
  */
-export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderListViewProps) {
+export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) {
   const [sort, setSort] = useState<SortOption>('grade-asc')
   const [filters, setFilters] = useState<BoulderFilters>(EMPTY_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [circuitFilters, setCircuitFilters] = useState<(CircuitColor | 'none')[]>([])
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Restore sort preference
@@ -79,18 +54,6 @@ export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderLis
   function handleSortChange(newSort: SortOption) {
     setSort(newSort)
     sessionStorage.setItem(SORT_STORAGE_KEY + sectorSlug, newSort)
-    // Reset circuit filters when switching away from circuits
-    if (newSort !== 'circuits') setCircuitFilters([])
-  }
-
-  function handleCircuitFilterToggle(color: CircuitColor | 'none') {
-    setCircuitFilters((prev) => {
-      if (prev.includes(color)) {
-        const next = prev.filter((c) => c !== color)
-        return next
-      }
-      return [...prev, color]
-    })
   }
 
   // Stable selectors
@@ -146,20 +109,9 @@ export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderLis
   )
 
   const isGradeSort = sort === 'grade-asc' || sort === 'grade-desc'
-  const isCircuitSort = sort === 'circuits'
-
   const gradeGroups = useMemo(
     () => (isGradeSort ? groupByGradePrefix(sorted, sort === 'grade-desc') : null),
     [sorted, isGradeSort, sort]
-  )
-
-  const circuitGroups = useMemo(
-    () => {
-      if (!isCircuitSort) return null
-      const name = sectorName ?? sectorSlug
-      return groupByCircuit(sorted, name, circuitFilters)
-    },
-    [sorted, isCircuitSort, sectorName, sectorSlug, circuitFilters]
   )
 
   const isFiltered = hasActiveFilters(filters)
@@ -225,20 +177,12 @@ export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderLis
         />
       )}
 
-      <BoulderSortSelector
-        value={sort}
-        onChange={handleSortChange}
-        circuitFilters={circuitFilters}
-        onCircuitFilterToggle={handleCircuitFilterToggle}
-        sectorSlug={sectorSlug}
-      />
+      <BoulderSortSelector value={sort} onChange={handleSortChange} />
 
       {/* Empty state */}
       {sorted.length === 0 && isNarrowed && (
         <div className="rounded-lg border border-dashed border-border py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Aucun bloc trouvé.
-          </p>
+          <p className="text-sm text-muted-foreground">Aucun bloc trouvé.</p>
           <button
             type="button"
             onClick={() => { setFilters(EMPTY_FILTERS); setSearchInput(''); setSearchQuery('') }}
@@ -249,16 +193,8 @@ export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderLis
         </div>
       )}
 
-      {/* Circuit-grouped list */}
-      {circuitGroups && sorted.length > 0 ? (
-        <div className="space-y-6">
-          {circuitGroups.map((group) => (
-            <CircuitSection key={group.color} group={group} sectorSlug={sectorSlug} />
-          ))}
-        </div>
-
-      /* Grade-grouped list */
-      ) : gradeGroups && sorted.length > 0 ? (
+      {/* Grade-grouped list */}
+      {gradeGroups && sorted.length > 0 ? (
         <div className="space-y-6">
           {gradeGroups.map(({ label, items }) => (
             <section key={label}>
@@ -297,72 +233,11 @@ export function BoulderListView({ boulders, sectorSlug, sectorName }: BoulderLis
 }
 
 // ---------------------------------------------------------------------------
-// Circuit section component
-// ---------------------------------------------------------------------------
-
-function CircuitSection({ group, sectorSlug }: { group: CircuitGroup; sectorSlug: string }) {
-  return (
-    <section>
-      {/* Circuit header */}
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className="h-3 w-3 rounded-full"
-            style={{
-              backgroundColor: group.hexColor,
-              border: group.color === 'blanc' ? '1px solid #d4d4d8' : undefined,
-            }}
-          />
-          <h2 className="text-sm font-semibold text-foreground">
-            {group.label}
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            {group.count} blocs · {group.gradeRange}
-          </span>
-        </div>
-        {group.color !== 'none' && (
-          <Link
-            href={`/?circuit=${group.color}&sector=${sectorSlug}`}
-            className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
-          >
-            <Map className="h-3 w-3" />
-            Carte
-          </Link>
-        )}
-      </div>
-
-      {/* Boulder list */}
-      <div className="space-y-1">
-        {group.items.map((b) => (
-          <BoulderListCard key={b.id} boulder={b} />
-        ))}
-      </div>
-
-      {/* Log entire circuit button */}
-      {group.color !== 'none' && group.items.length > 1 && (
-        <div className="mt-2">
-          <button
-            type="button"
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
-          >
-            <ListChecks className="h-3.5 w-3.5" />
-            Loguer l&apos;enchaînement du circuit
-          </button>
-        </div>
-      )}
-    </section>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Search logic
+// Search
 // ---------------------------------------------------------------------------
 
 function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
 function searchBoulders(boulders: BoulderListItem[], query: string): BoulderListItem[] {
@@ -371,7 +246,7 @@ function searchBoulders(boulders: BoulderListItem[], query: string): BoulderList
 }
 
 // ---------------------------------------------------------------------------
-// Sort logic
+// Sort
 // ---------------------------------------------------------------------------
 
 function sortBoulders(
@@ -381,20 +256,11 @@ function sortBoulders(
   projectIds: Set<string>
 ): BoulderListItem[] {
   const copy = [...boulders]
-
   switch (sort) {
     case 'grade-asc':
       return copy.sort((a, b) => a.grade.localeCompare(b.grade))
     case 'grade-desc':
       return copy.sort((a, b) => b.grade.localeCompare(a.grade))
-    case 'circuits':
-      // Sort by circuit color priority then circuitNumber
-      return copy.sort((a, b) => {
-        const aCircuit = a.circuit ?? 'zzz'
-        const bCircuit = b.circuit ?? 'zzz'
-        if (aCircuit !== bCircuit) return aCircuit.localeCompare(bCircuit)
-        return (a.circuitNumber ?? 999) - (b.circuitNumber ?? 999)
-      })
     case 'name-asc':
       return copy.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
     case 'name-desc':
@@ -422,57 +288,13 @@ function sortBoulders(
 
 function groupByGradePrefix(boulders: BoulderListItem[], descending = false): GradeGroup[] {
   const groups: Record<string, BoulderListItem[]> = {}
-
   for (const b of boulders) {
     const prefix = b.grade.charAt(0)
     const label = `${prefix}e niveau`
     if (!groups[label]) groups[label] = []
     groups[label].push(b)
   }
-
   return Object.entries(groups)
     .sort(([a], [b]) => descending ? b.localeCompare(a) : a.localeCompare(b))
     .map(([label, items]) => ({ label, items }))
-}
-
-function groupByCircuit(
-  boulders: BoulderListItem[],
-  sectorName: string,
-  colorFilter: (CircuitColor | 'none')[]
-): CircuitGroup[] {
-  const circuitInfos = getCircuitsForSector(sectorName)
-  const infoByColor: Record<string, CircuitInfo> = {}
-  for (const ci of circuitInfos) {
-    infoByColor[ci.color] = ci
-  }
-
-  const groups: Record<string, BoulderListItem[]> = {}
-
-  for (const b of boulders) {
-    const key = b.circuit ?? 'none'
-    if (!groups[key]) groups[key] = []
-    groups[key].push(b)
-  }
-
-  // Circuit color order
-  const colorOrder: (CircuitColor | 'none')[] = ['jaune', 'bleu', 'rouge', 'orange', 'blanc', 'noir', 'none']
-
-  return colorOrder
-    .filter((c) => c in groups)
-    .filter((c) => colorFilter.length === 0 || colorFilter.includes(c))
-    .map((color) => {
-      const items = groups[color]!
-      const grades = items.map((b) => b.grade).sort()
-      const info = color !== 'none' ? infoByColor[color] : undefined
-
-      return {
-        color,
-        label: CIRCUIT_LABELS[color] ?? color,
-        hexColor: color === 'none' ? '#a1a1aa' : (CIRCUIT_COLORS[color as CircuitColor] ?? '#a1a1aa'),
-        gradeRange: grades.length > 0 ? `${grades[0]} → ${grades[grades.length - 1]}` : '',
-        count: items.length,
-        items,
-        circuitInfo: info,
-      }
-    })
 }

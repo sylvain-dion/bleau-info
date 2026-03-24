@@ -7,9 +7,10 @@ import {
   CloudSun,
   Activity,
   BarChart3,
+  FileText,
 } from 'lucide-react'
 
-export type SectorTab = 'blocs' | 'circuits' | 'meteo' | 'activite' | 'stats'
+export type SectorTab = 'blocs' | 'circuits' | 'topo' | 'meteo' | 'activite' | 'stats'
 
 interface TabConfig {
   id: SectorTab
@@ -27,8 +28,14 @@ const TABS: TabConfig[] = [
   },
   {
     id: 'circuits',
-    label: 'Topo',
+    label: 'Circuits',
     icon: <Route className="h-3.5 w-3.5" />,
+    available: true,
+  },
+  {
+    id: 'topo',
+    label: 'Topo',
+    icon: <FileText className="h-3.5 w-3.5" />,
     available: false,
   },
   {
@@ -140,6 +147,7 @@ export function SectorTabsContainer({
       <SectorTabs activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === 'blocs' && blocsContent}
       {activeTab === 'circuits' && (circuitsContent ?? <TabPlaceholder tabName="Circuits" />)}
+      {activeTab === 'topo' && <TabPlaceholder tabName="Topo" />}
       {activeTab === 'meteo' && (meteoContent ?? <TabPlaceholder tabName="Météo" />)}
       {activeTab === 'activite' && <TabPlaceholder tabName="Activité" />}
       {activeTab === 'stats' && <TabPlaceholder tabName="Statistiques" />}
