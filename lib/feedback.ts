@@ -234,3 +234,15 @@ export function showCommentPostedToast(): void {
 export function showConditionReportedToast(): void {
   toast.success('Conditions reportées', { duration: 3000 })
 }
+
+// ---------------------------------------------------------------------------
+// Comment Reporting (Story 8.4)
+// ---------------------------------------------------------------------------
+
+/** Show toast when a comment is reported */
+export function showCommentReportedToast(): void {
+  toast.success('Signalement envoyé', {
+    description: 'Merci, un modérateur examinera ce commentaire.',
+    duration: 4000,
+  })
+}
