@@ -1,11 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { MessageSquare, Clock, Wifi, ChevronDown } from 'lucide-react'
+import { MessageSquare, Clock, Wifi, ChevronDown, EyeOff } from 'lucide-react'
 import { useCommentStore } from '@/stores/comment-store'
 import { useNetworkStore } from '@/stores/network-store'
+import { useCommentReportStore } from '@/stores/comment-report-store'
 import { SyncStatusPill } from '@/components/ui/sync-status-pill'
 import { CommentForm } from './comment-form'
+import { ReportCommentButton } from './report-comment-button'
 
 const PAGE_SIZE = 10
 
@@ -23,7 +25,20 @@ interface CommentSectionProps {
 export function CommentSection({ boulderId, boulderName }: CommentSectionProps) {
   const allComments = useCommentStore((s) => s.comments)
   const isOnline = useNetworkStore((s) => s.isOnline)
+  const reportStoreReports = useCommentReportStore((s) => s.reports)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
+  const hiddenIds = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const r of reportStoreReports) {
+      counts.set(r.commentId, (counts.get(r.commentId) ?? 0) + 1)
+    }
+    const hidden = new Set<string>()
+    for (const [id, count] of counts) {
+      if (count >= 3) hidden.add(id)
+    }
+    return hidden
+  }, [reportStoreReports])
 
   const comments = useMemo(
     () =>
@@ -59,42 +74,61 @@ export function CommentSection({ boulderId, boulderName }: CommentSectionProps) 
       {/* Comment list */}
       {visibleComments.length > 0 && (
         <div className="mt-4 space-y-3">
-          {visibleComments.map((comment) => (
-            <div
-              key={comment.id}
-              className="rounded-lg border border-border bg-card p-3"
-            >
-              {/* Author + sync status */}
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    {comment.userName.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {comment.userName}
-                  </span>
+          {visibleComments.map((comment) => {
+            const isCommentHidden = hiddenIds.has(comment.id)
+
+            if (isCommentHidden) {
+              return (
+                <div
+                  key={comment.id}
+                  className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground"
+                >
+                  <EyeOff className="h-3.5 w-3.5 shrink-0" />
+                  Commentaire masqué suite à des signalements
                 </div>
-                <SyncStatusPill syncStatus={comment.syncStatus} />
-              </div>
+              )
+            }
 
-              {/* Comment text */}
-              <p className="text-sm leading-relaxed text-foreground">
-                {comment.text}
-              </p>
+            return (
+              <div
+                key={comment.id}
+                className="rounded-lg border border-border bg-card p-3"
+              >
+                {/* Author + sync status */}
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {comment.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-xs font-medium text-foreground">
+                      {comment.userName}
+                    </span>
+                  </div>
+                  <SyncStatusPill syncStatus={comment.syncStatus} />
+                </div>
 
-              {/* Timestamp */}
-              <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Clock className="h-2.5 w-2.5" />
-                {formatRelativeDate(comment.createdAt)}
-                {comment.syncStatus === 'local' && (
-                  <span className="ml-1 flex items-center gap-0.5">
-                    <Wifi className="h-2.5 w-2.5" />
-                    En attente de sync
-                  </span>
-                )}
+                {/* Comment text */}
+                <p className="text-sm leading-relaxed text-foreground">
+                  {comment.text}
+                </p>
+
+                {/* Timestamp + report */}
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Clock className="h-2.5 w-2.5" />
+                    {formatRelativeDate(comment.createdAt)}
+                    {comment.syncStatus === 'local' && (
+                      <span className="ml-1 flex items-center gap-0.5">
+                        <Wifi className="h-2.5 w-2.5" />
+                        En attente de sync
+                      </span>
+                    )}
+                  </div>
+                  <ReportCommentButton commentId={comment.id} />
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {/* Load more */}
           {hasMore && (
