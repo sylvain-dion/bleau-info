@@ -35,7 +35,7 @@ const TABS: TabConfig[] = [
     id: 'meteo',
     label: 'Météo',
     icon: <CloudSun className="h-3.5 w-3.5" />,
-    available: false,
+    available: true,
   },
   {
     id: 'activite',
@@ -126,8 +126,10 @@ export function TabPlaceholder({ tabName }: { tabName: string }) {
  */
 export function SectorTabsContainer({
   blocsContent,
+  meteoContent,
 }: {
   blocsContent: React.ReactNode
+  meteoContent?: React.ReactNode
 }) {
   const [activeTab, setActiveTab] = useState<SectorTab>('blocs')
 
@@ -136,7 +138,7 @@ export function SectorTabsContainer({
       <SectorTabs activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === 'blocs' && blocsContent}
       {activeTab === 'circuits' && <TabPlaceholder tabName="Circuits" />}
-      {activeTab === 'meteo' && <TabPlaceholder tabName="Météo" />}
+      {activeTab === 'meteo' && (meteoContent ?? <TabPlaceholder tabName="Météo" />)}
       {activeTab === 'activite' && <TabPlaceholder tabName="Activité" />}
       {activeTab === 'stats' && <TabPlaceholder tabName="Statistiques" />}
     </>

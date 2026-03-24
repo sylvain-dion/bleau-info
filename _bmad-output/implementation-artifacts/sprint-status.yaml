@@ -120,4 +120,5 @@ development_status:
 
   # Phase 2 — Epic 8: Commentaires & Conditions
   epic-8: in-progress
-  8-1-publier-un-commentaire-sur-un-bloc: in-progress
+  8-1-publier-un-commentaire-sur-un-bloc: done
+  8-2-reporter-conditions-terrain-bloc: in-progress
