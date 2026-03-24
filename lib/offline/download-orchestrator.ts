@@ -12,6 +12,9 @@
 import { offlineDb } from '@/lib/db/offline-db'
 import { getSectorData } from './sector-data-service'
 import { computeSectorHash } from './version-hash'
+import { useCommentStore } from '@/stores/comment-store'
+import { useConditionReportStore } from '@/stores/condition-report-store'
+import { ARCHIVE_THRESHOLD_MS } from '@/lib/validations/condition'
 
 /** Download progress reported to the UI */
 export interface DownloadProgress {
@@ -99,6 +102,29 @@ export function startSectorDownload(
     await delay(200, abortController.signal)
     await waitIfPaused()
 
+    // Gather comments + conditions for offline cache
+    const bouldersInSector = sectorData.boulders.features.map(
+      (f) => f.properties.id
+    )
+    const boulderIdSet = new Set(bouldersInSector)
+
+    const allComments = useCommentStore.getState().comments
+    const sectorComments = allComments
+      .filter((c) => boulderIdSet.has(c.boulderId))
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, bouldersInSector.length * 20) // 20 per boulder max
+
+    const conditionCutoff = Date.now() - ARCHIVE_THRESHOLD_MS
+    const allConditions = useConditionReportStore.getState().reports
+    const sectorConditions = allConditions.filter(
+      (r) =>
+        boulderIdSet.has(r.boulderId) &&
+        new Date(r.reportedAt).getTime() > conditionCutoff
+    )
+
     // Save sector to IndexedDB
     await offlineDb.sectors.put({
       name: sectorName,
@@ -108,6 +134,8 @@ export function startSectorDownload(
       versionHash: computeSectorHash(sectorName),
       downloadedAt: new Date().toISOString(),
       sizeBytes: totalBytes,
+      comments: sectorComments,
+      conditionReports: sectorConditions,
     })
 
     bytesDownloaded = Math.floor(totalBytes * 0.3)

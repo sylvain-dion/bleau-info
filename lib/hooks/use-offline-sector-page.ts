@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useNetworkStore } from '@/stores/network-store'
 import { useOfflineSectorStore } from '@/stores/offline-sector-store'
+import { useCommentStore } from '@/stores/comment-store'
+import { useConditionReportStore } from '@/stores/condition-report-store'
 import { offlineDb, type OfflineSector } from '@/lib/db/offline-db'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import type { BoulderListItem } from '@/components/sector/boulder-list-card'
@@ -56,6 +58,7 @@ export function useOfflineSectorPage(
       .then((cached) => {
         if (cancelled || !cached) return
         setOfflineData(buildFromOffline(cached, sectorSlug))
+        hydrateCachedData(cached)
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)
@@ -123,4 +126,36 @@ function buildFromOffline(
   }))
 
   return { sector, boulders }
+}
+
+/**
+ * Merge cached comments/conditions into Zustand stores.
+ *
+ * Only adds items not already present (by id) to avoid duplicates
+ * with locally-created offline content.
+ */
+function hydrateCachedData(cached: OfflineSector): void {
+  if (cached.comments?.length) {
+    const store = useCommentStore.getState()
+    const existingIds = new Set(store.comments.map((c) => c.id))
+    const newComments = cached.comments.filter((c) => !existingIds.has(c.id))
+    if (newComments.length > 0) {
+      useCommentStore.setState((s) => ({
+        comments: [...s.comments, ...newComments],
+      }))
+    }
+  }
+
+  if (cached.conditionReports?.length) {
+    const store = useConditionReportStore.getState()
+    const existingIds = new Set(store.reports.map((r) => r.id))
+    const newReports = cached.conditionReports.filter(
+      (r) => !existingIds.has(r.id)
+    )
+    if (newReports.length > 0) {
+      useConditionReportStore.setState((s) => ({
+        reports: [...s.reports, ...newReports],
+      }))
+    }
+  }
 }
