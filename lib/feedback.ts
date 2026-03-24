@@ -225,3 +225,12 @@ export function showAutoValidatedToast(name: string): void {
 export function showCommentPostedToast(): void {
   toast.success('Commentaire publié', { duration: 3000 })
 }
+
+// ---------------------------------------------------------------------------
+// Conditions (Story 8.2)
+// ---------------------------------------------------------------------------
+
+/** Show toast when a condition report is submitted */
+export function showConditionReportedToast(): void {
+  toast.success('Conditions reportées', { duration: 3000 })
+}

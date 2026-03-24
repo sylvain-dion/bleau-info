@@ -38,6 +38,8 @@ import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 import { SectorDownloadButton } from '@/components/offline/sector-download-button'
 import { CommentSection } from '@/components/boulder/comment-section'
+import { ConditionSection } from '@/components/boulder/condition-section'
+import { ConditionBadge } from '@/components/boulder/condition-badge'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -176,6 +178,7 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           <Mountain className="h-3 w-3" />
           {STYLE_LABELS[style]}
         </span>
+        <ConditionBadge boulderId={properties.id} />
       </div>
 
       {/* ── Half/Full content: shown when expanded ── */}
@@ -243,6 +246,7 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
 
           {/* Comments (Story 8.1) */}
           <div className="border-t border-border pt-4">
+            <ConditionSection boulderId={properties.id} boulderName={name} />
             <CommentSection boulderId={properties.id} boulderName={name} />
           </div>
 
