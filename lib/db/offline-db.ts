@@ -10,6 +10,8 @@ import Dexie, { type Table } from 'dexie'
 import type { FeatureCollection, Point } from 'geojson'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
 import type { TopoData } from '@/lib/data/mock-topos'
+import type { BoulderComment } from '@/lib/validations/comment'
+import type { ConditionReport } from '@/lib/validations/condition'
 
 /** A fully cached sector for offline use */
 export interface OfflineSector {
@@ -27,6 +29,10 @@ export interface OfflineSector {
   downloadedAt: string
   /** Approximate total size in bytes */
   sizeBytes: number
+  /** Cached comments (20 most recent per boulder) */
+  comments?: BoulderComment[]
+  /** Cached condition reports (last 7 days) */
+  conditionReports?: ConditionReport[]
 }
 
 /** A cached photo linked to a sector/boulder */
