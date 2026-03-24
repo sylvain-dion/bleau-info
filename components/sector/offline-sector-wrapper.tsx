@@ -67,7 +67,7 @@ export function OfflineSectorWrapper({
           </span>
         </div>
       )}
-      <BoulderListView boulders={boulders} sectorSlug={sectorSlug} />
+      <BoulderListView boulders={boulders} sectorSlug={sectorSlug} sectorName={sector.name} />
     </>
   )
 

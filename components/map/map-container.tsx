@@ -13,6 +13,8 @@ import {
 } from '@/lib/maplibre/config'
 import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
+import { getCircuitRoutes } from '@/lib/data/mock-circuits'
+import type { FeatureCollection, Point } from 'geojson'
 import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
 import { useTickStore } from '@/stores/tick-store'
@@ -35,12 +37,47 @@ interface MapContainerProps {
 }
 
 /** Filter the mock boulder GeoJSON based on current filter state */
-function filterBoulders(state: FilterState): typeof mockBoulders {
+/** Circuit dot features (generated once, reused on every filter update) */
+let _circuitDotFeatures: GeoJSON.Feature<Point>[] | null = null
+
+function getCircuitDotFeatures(): GeoJSON.Feature<Point>[] {
+  if (_circuitDotFeatures) return _circuitDotFeatures
+  const routeData = getCircuitRoutes()
+  const dots: GeoJSON.Feature<Point>[] = []
+  for (const route of routeData.features) {
+    const coords = route.geometry.coordinates
+    const color = route.properties.color
+    for (let i = 0; i < coords.length - 1; i++) {
+      const [lng1, lat1] = coords[i]
+      const [lng2, lat2] = coords[i + 1]
+      const dLng = lng2 - lng1
+      const dLat = lat2 - lat1
+      const dist = Math.sqrt(dLng * dLng + dLat * dLat)
+      const steps = Math.max(2, Math.ceil(dist / 0.0003))
+      for (let s = 1; s < steps; s++) {
+        const t = s / steps
+        dots.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [lng1 + dLng * t, lat1 + dLat * t] },
+          properties: { _isCircuitDot: true, _circuitColor: color },
+        })
+      }
+    }
+  }
+  _circuitDotFeatures = dots
+  console.log('[Circuits] Generated', dots.length, 'path dots')
+  return dots
+}
+
+function filterBoulders(state: FilterState): FeatureCollection<Point> {
   const filtered = mockBoulders.features.filter(
     (feature: (typeof mockBoulders.features)[number]) =>
       matchesFilters(feature.properties, state)
   )
-  return { type: 'FeatureCollection', features: filtered }
+  // Always include circuit dots (they're filtered by their own layer filter)
+  const circuitDots = getCircuitDotFeatures()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { type: 'FeatureCollection', features: [...filtered, ...circuitDots] } as FeatureCollection<Point, any>
 }
 
 export function MapContainer({ theme }: MapContainerProps) {
@@ -92,6 +129,9 @@ export function MapContainer({ theme }: MapContainerProps) {
     const filtered = filterBoulders(state)
     source.setData(filtered)
     setVisibleCount(filtered.features.length)
+
+    // Update circuit route visibility based on filter
+    updateCircuitVisibility(map, state.circuits)
   }, [])
 
   /** Initialize the map */
@@ -123,9 +163,16 @@ export function MapContainer({ theme }: MapContainerProps) {
     map.on('load', () => {
       addBoulderLayers(map)
       addCompletedBoulderLayer(map)
+      addCircuitLayers(map) // Add circuits during load, same as boulders
       addMapInteractions(map)
       // Apply any pre-existing filters
       updateMapData(useFilterStore.getState())
+
+      // Debug: verify circuit dots are in the source
+      map.once('idle', () => {
+        const rendered = map.queryRenderedFeatures(undefined, { layers: ['circuit-path-dots'] })
+        console.log('[Circuits] Rendered circuit dots in viewport:', rendered.length)
+      })
     })
 
     // Fallback to OSM raster tiles if remote style fails
@@ -135,6 +182,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         map.once('styledata', () => {
           addBoulderLayers(map)
           addCompletedBoulderLayer(map)
+          addCircuitLayers(map)
           addMapInteractions(map)
           updateMapData(useFilterStore.getState())
         })
@@ -186,6 +234,8 @@ export function MapContainer({ theme }: MapContainerProps) {
     // Re-add layers after style change (setStyle removes all custom layers)
     map.once('styledata', () => {
       addBoulderLayers(map)
+      addCompletedBoulderLayer(map)
+      addCircuitLayers(map)
       addMapInteractions(map)
       updateMapData(useFilterStore.getState())
     })
@@ -261,9 +311,10 @@ function addBoulderLayers(map: maplibregl.Map) {
   // Skip if source already exists (e.g. after theme change re-add)
   if (map.getSource('boulders')) return
 
+  // Initial data includes boulders + circuit path dots
   map.addSource('boulders', {
     type: 'geojson',
-    data: mockBoulders,
+    data: filterBoulders(useFilterStore.getState()),
     ...CLUSTER_CONFIG,
   })
 
@@ -314,12 +365,40 @@ function addBoulderLayers(map: maplibregl.Map) {
     },
   })
 
-  // ── Individual boulder markers ──
+  // ── Circuit path dots (small, between boulders) ──
+  map.addLayer({
+    id: 'circuit-path-dots',
+    type: 'circle',
+    source: 'boulders',
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', '_isCircuitDot'], true]],
+    paint: {
+      'circle-color': [
+        'match',
+        ['get', '_circuitColor'],
+        'jaune', CIRCUIT_COLORS.jaune,
+        'bleu', CIRCUIT_COLORS.bleu,
+        'rouge', CIRCUIT_COLORS.rouge,
+        'blanc', '#d4d4d8',
+        'orange', CIRCUIT_COLORS.orange,
+        'noir', CIRCUIT_COLORS.noir,
+        '#a1a1aa',
+      ],
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        12, 1.5,
+        15, 3,
+        18, 4,
+      ],
+      'circle-opacity': 0.6,
+    },
+  })
+
+  // ── Individual boulder markers (exclude circuit dots) ──
   map.addLayer({
     id: 'boulder-markers',
     type: 'circle',
     source: 'boulders',
-    filter: ['!', ['has', 'point_count']],
+    filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', '_isCircuitDot'], true]],
     paint: {
       'circle-color': [
         'match',
@@ -411,6 +490,41 @@ function updateCompletedLayer(map: maplibregl.Map | null) {
     (f: (typeof mockBoulders.features)[number]) => completedIds.has(f.properties.id)
   )
   source.setData({ type: 'FeatureCollection', features })
+}
+
+/** No-op — circuit dots are injected into the boulders source via filterBoulders() */
+function addCircuitLayers(_map: maplibregl.Map) {
+  // Circuit path dots are rendered by the 'circuit-path-dots' layer in addBoulderLayers()
+}
+
+/**
+ * Show/hide circuit lines based on selected circuit filter.
+ *
+ * - No filter (empty array) → show all circuits
+ * - Filter active → only show matching circuits, hide others
+ */
+function updateCircuitVisibility(
+  map: maplibregl.Map,
+  selectedCircuits: string[]
+): void {
+  if (!map.getLayer('circuit-path-dots')) return
+
+  if (selectedCircuits.length === 0) {
+    // Show all circuit dots
+    map.setFilter('circuit-path-dots', [
+      'all',
+      ['!', ['has', 'point_count']],
+      ['==', ['get', '_isCircuitDot'], true],
+    ])
+  } else {
+    // Show only selected circuits
+    map.setFilter('circuit-path-dots', [
+      'all',
+      ['!', ['has', 'point_count']],
+      ['==', ['get', '_isCircuitDot'], true],
+      ['in', ['get', '_circuitColor'], ['literal', selectedCircuits]],
+    ])
+  }
 }
 
 /** Add click interactions for clusters and individual markers */
