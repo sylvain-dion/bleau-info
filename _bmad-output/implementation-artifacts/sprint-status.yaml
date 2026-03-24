@@ -123,4 +123,5 @@ development_status:
   8-1-publier-un-commentaire-sur-un-bloc: done
   8-2-reporter-conditions-terrain-bloc: done
   8-3-afficher-commentaires-conditions-fiche-bloc: done
-  8-4-signaler-commentaire-inapproprie: in-progress
+  8-4-signaler-commentaire-inapproprie: done
+  8-5-modifier-supprimer-son-commentaire: in-progress
