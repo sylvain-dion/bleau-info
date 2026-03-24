@@ -15,6 +15,9 @@ interface CommentState {
   /** Add a new comment. Returns the generated ID. */
   addComment: (data: CommentInput) => string
 
+  /** Update a comment's text. Sets updatedAt and marks as edited. */
+  updateComment: (id: string, text: string) => void
+
   /** Remove a comment by ID. */
   removeComment: (id: string) => void
 
@@ -51,6 +54,16 @@ export const useCommentStore = create<CommentState>()(
           comments: [comment, ...state.comments],
         }))
         return id
+      },
+
+      updateComment: (id, text) => {
+        set((state) => ({
+          comments: state.comments.map((c) =>
+            c.id === id
+              ? { ...c, text, updatedAt: new Date().toISOString() }
+              : c
+          ),
+        }))
       },
 
       removeComment: (id) => {
