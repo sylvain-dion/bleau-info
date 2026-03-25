@@ -29,6 +29,9 @@ import type { SearchResult } from '@/lib/search'
 import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
 import { SectorContextBar } from './sector-context-bar'
+import { GuidedNavBar } from './guided-nav-bar'
+import { UserPositionLayer } from './user-position-layer'
+import { useGuidedModeStore } from '@/stores/guided-mode-store'
 import { DownloadProgress } from '@/components/offline/download-progress'
 
 interface MapContainerProps {
@@ -295,7 +298,9 @@ export function MapContainer({ theme }: MapContainerProps) {
         onLocate={locate}
         onAdd={isAuthenticated ? () => setShowBoulderForm(true) : undefined}
       />
-      <SectorContextBar mapRef={mapRef} />
+      <SectorContextBarWrapper mapRef={mapRef} />
+      <GuidedNavBar mapRef={mapRef} />
+      <UserPositionLayer mapRef={mapRef} />
       <MapSheet />
       <DownloadProgress />
       <BoulderCreationDrawer
@@ -304,6 +309,13 @@ export function MapContainer({ theme }: MapContainerProps) {
       />
     </div>
   )
+}
+
+/** Wrapper: hides SectorContextBar when guided mode is active */
+function SectorContextBarWrapper({ mapRef }: { mapRef: React.RefObject<maplibregl.Map | null> }) {
+  const isGuided = useGuidedModeStore((s) => s.isActive)
+  if (isGuided) return null
+  return <SectorContextBar mapRef={mapRef} />
 }
 
 /** Add boulder GeoJSON source with clustering + marker/cluster layers */

@@ -131,4 +131,5 @@ development_status:
   # Phase 2 — Epic 9: Circuits & Parcours guidés
   epic-9: in-progress
   9-1-afficher-circuits-officiels-sur-carte: done
-  9-2-consulter-fiche-circuit: in-progress
+  9-2-consulter-fiche-circuit: done
+  9-3-mode-navigation-guidee-circuit: in-progress
