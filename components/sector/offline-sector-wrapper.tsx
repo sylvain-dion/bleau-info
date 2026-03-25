@@ -5,6 +5,7 @@ import { useOfflineSectorPage } from '@/lib/hooks/use-offline-sector-page'
 import { SectorHeader } from './sector-header'
 import { SectorTabsContainer } from './sector-tabs'
 import { BoulderListView } from './boulder-list-view'
+import { SectorCircuitsTab } from './sector-circuits-tab'
 import { SectorWeatherTab } from './sector-weather-tab'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import type { BoulderListItem } from './boulder-list-card'
@@ -67,7 +68,7 @@ export function OfflineSectorWrapper({
           </span>
         </div>
       )}
-      <BoulderListView boulders={boulders} sectorSlug={sectorSlug} sectorName={sector.name} />
+      <BoulderListView boulders={boulders} sectorSlug={sectorSlug} />
     </>
   )
 
@@ -76,6 +77,9 @@ export function OfflineSectorWrapper({
       <SectorHeader sector={sector} isOfflineReady={!!offlineData} />
       <SectorTabsContainer
         blocsContent={blocsContent}
+        circuitsContent={
+          <SectorCircuitsTab sectorName={sector.name} />
+        }
         meteoContent={
           <SectorWeatherTab
             sectorName={sector.name}
