@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Route,
   Hash,
@@ -10,6 +11,7 @@ import {
   CheckCircle2,
   Circle,
   ListChecks,
+  Compass,
 } from 'lucide-react'
 import {
   getCircuitsForSector,
@@ -18,6 +20,7 @@ import {
 import { getBoulderById, toSlug } from '@/lib/data/boulder-service'
 import { CIRCUIT_COLORS, type CircuitColor } from '@/lib/data/mock-boulders'
 import { useTickStore } from '@/stores/tick-store'
+import { useGuidedModeStore } from '@/stores/guided-mode-store'
 
 const CIRCUIT_LABELS: Record<CircuitColor, string> = {
   jaune: 'Jaune',
@@ -141,7 +144,9 @@ function CircuitDetailView({
   circuit: CircuitInfo
   onBack: () => void
 }) {
+  const router = useRouter()
   const sectorSlug = toSlug(circuit.sector)
+  const startGuide = useGuidedModeStore((s) => s.startGuide)
   const ticks = useTickStore((s) => s.ticks)
   const tickedIds = useMemo(
     () => new Set(ticks.map((t) => t.boulderId)),
@@ -216,19 +221,33 @@ function CircuitDetailView({
 
       {/* Actions */}
       <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            // Find first uncompleted boulder, or start from beginning
+            const startIdx = circuit.boulderIds.findIndex((id) => !tickedIds.has(id))
+            startGuide(circuit.id, circuit.color, circuit.boulderIds, startIdx >= 0 ? startIdx : 0)
+            router.push('/')
+          }}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-xs font-medium text-white transition-colors"
+          style={{ backgroundColor: circuit.hexColor }}
+        >
+          <Compass className="h-3.5 w-3.5" />
+          Mode guidé
+        </button>
         <Link
           href={`/?circuit=${circuit.color}&sector=${sectorSlug}`}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Map className="h-3.5 w-3.5" />
-          Voir sur la carte
+          Carte
         </Link>
         <button
           type="button"
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
         >
           <ListChecks className="h-3.5 w-3.5" />
-          Loguer l&apos;enchaînement
+          Loguer tout
         </button>
       </div>
 
