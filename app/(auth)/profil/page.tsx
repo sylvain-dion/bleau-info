@@ -18,6 +18,7 @@ import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { StorageManager } from '@/components/offline/storage-manager'
 import { ConflictList } from '@/components/sync/conflict-list'
+import { MyCircuitsSection } from '@/components/profile/my-circuits-section'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
@@ -134,6 +135,9 @@ export default function ProfilPage() {
           role={user.user_metadata?.role ?? null}
         />
       </div>
+
+      {/* Circuit progression (Story 9.4) */}
+      <MyCircuitsSection />
 
       {/* Boulder drafts */}
       <div className="mb-6">

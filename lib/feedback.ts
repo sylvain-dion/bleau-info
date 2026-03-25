@@ -246,3 +246,15 @@ export function showCommentReportedToast(): void {
     duration: 4000,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Circuit Completion (Story 9.4)
+// ---------------------------------------------------------------------------
+
+/** Show toast when a circuit is fully completed */
+export function showCircuitCompletedToast(circuitName: string): void {
+  toast.success('Circuit complété !', {
+    description: circuitName,
+    duration: 5000,
+  })
+}
