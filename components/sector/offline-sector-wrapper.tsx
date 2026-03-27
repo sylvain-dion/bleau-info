@@ -74,7 +74,7 @@ export function OfflineSectorWrapper({
 
   return (
     <>
-      <SectorHeader sector={sector} isOfflineReady={!!offlineData} />
+      <SectorHeader sector={sector} boulderIds={boulders.map((b) => b.id)} isOfflineReady={!!offlineData} />
       <SectorTabsContainer
         blocsContent={blocsContent}
         circuitsContent={

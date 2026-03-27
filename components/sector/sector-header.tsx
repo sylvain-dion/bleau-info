@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -8,9 +10,11 @@ import {
 } from 'lucide-react'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import { CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
+import { PraticabilityBadge } from './praticability-badge'
 
 interface SectorHeaderProps {
   sector: SectorDetail
+  boulderIds?: string[]
   isOfflineReady?: boolean
 }
 
@@ -22,6 +26,7 @@ interface SectorHeaderProps {
  */
 export function SectorHeader({
   sector,
+  boulderIds = [],
   isOfflineReady = false,
 }: SectorHeaderProps) {
   return (
@@ -69,6 +74,15 @@ export function SectorHeader({
                 label={`${sector.circuitCount} circuit${sector.circuitCount > 1 ? 's' : ''}`}
               />
             )}
+          </div>
+
+          {/* Praticability badge */}
+          <div className="mt-2">
+            <PraticabilityBadge
+              sectorLat={sector.centroid.latitude}
+              sectorLng={sector.centroid.longitude}
+              boulderIds={boulderIds}
+            />
           </div>
 
           {/* Circuit color badges */}
