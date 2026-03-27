@@ -20,7 +20,10 @@ import {
 import { getBoulderById, toSlug } from '@/lib/data/boulder-service'
 import { CIRCUIT_COLORS, type CircuitColor } from '@/lib/data/mock-boulders'
 import { useTickStore } from '@/stores/tick-store'
+import { useAuthStore } from '@/stores/auth-store'
 import { useGuidedModeStore } from '@/stores/guided-mode-store'
+import { todayISO } from '@/lib/validations/tick'
+import { toast } from 'sonner'
 
 const CIRCUIT_LABELS: Record<CircuitColor, string> = {
   jaune: 'Jaune',
@@ -147,7 +150,9 @@ function CircuitDetailView({
   const router = useRouter()
   const sectorSlug = toSlug(circuit.sector)
   const startGuide = useGuidedModeStore((s) => s.startGuide)
+  const addTick = useTickStore((s) => s.addTick)
   const ticks = useTickStore((s) => s.ticks)
+  const { user } = useAuthStore()
   const tickedIds = useMemo(
     () => new Set(ticks.map((t) => t.boulderId)),
     [ticks]
@@ -157,6 +162,29 @@ function CircuitDetailView({
     () => circuit.boulderIds.map((id) => getBoulderById(id)).filter(Boolean),
     [circuit.boulderIds]
   )
+
+  const unticked = boulders.filter((b) => b && !tickedIds.has(b.id))
+
+  function handleLogAll() {
+    if (!user || unticked.length === 0) return
+    const today = todayISO()
+    for (const boulder of unticked) {
+      if (!boulder) continue
+      addTick({
+        userId: user.id,
+        boulderId: boulder.id,
+        boulderName: boulder.name,
+        boulderGrade: boulder.grade,
+        tickStyle: 'flash',
+        tickDate: today,
+        personalNote: '',
+      })
+    }
+    toast.success(`${unticked.length} croix enregistrées`, {
+      description: `Circuit ${CIRCUIT_LABELS[circuit.color]} complété`,
+      duration: 4000,
+    })
+  }
 
   const completedCount = boulders.filter((b) => b && tickedIds.has(b.id)).length
   const progressPercent =
@@ -244,10 +272,12 @@ function CircuitDetailView({
         </Link>
         <button
           type="button"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+          onClick={handleLogAll}
+          disabled={!user || unticked.length === 0}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
         >
           <ListChecks className="h-3.5 w-3.5" />
-          Loguer tout
+          {unticked.length === 0 ? 'Tout logué' : `Loguer tout (${unticked.length})`}
         </button>
       </div>
 
