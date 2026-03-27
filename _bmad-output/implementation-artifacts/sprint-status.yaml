@@ -133,4 +133,9 @@ development_status:
   9-1-afficher-circuits-officiels-sur-carte: done
   9-2-consulter-fiche-circuit: done
   9-3-mode-navigation-guidee-circuit: done
-  9-4-progression-completion-circuit: in-progress
+  9-4-progression-completion-circuit: done
+  epic-9-retrospective: optional
+
+  # Phase 2 — Epic 10: Météo & Praticabilité
+  epic-10: in-progress
+  10-1-afficher-previsions-meteo-page-secteur: in-progress
