@@ -5,13 +5,15 @@
  * with inferred rock conditions based on precipitation.
  */
 
-/** Fontainebleau forest center coordinates */
+/** Fontainebleau forest center coordinates (fallback) */
 const FONTAINEBLEAU_LAT = 48.4088
 const FONTAINEBLEAU_LNG = 2.6988
 
-/** Cache key and duration (30 minutes) */
-const CACHE_KEY = 'bleau-weather-cache'
-const CACHE_DURATION_MS = 30 * 60 * 1000
+/** Cache duration: 3h online (NFR-10) */
+const CACHE_DURATION_MS = 3 * 60 * 60 * 1000
+
+/** Max age before showing staleness warning (24h) */
+export const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000
 
 /** Inferred rock condition from weather data */
 export type InferredCondition = 'sec' | 'humide' | 'incertain'
@@ -78,17 +80,36 @@ function inferCondition(
   return 'incertain'
 }
 
+export interface FetchWeatherOptions {
+  lat?: number
+  lng?: number
+  days?: 3 | 7
+}
+
+/** Build a cache key scoped to coordinates + forecast length */
+function buildCacheKey(lat: number, lng: number, days: number): string {
+  return `bleau-weather-${lat.toFixed(2)}-${lng.toFixed(2)}-${days}d`
+}
+
 /**
- * Fetch 3-day weather forecast from Open-Meteo API.
+ * Fetch weather forecast from Open-Meteo API.
  *
- * Uses client-side localStorage cache (30min TTL).
- * Returns null on failure (network error, API down).
+ * Supports sector-specific coordinates and 3 or 7-day forecasts.
+ * Uses client-side localStorage cache (3h TTL).
+ * Returns stale cache on failure (with fetchedAt for staleness check).
  */
-export async function fetchWeatherForecast(): Promise<WeatherForecast | null> {
+export async function fetchWeatherForecast(
+  options?: FetchWeatherOptions
+): Promise<WeatherForecast | null> {
+  const lat = options?.lat ?? FONTAINEBLEAU_LAT
+  const lng = options?.lng ?? FONTAINEBLEAU_LNG
+  const forecastDays = options?.days ?? 3
+  const cacheKey = buildCacheKey(lat, lng, forecastDays)
+
   // Check cache
   if (typeof window !== 'undefined') {
     try {
-      const cached = localStorage.getItem(CACHE_KEY)
+      const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const entry: CacheEntry = JSON.parse(cached)
         if (entry.expiresAt > Date.now()) {
@@ -102,17 +123,17 @@ export async function fetchWeatherForecast(): Promise<WeatherForecast | null> {
 
   try {
     const url = new URL('https://api.open-meteo.com/v1/forecast')
-    url.searchParams.set('latitude', String(FONTAINEBLEAU_LAT))
-    url.searchParams.set('longitude', String(FONTAINEBLEAU_LNG))
+    url.searchParams.set('latitude', String(lat))
+    url.searchParams.set('longitude', String(lng))
     url.searchParams.set(
       'daily',
       'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code,wind_speed_10m_max'
     )
     url.searchParams.set('timezone', 'Europe/Paris')
-    url.searchParams.set('forecast_days', '3')
+    url.searchParams.set('forecast_days', String(forecastDays))
 
     const res = await fetch(url.toString(), { signal: AbortSignal.timeout(5000) })
-    if (!res.ok) return null
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
     const json = await res.json()
     const daily = json.daily
@@ -156,7 +177,7 @@ export async function fetchWeatherForecast(): Promise<WeatherForecast | null> {
           data: forecast,
           expiresAt: Date.now() + CACHE_DURATION_MS,
         }
-        localStorage.setItem(CACHE_KEY, JSON.stringify(entry))
+        localStorage.setItem(cacheKey, JSON.stringify(entry))
       } catch {
         // Ignore storage errors
       }
@@ -164,6 +185,18 @@ export async function fetchWeatherForecast(): Promise<WeatherForecast | null> {
 
     return forecast
   } catch {
+    // On failure, return stale cache if available
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const entry: CacheEntry = JSON.parse(cached)
+          return entry.data // stale but better than nothing
+        }
+      } catch {
+        // Ignore
+      }
+    }
     return null
   }
 }

@@ -83,6 +83,8 @@ export function OfflineSectorWrapper({
         meteoContent={
           <SectorWeatherTab
             sectorName={sector.name}
+            sectorLat={sector.centroid.latitude}
+            sectorLng={sector.centroid.longitude}
             bouldersInSector={boulders.map((b) => ({ id: b.id, name: b.name }))}
           />
         }
