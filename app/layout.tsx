@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { onest } from '@/lib/fonts'
 import { OfflineStatus } from '@/components/layout/offline-status'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { WeatherAlertsBell } from '@/components/layout/weather-alerts-bell'
 import { AuthListener } from '@/components/auth/auth-listener'
 import { UserMenu } from '@/components/auth/user-menu'
 import { ToasterProvider } from '@/components/layout/toaster-provider'
@@ -88,6 +89,7 @@ export default function RootLayout({
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            <WeatherAlertsBell />
             <UserMenu />
             <ThemeToggle />
           </div>
