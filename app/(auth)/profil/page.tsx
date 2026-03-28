@@ -19,6 +19,7 @@ import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { StorageManager } from '@/components/offline/storage-manager'
 import { ConflictList } from '@/components/sync/conflict-list'
 import { MyCircuitsSection } from '@/components/profile/my-circuits-section'
+import { WeatherAlertsConfig } from '@/components/profile/weather-alerts-config'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
@@ -278,6 +279,15 @@ export default function ProfilPage() {
           Gérez les packs de secteurs téléchargés sur cet appareil.
         </p>
         <StorageManager />
+      </div>
+
+      {/* Alertes météo */}
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-1 text-sm font-semibold text-foreground">Alertes météo</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Recevez une notification quand les conditions sont favorables.
+        </p>
+        <WeatherAlertsConfig />
       </div>
 
       {/* Maintenance */}

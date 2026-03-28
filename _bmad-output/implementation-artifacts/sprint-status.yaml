@@ -140,4 +140,5 @@ development_status:
   epic-10: in-progress
   10-1-afficher-previsions-meteo-page-secteur: done
   10-2-score-de-praticabilite-par-secteur: done
-  10-3-historique-de-sechage-par-secteur: in-progress
+  10-3-historique-de-sechage-par-secteur: done
+  10-4-notifications-conditions-favorables: in-progress

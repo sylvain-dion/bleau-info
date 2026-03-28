@@ -24,6 +24,7 @@ const ZUSTAND_KEYS = [
   'bleau-condition-reports',
   'bleau-comment-reports',
   'bleau-circuit-completions',
+  'bleau-weather-alerts',
 ] as const
 
 /** IndexedDB database names managed by the app */
