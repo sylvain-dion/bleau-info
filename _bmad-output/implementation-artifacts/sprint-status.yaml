@@ -150,4 +150,5 @@ development_status:
   11-1-profil-public-grimpeur: done
   11-2-feed-activite-par-secteur: done
   11-3-feed-activite-global: done
-  11-4-creer-partager-resume-session: in-progress
+  11-4-creer-partager-resume-session: done
+  11-5-compteur-activite-recente-blocs: in-progress
