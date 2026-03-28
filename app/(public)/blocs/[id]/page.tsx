@@ -19,6 +19,7 @@ import { VideoCarousel } from '@/components/boulder/video-carousel'
 import { CommentSection } from '@/components/boulder/comment-section'
 import { ConditionSection } from '@/components/boulder/condition-section'
 import { ConditionBadge } from '@/components/boulder/condition-badge'
+import { ActivityCounter } from '@/components/boulder/activity-counter'
 
 /**
  * ISR revalidation: regenerate page every hour.
@@ -148,6 +149,11 @@ export default async function BlocPage({
         boulderId={boulder.id}
         mockVideos={boulder.videos}
       />
+
+      {/* Activity counter */}
+      <div className="mb-6">
+        <ActivityCounter boulderId={boulder.id} />
+      </div>
 
       {/* Conditions */}
       <ConditionSection

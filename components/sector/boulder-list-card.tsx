@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Check, Zap, Eye, Dumbbell, Star, Target } from 'lucide-react'
 import { useTickStore } from '@/stores/tick-store'
 import { useListStore } from '@/stores/list-store'
+import { ActivityCounter } from '@/components/boulder/activity-counter'
 
 /** Boulder data shape passed from the sector page (server → client) */
 export interface BoulderListItem {
@@ -116,6 +117,7 @@ export function BoulderListCard({ boulder }: BoulderListCardProps) {
           {isInFavorite && (
             <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-label="Favori" />
           )}
+          <ActivityCounter boulderId={boulder.id} compact />
         </div>
         <p className="text-xs text-muted-foreground">
           {STYLE_LABELS[boulder.style] ?? boulder.style}

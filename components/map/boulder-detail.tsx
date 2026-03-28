@@ -40,6 +40,7 @@ import { SectorDownloadButton } from '@/components/offline/sector-download-butto
 import { CommentSection } from '@/components/boulder/comment-section'
 import { ConditionSection } from '@/components/boulder/condition-section'
 import { ConditionBadge } from '@/components/boulder/condition-badge'
+import { ActivityCounter } from '@/components/boulder/activity-counter'
 
 /** Labels for boulder styles in French */
 const STYLE_LABELS: Record<BoulderStyle, string> = {
@@ -179,6 +180,7 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
           {STYLE_LABELS[style]}
         </span>
         <ConditionBadge boulderId={properties.id} />
+        <ActivityCounter boulderId={properties.id} compact />
       </div>
 
       {/* ── Half/Full content: shown when expanded ── */}
@@ -227,6 +229,9 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
               </p>
             </div>
           </div>
+
+          {/* Activity counter (full) */}
+          <ActivityCounter boulderId={properties.id} />
 
           {/* Topo viewer or placeholder */}
           <div className="border-t border-border pt-4">
