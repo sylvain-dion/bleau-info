@@ -141,4 +141,5 @@ development_status:
   10-1-afficher-previsions-meteo-page-secteur: done
   10-2-score-de-praticabilite-par-secteur: done
   10-3-historique-de-sechage-par-secteur: done
-  10-4-notifications-conditions-favorables: in-progress
+  10-4-notifications-conditions-favorables: done
+  10-5-cache-meteo-offline-pack-secteur: in-progress

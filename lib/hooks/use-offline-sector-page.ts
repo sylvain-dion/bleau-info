@@ -8,10 +8,17 @@ import { useConditionReportStore } from '@/stores/condition-report-store'
 import { offlineDb, type OfflineSector } from '@/lib/db/offline-db'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import type { BoulderListItem } from '@/components/sector/boulder-list-card'
+import type { WeatherForecast } from '@/lib/weather/weather-service'
+import type { RainHistory } from '@/lib/weather/drying-service'
 
 interface OfflineSectorPageData {
   sector: SectorDetail
   boulders: BoulderListItem[]
+  /** Cached weather from pack download */
+  weatherForecast?: WeatherForecast | null
+  rainHistory?: RainHistory | null
+  praticabilityScore?: number | null
+  downloadedAt: string
 }
 
 interface UseOfflineSectorPageResult {
@@ -125,7 +132,14 @@ function buildFromOffline(
     exposure: f.properties.exposure,
   }))
 
-  return { sector, boulders }
+  return {
+    sector,
+    boulders,
+    weatherForecast: cached.weatherForecast,
+    rainHistory: cached.rainHistory,
+    praticabilityScore: cached.praticabilityScore,
+    downloadedAt: cached.downloadedAt,
+  }
 }
 
 /**
