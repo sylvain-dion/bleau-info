@@ -16,6 +16,7 @@ import {
   type DayForecast,
   type WeatherForecast,
 } from '@/lib/weather/weather-service'
+import { DryingHistoryCard } from './drying-history-card'
 import { useConditionReportStore } from '@/stores/condition-report-store'
 import {
   CONDITION_CONFIG,
@@ -194,6 +195,13 @@ export function SectorWeatherTab({
           </div>
         )}
       </section>
+
+      {/* Drying history (Story 10.3) */}
+      <DryingHistoryCard
+        sectorLat={sectorLat ?? 48.4088}
+        sectorLng={sectorLng ?? 2.6988}
+        dominantExposure={null}
+      />
 
       {/* Crowdsourced conditions summary */}
       <section>
