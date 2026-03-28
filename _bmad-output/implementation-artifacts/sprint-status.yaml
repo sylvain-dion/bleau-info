@@ -152,4 +152,8 @@ development_status:
   11-3-feed-activite-global: done
   11-4-creer-partager-resume-session: done
   11-5-compteur-activite-recente-blocs: done
-  11-6-parametres-confidentialite-visibilite: in-progress
+  11-6-parametres-confidentialite-visibilite: done
+
+  # Epic 12: Consensus & Recommandations
+  epic-12: in-progress
+  12-1-cotation-communautaire-soft-grade: in-progress

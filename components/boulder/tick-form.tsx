@@ -2,12 +2,14 @@
 
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import { CheckCircle2, X } from 'lucide-react'
 import { tickFormSchema, todayISO, type TickFormData, type TickStyle } from '@/lib/validations/tick'
 import { useTickStore } from '@/stores/tick-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { triggerTickFeedback } from '@/lib/feedback'
 import { TickStyleSelector } from './tick-style-selector'
+import { GRADE_SCALE } from '@/lib/grades'
 
 interface TickFormProps {
   boulderId: string
@@ -26,6 +28,7 @@ interface TickFormProps {
 export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSuccess }: TickFormProps) {
   const { user } = useAuthStore()
   const addTick = useTickStore((s) => s.addTick)
+  const [perceivedGrade, setPerceivedGrade] = useState<string>(boulderGrade)
 
   const {
     register,
@@ -50,6 +53,7 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
       tickStyle: data.tickStyle,
       tickDate: data.tickDate,
       personalNote: data.personalNote ?? '',
+      perceivedGrade: perceivedGrade !== boulderGrade ? perceivedGrade : null,
     })
 
     triggerTickFeedback()
@@ -121,6 +125,28 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
         {errors.personalNote && (
           <p className="mt-1 text-xs text-destructive">{errors.personalNote.message}</p>
         )}
+      </div>
+
+      {/* Perceived grade (optional) */}
+      <div>
+        <label htmlFor="perceivedGrade" className="mb-1.5 block text-sm font-medium text-foreground">
+          Cotation ressentie <span className="font-normal text-muted-foreground">(optionnel)</span>
+        </label>
+        <select
+          id="perceivedGrade"
+          value={perceivedGrade}
+          onChange={(e) => setPerceivedGrade(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          {GRADE_SCALE.map((g) => (
+            <option key={g} value={g}>
+              {g}{g === boulderGrade ? ' (officiel)' : ''}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Quelle difficulté avez-vous ressentie ?
+        </p>
       </div>
 
       {/* Actions */}

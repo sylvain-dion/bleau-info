@@ -21,6 +21,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: 'Super session',
+      perceivedGrade: null,
     })
 
     expect(id).toBeTruthy()
@@ -41,6 +42,7 @@ describe('tick-store', () => {
       tickStyle: 'a_vue',
       tickDate: '2026-02-28',
       personalNote: '',
+      perceivedGrade: null,
     })
     useTickStore.getState().addTick({
       userId: 'user-1',
@@ -50,6 +52,7 @@ describe('tick-store', () => {
       tickStyle: 'travaille',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
 
     const ticks = useTickStore.getState().ticks
@@ -67,6 +70,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
 
     useTickStore.getState().removeTick(id)
@@ -87,6 +91,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
     useTickStore.getState().addTick({
       userId: 'user-1',
@@ -96,6 +101,7 @@ describe('tick-store', () => {
       tickStyle: 'a_vue',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
 
     const boulder1Ticks = useTickStore.getState().getTicksForBoulder('boulder-1')
@@ -114,6 +120,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
 
     expect(useTickStore.getState().isBoulderCompleted('boulder-1')).toBe(true)
@@ -129,6 +136,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
     useTickStore.getState().addTick({
       userId: 'user-1',
@@ -138,6 +146,7 @@ describe('tick-store', () => {
       tickStyle: 'travaille',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
 
     const ids = useTickStore.getState().getCompletedBoulderIds()
@@ -156,6 +165,7 @@ describe('tick-store', () => {
       tickStyle: 'flash',
       tickDate: '2026-03-01',
       personalNote: '',
+      perceivedGrade: null,
     })
     useTickStore.getState().addTick({
       userId: 'user-1',
@@ -165,6 +175,7 @@ describe('tick-store', () => {
       tickStyle: 'a_vue',
       tickDate: '2026-03-02',
       personalNote: 'Second attempt',
+      perceivedGrade: null,
     })
 
     const ids = useTickStore.getState().getCompletedBoulderIds()

@@ -20,6 +20,7 @@ import { CommentSection } from '@/components/boulder/comment-section'
 import { ConditionSection } from '@/components/boulder/condition-section'
 import { ConditionBadge } from '@/components/boulder/condition-badge'
 import { ActivityCounter } from '@/components/boulder/activity-counter'
+import { CommunityGradeBadge } from '@/components/boulder/community-grade-badge'
 
 /**
  * ISR revalidation: regenerate page every hour.
@@ -103,6 +104,15 @@ export default async function BlocPage({
             />
           )}
           <ConditionBadge boulderId={boulder.id} />
+        </div>
+
+        {/* Community grade */}
+        <div className="mt-3">
+          <CommunityGradeBadge
+            boulderId={boulder.id}
+            officialGrade={boulder.grade}
+            detailed
+          />
         </div>
       </div>
 

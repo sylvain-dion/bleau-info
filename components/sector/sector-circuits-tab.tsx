@@ -178,6 +178,7 @@ function CircuitDetailView({
         tickStyle: 'flash',
         tickDate: today,
         personalNote: '',
+        perceivedGrade: null,
       })
     }
     toast.success(`${unticked.length} croix enregistrées`, {
