@@ -48,7 +48,7 @@ const TABS: TabConfig[] = [
     id: 'activite',
     label: 'Activité',
     icon: <Activity className="h-3.5 w-3.5" />,
-    available: false,
+    available: true,
   },
   {
     id: 'stats',
@@ -135,10 +135,12 @@ export function SectorTabsContainer({
   blocsContent,
   circuitsContent,
   meteoContent,
+  activityContent,
 }: {
   blocsContent: React.ReactNode
   circuitsContent?: React.ReactNode
   meteoContent?: React.ReactNode
+  activityContent?: React.ReactNode
 }) {
   const [activeTab, setActiveTab] = useState<SectorTab>('blocs')
 
@@ -149,7 +151,7 @@ export function SectorTabsContainer({
       {activeTab === 'circuits' && (circuitsContent ?? <TabPlaceholder tabName="Circuits" />)}
       {activeTab === 'topo' && <TabPlaceholder tabName="Topo" />}
       {activeTab === 'meteo' && (meteoContent ?? <TabPlaceholder tabName="Météo" />)}
-      {activeTab === 'activite' && <TabPlaceholder tabName="Activité" />}
+      {activeTab === 'activite' && (activityContent ?? <TabPlaceholder tabName="Activité" />)}
       {activeTab === 'stats' && <TabPlaceholder tabName="Statistiques" />}
     </>
   )
