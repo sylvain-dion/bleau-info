@@ -25,11 +25,20 @@ import {
   type ConditionValue,
 } from '@/lib/validations/condition'
 
+import type { RainHistory } from '@/lib/weather/drying-service'
+
 interface SectorWeatherTabProps {
   sectorName: string
   sectorLat?: number
   sectorLng?: number
   bouldersInSector: { id: string; name: string }[]
+  /** Cached weather from offline pack (shown with staleness warning) */
+  offlineWeather?: {
+    forecast: WeatherForecast | null
+    rainHistory: RainHistory | null
+    praticabilityScore: number | null
+    downloadedAt: string
+  }
 }
 
 /**
@@ -43,6 +52,7 @@ export function SectorWeatherTab({
   sectorLat,
   sectorLng,
   bouldersInSector,
+  offlineWeather,
 }: SectorWeatherTabProps) {
   const [forecastDays, setForecastDays] = useState<3 | 7>(3)
   const [forecast, setForecast] = useState<WeatherForecast | null>(null)
@@ -112,6 +122,23 @@ export function SectorWeatherTab({
 
   return (
     <div className="space-y-6">
+      {/* Offline staleness banner */}
+      {offlineWeather && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            Données météo hors-ligne du{' '}
+            {new Date(offlineWeather.downloadedAt).toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            {' '}— non temps réel
+          </span>
+        </div>
+      )}
+
       {/* Weather forecast */}
       <section>
         <div className="mb-3 flex items-center justify-between">

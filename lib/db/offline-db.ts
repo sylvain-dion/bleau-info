@@ -12,6 +12,8 @@ import type { BoulderProperties } from '@/lib/data/mock-boulders'
 import type { TopoData } from '@/lib/data/mock-topos'
 import type { BoulderComment } from '@/lib/validations/comment'
 import type { ConditionReport } from '@/lib/validations/condition'
+import type { WeatherForecast } from '@/lib/weather/weather-service'
+import type { RainHistory } from '@/lib/weather/drying-service'
 
 /** A fully cached sector for offline use */
 export interface OfflineSector {
@@ -33,6 +35,12 @@ export interface OfflineSector {
   comments?: BoulderComment[]
   /** Cached condition reports (last 7 days) */
   conditionReports?: ConditionReport[]
+  /** Cached weather forecast (7 days from download time) */
+  weatherForecast?: WeatherForecast | null
+  /** Cached rain history (7 days before download) */
+  rainHistory?: RainHistory | null
+  /** Praticability score at download time */
+  praticabilityScore?: number | null
 }
 
 /** A cached photo linked to a sector/boulder */

@@ -86,6 +86,16 @@ export function OfflineSectorWrapper({
             sectorLat={sector.centroid.latitude}
             sectorLng={sector.centroid.longitude}
             bouldersInSector={boulders.map((b) => ({ id: b.id, name: b.name }))}
+            offlineWeather={
+              offlineData
+                ? {
+                    forecast: offlineData.weatherForecast ?? null,
+                    rainHistory: offlineData.rainHistory ?? null,
+                    praticabilityScore: offlineData.praticabilityScore ?? null,
+                    downloadedAt: offlineData.downloadedAt,
+                  }
+                : undefined
+            }
           />
         }
       />

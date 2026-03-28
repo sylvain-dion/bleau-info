@@ -15,6 +15,9 @@ import { computeSectorHash } from './version-hash'
 import { useCommentStore } from '@/stores/comment-store'
 import { useConditionReportStore } from '@/stores/condition-report-store'
 import { ARCHIVE_THRESHOLD_MS } from '@/lib/validations/condition'
+import { fetchWeatherForecast } from '@/lib/weather/weather-service'
+import { fetchRainHistory } from '@/lib/weather/drying-service'
+import { computePraticability } from '@/lib/weather/praticability'
 
 /** Download progress reported to the UI */
 export interface DownloadProgress {
@@ -125,6 +128,22 @@ export function startSectorDownload(
         new Date(r.reportedAt).getTime() > conditionCutoff
     )
 
+    // Fetch weather data for offline cache
+    const [minLng, minLat, maxLng, maxLat] = sectorData.bbox
+    const centerLat = (minLat + maxLat) / 2
+    const centerLng = (minLng + maxLng) / 2
+
+    const [weatherForecast, rainHistory] = await Promise.all([
+      fetchWeatherForecast({ lat: centerLat, lng: centerLng, days: 7 }).catch(() => null),
+      fetchRainHistory(centerLat, centerLng).catch(() => null),
+    ])
+
+    // Compute praticability snapshot
+    const recentConditions = sectorConditions.map((r) => r.condition)
+    const praticability = weatherForecast
+      ? computePraticability(weatherForecast.days, null, recentConditions)
+      : null
+
     // Save sector to IndexedDB
     await offlineDb.sectors.put({
       name: sectorName,
@@ -136,6 +155,9 @@ export function startSectorDownload(
       sizeBytes: totalBytes,
       comments: sectorComments,
       conditionReports: sectorConditions,
+      weatherForecast,
+      rainHistory,
+      praticabilityScore: praticability?.score ?? null,
     })
 
     bytesDownloaded = Math.floor(totalBytes * 0.3)
