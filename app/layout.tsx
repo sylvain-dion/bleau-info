@@ -8,7 +8,7 @@ import { UserMenu } from '@/components/auth/user-menu'
 import { ToasterProvider } from '@/components/layout/toaster-provider'
 import { SyncProvider } from '@/components/layout/sync-provider'
 import Link from 'next/link'
-import { Mountain } from 'lucide-react'
+import { Mountain, Activity } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -86,6 +86,13 @@ export default function RootLayout({
             >
               <Mountain className="h-3.5 w-3.5" />
               Secteurs
+            </Link>
+            <Link
+              href="/feed"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Feed
             </Link>
           </div>
           <div className="flex items-center gap-2">
