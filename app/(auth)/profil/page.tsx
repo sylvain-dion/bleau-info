@@ -20,6 +20,7 @@ import { StorageManager } from '@/components/offline/storage-manager'
 import { ConflictList } from '@/components/sync/conflict-list'
 import { MyCircuitsSection } from '@/components/profile/my-circuits-section'
 import { WeatherAlertsConfig } from '@/components/profile/weather-alerts-config'
+import { PrivacyConfig } from '@/components/profile/privacy-config'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
 import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
@@ -279,6 +280,15 @@ export default function ProfilPage() {
           Gérez les packs de secteurs téléchargés sur cet appareil.
         </p>
         <StorageManager />
+      </div>
+
+      {/* Confidentialité */}
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-1 text-sm font-semibold text-foreground">Confidentialité</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Contrôlez ce qui est visible sur votre profil public.
+        </p>
+        <PrivacyConfig />
       </div>
 
       {/* Alertes météo */}
