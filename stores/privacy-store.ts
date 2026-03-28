@@ -17,6 +17,8 @@ export interface PrivacySettings {
   ascensionsPublic: boolean
   /** Whether the full logbook is accessible */
   logbookPublic: boolean
+  /** Whether to appear in sector activity feeds (if false, anonymized) */
+  showInFeed: boolean
 }
 
 interface PrivacyState {
@@ -29,6 +31,7 @@ const DEFAULT_SETTINGS: PrivacySettings = {
   statsPublic: true,
   ascensionsPublic: false,
   logbookPublic: false,
+  showInFeed: true,
 }
 
 export const usePrivacyStore = create<PrivacyState>()(

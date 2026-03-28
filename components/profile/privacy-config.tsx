@@ -1,7 +1,9 @@
 'use client'
 
-import { Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { Eye, EyeOff, ExternalLink } from 'lucide-react'
 import { usePrivacyStore } from '@/stores/privacy-store'
+import { useAuthStore } from '@/stores/auth-store'
 
 /**
  * Privacy settings toggles for the profile page.
@@ -9,6 +11,7 @@ import { usePrivacyStore } from '@/stores/privacy-store'
 export function PrivacyConfig() {
   const settings = usePrivacyStore((s) => s.settings)
   const updateSettings = usePrivacyStore((s) => s.updateSettings)
+  const { user } = useAuthStore()
 
   return (
     <div className="space-y-2">
@@ -39,6 +42,30 @@ export function PrivacyConfig() {
         onChange={(v) => updateSettings({ logbookPublic: v })}
         disabled={!settings.profilePublic}
       />
+      <Toggle
+        label="Apparaître dans les feeds"
+        description="Votre activité est nominative dans les fils de secteur"
+        enabled={settings.showInFeed}
+        onChange={(v) => updateSettings({ showInFeed: v })}
+      />
+
+      {/* Preview link */}
+      {user && settings.profilePublic && (
+        <Link
+          href={`/grimpeurs/${user.id}`}
+          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+        >
+          <Eye className="h-3 w-3" />
+          Voir mon profil public
+          <ExternalLink className="h-3 w-3" />
+        </Link>
+      )}
+
+      {!settings.profilePublic && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Votre profil est privé. Seuls votre nom et avatar sont visibles.
+        </p>
+      )}
     </div>
   )
 }
