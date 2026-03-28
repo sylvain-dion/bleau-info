@@ -80,6 +80,8 @@ export interface Tick {
   tickStyle: TickStyle
   tickDate: string
   personalNote: string
+  /** Community grade — perceived difficulty (Story 12.1) */
+  perceivedGrade: string | null
   /** Sync queue status (Story 6.2) */
   syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
   createdAt: string
