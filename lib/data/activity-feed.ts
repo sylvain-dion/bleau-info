@@ -9,6 +9,7 @@
 import { useTickStore } from '@/stores/tick-store'
 import { useConditionReportStore } from '@/stores/condition-report-store'
 import { useBoulderDraftStore } from '@/stores/boulder-draft-store'
+import { usePrivacyStore } from '@/stores/privacy-store'
 import { CONDITION_CONFIG } from '@/lib/validations/condition'
 
 export type ActivityType = 'tick' | 'condition' | 'new_boulder'
@@ -18,6 +19,8 @@ export interface ActivityEvent {
   type: ActivityType
   /** Display name (anonymized if private) */
   userName: string
+  /** Original author name (before anonymization) */
+  authorName: string | null
   userId: string | null
   /** Event description */
   description: string
@@ -60,17 +63,20 @@ export function collectSectorActivity(
   limit = 20
 ): ActivityEvent[] {
   const events: ActivityEvent[] = []
+  const showInFeed = usePrivacyStore.getState().settings.showInFeed
 
   // Ticks
   const ticks = useTickStore.getState().ticks
   for (const tick of ticks) {
     if (!boulderIds.has(tick.boulderId)) continue
     const styleLabel = TICK_STYLE_LABELS[tick.tickStyle] ?? tick.tickStyle
+    const isOwn = !!tick.userId
     events.push({
       id: `tick-${tick.id}`,
       type: 'tick',
-      userName: tick.userId ? 'Vous' : 'Un grimpeur',
-      userId: tick.userId,
+      userName: isOwn && showInFeed ? 'Vous' : 'Un grimpeur',
+      authorName: isOwn && showInFeed ? 'Vous' : null,
+      userId: showInFeed ? tick.userId : null,
       description: `a enchaîné ${tick.boulderName} (${tick.boulderGrade}) en ${styleLabel}`,
       boulderId: tick.boulderId,
       boulderName: tick.boulderName,
@@ -90,8 +96,9 @@ export function collectSectorActivity(
     events.push({
       id: `cond-${report.id}`,
       type: 'condition',
-      userName: report.userName,
-      userId: report.userId,
+      userName: showInFeed ? report.userName : 'Un grimpeur',
+      authorName: showInFeed ? report.userName : null,
+      userId: showInFeed ? report.userId : null,
       description: `a reporté "${config.label}" sur ${report.boulderName}`,
       boulderId: report.boulderId,
       boulderName: report.boulderName,
@@ -112,6 +119,7 @@ export function collectSectorActivity(
       id: `boulder-${draft.id}`,
       type: 'new_boulder',
       userName: 'Un contributeur',
+      authorName: null,
       userId: null,
       description: `a ajouté "${draft.name}" (${draft.grade})`,
       boulderId: draft.id,
