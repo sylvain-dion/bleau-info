@@ -147,4 +147,5 @@ development_status:
 
   # Phase 2 — Epic 11: Profils publics & Feed d'activité
   epic-11: in-progress
-  11-1-profil-public-grimpeur: in-progress
+  11-1-profil-public-grimpeur: done
+  11-2-feed-activite-par-secteur: in-progress

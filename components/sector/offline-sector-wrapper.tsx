@@ -7,6 +7,7 @@ import { SectorTabsContainer } from './sector-tabs'
 import { BoulderListView } from './boulder-list-view'
 import { SectorCircuitsTab } from './sector-circuits-tab'
 import { SectorWeatherTab } from './sector-weather-tab'
+import { SectorActivityTab } from './sector-activity-tab'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import type { BoulderListItem } from './boulder-list-card'
 
@@ -97,6 +98,9 @@ export function OfflineSectorWrapper({
                 : undefined
             }
           />
+        }
+        activityContent={
+          <SectorActivityTab boulderIds={boulders.map((b) => b.id)} />
         }
       />
     </>
