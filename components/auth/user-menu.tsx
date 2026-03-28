@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { LogIn, LogOut, User, ListChecks, BarChart3, Shield, MessageSquare } from 'lucide-react'
+import { LogIn, LogOut, User, ListChecks, BarChart3, Shield, MessageSquare, Share2 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/supabase/client'
 import { getAvatarPreset } from '@/lib/validations/profile'
@@ -164,6 +164,15 @@ function AuthenticatedMenu() {
             >
               <MessageSquare className="h-4 w-4" />
               Mes Commentaires
+            </Link>
+            <Link
+              href="/session"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Share2 className="h-4 w-4" />
+              Résumé de séance
             </Link>
             <Link
               href="/statistiques"
