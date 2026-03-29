@@ -18,6 +18,7 @@ import {
 } from './boulder-filter-panel'
 import { useTickStore } from '@/stores/tick-store'
 import { useListStore } from '@/stores/list-store'
+import { RecommendationSection } from './recommendation-section'
 
 interface BoulderListViewProps {
   boulders: BoulderListItem[]
@@ -178,6 +179,8 @@ export function BoulderListView({ boulders, sectorSlug }: BoulderListViewProps) 
       )}
 
       <BoulderSortSelector value={sort} onChange={handleSortChange} />
+
+      <RecommendationSection boulders={boulders} />
 
       {/* Empty state */}
       {sorted.length === 0 && isNarrowed && (
