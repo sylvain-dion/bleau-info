@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { TrendingUp, Clock, ChevronDown, ChevronUp, User } from 'lucide-react'
 import { useTickStore } from '@/stores/tick-store'
+import { hashCode, getMockPopularity } from '@/lib/popularity'
 
 interface ActivityCounterProps {
   boulderId: string
@@ -34,11 +35,8 @@ export function ActivityCounter({
         new Date(t.createdAt) >= monthStart
     )
 
-    // Simulate mock community ticks (deterministic from boulderId hash)
-    const hash = boulderId
-      .split('')
-      .reduce((acc, c) => acc + c.charCodeAt(0), 0)
-    const mockCount = (hash % 5) // 0-4 mock community ascents
+    // Mock community ticks (deterministic from boulderId hash)
+    const mockCount = getMockPopularity(boulderId)
 
     const totalMonth = monthTicks.length + mockCount
 
@@ -61,6 +59,7 @@ export function ActivityCounter({
     }
 
     // Add mock community (seeded by boulderId)
+    const hash = hashCode(boulderId)
     for (let i = 0; i < mockCount; i++) {
       const daysAgo = ((hash + i * 7) % 20) + 1
       const date = new Date(now.getTime() - daysAgo * 86400000)
