@@ -10,12 +10,15 @@ interface MapState {
   selectedFeatureId: string | null
   /** True after user has used "Locate me" at least once (enables auto-locate on return) */
   hasLocated: boolean
+  /** Whether the heatmap layer is visible on the map */
+  showHeatmap: boolean
 
   setCenter: (center: [number, number]) => void
   setZoom: (zoom: number) => void
   setView: (center: [number, number], zoom: number) => void
   selectFeature: (id: string | null) => void
   setHasLocated: () => void
+  toggleHeatmap: () => void
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -23,10 +26,12 @@ export const useMapStore = create<MapState>((set) => ({
   zoom: MAP_DEFAULT_ZOOM,
   selectedFeatureId: null,
   hasLocated: false,
+  showHeatmap: false,
 
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
   setView: (center, zoom) => set({ center, zoom }),
   selectFeature: (id) => set({ selectedFeatureId: id }),
   setHasLocated: () => set({ hasLocated: true }),
+  toggleHeatmap: () => set((s) => ({ showHeatmap: !s.showHeatmap })),
 }))

@@ -1,6 +1,6 @@
 'use client'
 
-import { Locate, Minus, Plus as PlusIcon, PlusCircle } from 'lucide-react'
+import { Flame, Locate, Minus, Plus as PlusIcon, PlusCircle } from 'lucide-react'
 
 interface MapControlsProps {
   onZoomIn: () => void
@@ -8,9 +8,20 @@ interface MapControlsProps {
   onLocate: () => void
   /** FAB for boulder creation — only shown when authenticated */
   onAdd?: () => void
+  /** Toggle the activity heatmap layer */
+  onToggleHeatmap: () => void
+  /** Whether the heatmap layer is currently active */
+  heatmapActive: boolean
 }
 
-export function MapControls({ onZoomIn, onZoomOut, onLocate, onAdd }: MapControlsProps) {
+export function MapControls({
+  onZoomIn,
+  onZoomOut,
+  onLocate,
+  onAdd,
+  onToggleHeatmap,
+  heatmapActive,
+}: MapControlsProps) {
   return (
     <div className="absolute bottom-6 right-4 z-10 flex flex-col gap-2">
       {onAdd && (
@@ -23,6 +34,19 @@ export function MapControls({ onZoomIn, onZoomOut, onLocate, onAdd }: MapControl
           <PlusCircle className="h-6 w-6" />
         </button>
       )}
+      <button
+        onClick={onToggleHeatmap}
+        className={`flex h-12 w-12 items-center justify-center rounded-lg shadow-md transition-colors ${
+          heatmapActive
+            ? 'bg-primary text-white hover:bg-primary/90'
+            : 'bg-background/90 text-foreground backdrop-blur hover:bg-background'
+        }`}
+        aria-label="Fréquentation"
+        aria-pressed={heatmapActive}
+        title="Fréquentation"
+      >
+        <Flame className="h-5 w-5" />
+      </button>
       <button
         onClick={onZoomIn}
         className="flex h-12 w-12 items-center justify-center rounded-lg bg-background/90 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background"
