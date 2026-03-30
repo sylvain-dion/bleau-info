@@ -11,6 +11,17 @@ import type { Tick } from '@/lib/validations/tick'
 /** Minimum votes to show community grade */
 export const SOFT_GRADE_MIN_VOTES = 5
 
+/** Minimum votes for "verified" reliability */
+export const RELIABILITY_MIN_VOTES = 10
+
+/** Max std dev (in grade steps) for "verified" */
+export const VERIFIED_MAX_STD_DEV = 0.5
+
+/** Min std dev (in grade steps) for "disputed" */
+export const DISPUTED_MIN_STD_DEV = 1.0
+
+export type GradeReliability = 'verified' | 'disputed' | null
+
 export interface SoftGradeResult {
   /** The consensus community grade (median) */
   grade: string
@@ -22,6 +33,10 @@ export interface SoftGradeResult {
   distribution: Record<string, number>
   /** Difference from official: 'sous-coté' | 'sur-coté' | null */
   deviation: 'sous-coté' | 'sur-coté' | null
+  /** Standard deviation of votes in grade steps */
+  stdDev: number
+  /** Reliability classification (Story 12.5) */
+  reliability: GradeReliability
 }
 
 /**
@@ -54,6 +69,8 @@ export function calculateSoftGrade(
       hasConsensus: false,
       distribution,
       deviation: null,
+      stdDev: 0,
+      reliability: null,
     }
   }
 
@@ -72,5 +89,27 @@ export function calculateSoftGrade(
   if (diff >= 1) deviation = 'sous-coté' // community thinks it's harder
   if (diff <= -1) deviation = 'sur-coté' // community thinks it's easier
 
-  return { grade, voteCount, hasConsensus, distribution, deviation }
+  // Standard deviation in grade steps
+  const mean = indices.reduce((a, b) => a + b, 0) / indices.length
+  const variance =
+    indices.reduce((sum, idx) => sum + (idx - mean) ** 2, 0) / indices.length
+  const stdDev = Math.sqrt(variance)
+
+  // Reliability classification
+  let reliability: GradeReliability = null
+  if (voteCount >= RELIABILITY_MIN_VOTES && stdDev < VERIFIED_MAX_STD_DEV) {
+    reliability = 'verified'
+  } else if (stdDev > DISPUTED_MIN_STD_DEV) {
+    reliability = 'disputed'
+  }
+
+  return {
+    grade,
+    voteCount,
+    hasConsensus,
+    distribution,
+    deviation,
+    stdDev,
+    reliability,
+  }
 }
