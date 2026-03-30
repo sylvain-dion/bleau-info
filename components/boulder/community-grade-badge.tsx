@@ -8,6 +8,8 @@ import {
   SOFT_GRADE_MIN_VOTES,
 } from '@/lib/grades/soft-grade'
 import { GRADE_SCALE } from '@/lib/grades'
+import { getMockCommunityTicks } from '@/lib/data/mock-community-grades'
+import { GradeReliabilityPopover } from './grade-reliability-popover'
 
 interface CommunityGradeBadgeProps {
   boulderId: string
@@ -31,8 +33,11 @@ export function CommunityGradeBadge({
   const [showHistogram, setShowHistogram] = useState(false)
 
   const softGrade = useMemo(() => {
-    const boulderTicks = ticks.filter((t) => t.boulderId === boulderId)
-    return calculateSoftGrade(boulderTicks, officialGrade)
+    const localTicks = ticks.filter((t) => t.boulderId === boulderId)
+    const communityTicks = getMockCommunityTicks().filter(
+      (t) => t.boulderId === boulderId
+    )
+    return calculateSoftGrade([...localTicks, ...communityTicks], officialGrade)
   }, [ticks, boulderId, officialGrade])
 
   if (!detailed && !softGrade.hasConsensus) return null
@@ -80,6 +85,12 @@ export function CommunityGradeBadge({
         </span>
 
         {deviationBadge}
+
+        <GradeReliabilityPopover
+          reliability={softGrade.reliability}
+          voteCount={softGrade.voteCount}
+          stdDev={softGrade.stdDev}
+        />
 
         {detailed && Object.keys(softGrade.distribution).length > 1 && (
           <button
