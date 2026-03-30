@@ -2,6 +2,9 @@
  * Shared mock popularity utility.
  *
  * Deterministic hash-based popularity score for boulders.
+ * Extracted from activity-counter.tsx so both the counter
+ * and the recommendation engine share the same source.
+ *
  * Will be replaced by real Supabase data in a future epic.
  */
 

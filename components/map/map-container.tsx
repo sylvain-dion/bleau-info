@@ -13,6 +13,7 @@ import {
 } from '@/lib/maplibre/config'
 import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
+import { buildHeatmapData } from '@/lib/heatmap'
 import { getCircuitRoutes } from '@/lib/data/mock-circuits'
 import type { FeatureCollection, Point } from 'geojson'
 import { useMapStore } from '@/stores/map-store'
@@ -28,6 +29,7 @@ import { BoulderCreationDrawer } from '@/components/boulder/boulder-creation-dra
 import type { SearchResult } from '@/lib/search'
 import { MapSheet } from './map-sheet'
 import { MapControls } from './map-controls'
+import { HeatmapLegend } from './heatmap-legend'
 import { SectorContextBar } from './sector-context-bar'
 import { GuidedNavBar } from './guided-nav-bar'
 import { UserPositionLayer } from './user-position-layer'
@@ -89,7 +91,7 @@ export function MapContainer({ theme }: MapContainerProps) {
   const protocolRef = useRef<Protocol | null>(null)
   const [showBoulderForm, setShowBoulderForm] = useState(false)
 
-  const { center, zoom, setView, hasLocated, setHasLocated } = useMapStore()
+  const { center, zoom, setView, hasLocated, setHasLocated, showHeatmap, toggleHeatmap } = useMapStore()
   const isAuthenticated = useAuthStore((s) => !!s.user)
 
   // Safe geolocation — NFR-04: no GPS in background
@@ -165,6 +167,7 @@ export function MapContainer({ theme }: MapContainerProps) {
 
     map.on('load', () => {
       addBoulderLayers(map)
+      addHeatmapLayer(map)
       addCompletedBoulderLayer(map)
       addCircuitLayers(map) // Add circuits during load, same as boulders
       addMapInteractions(map)
@@ -184,6 +187,7 @@ export function MapContainer({ theme }: MapContainerProps) {
         map.setStyle(createFallbackStyle())
         map.once('styledata', () => {
           addBoulderLayers(map)
+          addHeatmapLayer(map)
           addCompletedBoulderLayer(map)
           addCircuitLayers(map)
           addMapInteractions(map)
@@ -219,10 +223,26 @@ export function MapContainer({ theme }: MapContainerProps) {
     return unsubscribe
   }, [updateMapData])
 
-  /** Subscribe to tick store changes and update completed boulders layer */
+  /** Subscribe to tick store changes and update completed boulders + heatmap layers */
   useEffect(() => {
     const unsubscribe = useTickStore.subscribe(() => {
       updateCompletedLayer(mapRef.current)
+      updateHeatmapData(mapRef.current)
+    })
+    return unsubscribe
+  }, [])
+
+  /** Subscribe to heatmap toggle and update layer visibility */
+  useEffect(() => {
+    const unsubscribe = useMapStore.subscribe((state, prev) => {
+      if (state.showHeatmap === prev.showHeatmap) return
+      const map = mapRef.current
+      if (!map || !map.getLayer('heatmap')) return
+      map.setLayoutProperty(
+        'heatmap',
+        'visibility',
+        state.showHeatmap ? 'visible' : 'none'
+      )
     })
     return unsubscribe
   }, [])
@@ -237,10 +257,15 @@ export function MapContainer({ theme }: MapContainerProps) {
     // Re-add layers after style change (setStyle removes all custom layers)
     map.once('styledata', () => {
       addBoulderLayers(map)
+      addHeatmapLayer(map)
       addCompletedBoulderLayer(map)
       addCircuitLayers(map)
       addMapInteractions(map)
       updateMapData(useFilterStore.getState())
+      // Restore heatmap visibility after style change
+      if (useMapStore.getState().showHeatmap) {
+        map.setLayoutProperty('heatmap', 'visibility', 'visible')
+      }
     })
   }, [theme, updateMapData])
 
@@ -297,7 +322,10 @@ export function MapContainer({ theme }: MapContainerProps) {
         onZoomOut={handleZoomOut}
         onLocate={locate}
         onAdd={isAuthenticated ? () => setShowBoulderForm(true) : undefined}
+        onToggleHeatmap={toggleHeatmap}
+        heatmapActive={showHeatmap}
       />
+      <HeatmapLegend />
       <SectorContextBarWrapper mapRef={mapRef} />
       <GuidedNavBar mapRef={mapRef} />
       <UserPositionLayer mapRef={mapRef} />
@@ -437,6 +465,76 @@ function addBoulderLayers(map: maplibregl.Map) {
       ],
     },
   })
+}
+
+/** Add heatmap layer for activity frequency visualization */
+function addHeatmapLayer(map: maplibregl.Map) {
+  if (map.getSource('heatmap-data')) return
+
+  const data = buildHeatmapData(
+    mockBoulders.features,
+    useTickStore.getState().ticks
+  )
+
+  map.addSource('heatmap-data', {
+    type: 'geojson',
+    data,
+  })
+
+  map.addLayer(
+    {
+      id: 'heatmap',
+      type: 'heatmap',
+      source: 'heatmap-data',
+      layout: { visibility: 'none' },
+      paint: {
+        'heatmap-weight': [
+          'interpolate', ['linear'], ['get', '_activity'],
+          0, 0,
+          10, 1,
+        ],
+        'heatmap-intensity': [
+          'interpolate', ['linear'], ['zoom'],
+          8, 0.6,
+          13, 1.2,
+        ],
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(0,0,255,0)',
+          0.2, '#3b82f6',
+          0.4, '#22c55e',
+          0.6, '#eab308',
+          0.8, '#f97316',
+          1, '#ef4444',
+        ],
+        'heatmap-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          8, 25,
+          13, 40,
+          16, 60,
+        ],
+        'heatmap-opacity': [
+          'interpolate', ['linear'], ['zoom'],
+          13, 0.8,
+          15, 0,
+        ],
+      },
+    },
+    'clusters' // Insert before clusters so heatmap sits underneath
+  )
+}
+
+/** Refresh heatmap source data (e.g. after new tick logged) */
+function updateHeatmapData(map: maplibregl.Map | null) {
+  if (!map) return
+  const source = map.getSource('heatmap-data') as maplibregl.GeoJSONSource | undefined
+  if (!source) return
+
+  const data = buildHeatmapData(
+    mockBoulders.features,
+    useTickStore.getState().ticks
+  )
+  source.setData(data)
 }
 
 /** Add a green ring overlay on boulders the user has ticked */
