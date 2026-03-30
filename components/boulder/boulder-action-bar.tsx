@@ -10,12 +10,15 @@ import {
   BookmarkCheck,
   Pencil,
   MapPin,
+  Route,
 } from 'lucide-react'
 import { useTickStore, formatTickStyle } from '@/stores/tick-store'
 import { useListStore } from '@/stores/list-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { TickForm } from '@/components/boulder/tick-form'
 import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
+import { AddToRouteMenu } from '@/components/routes/add-to-route-menu'
+import { useCustomRouteStore } from '@/stores/custom-route-store'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 import type { BoulderProperties } from '@/lib/data/mock-boulders'
 
@@ -51,12 +54,15 @@ export function BoulderActionBar({
 }: BoulderActionBarProps) {
   const [showTickDrawer, setShowTickDrawer] = useState(false)
   const [showListDrawer, setShowListDrawer] = useState(false)
+  const [showRouteDrawer, setShowRouteDrawer] = useState(false)
   const [showSuggestionDrawer, setShowSuggestionDrawer] = useState(false)
 
   const { user } = useAuthStore()
   const isBoulderCompleted = useTickStore((s) => s.isBoulderCompleted)
   const getTicksForBoulder = useTickStore((s) => s.getTicksForBoulder)
   const isBoulderInAnyList = useListStore((s) => s.isBoulderInAnyList)
+  const routes = useCustomRouteStore((s) => s.routes)
+  const isInAnyRoute = routes.some((r) => r.boulderIds.includes(boulderId))
 
   const isCompleted = isBoulderCompleted(boulderId)
   const boulderTicks = getTicksForBoulder(boulderId)
@@ -104,6 +110,20 @@ export function BoulderActionBar({
               <span>Listes</span>
             </button>
           </div>
+
+          {/* Add to route */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setShowRouteDrawer(true)}
+              className={buttonClass}
+            >
+              <Route
+                className={`h-5 w-5 ${isInAnyRoute ? 'text-primary' : ''}`}
+              />
+              <span>Parcours</span>
+            </button>
+          )}
 
           {/* Suggest modification */}
           <button
@@ -161,6 +181,23 @@ export function BoulderActionBar({
                 isOpen={true}
                 onClose={() => setShowListDrawer(false)}
                 inline
+              />
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
+      {/* Route drawer */}
+      <Drawer.Root open={showRouteDrawer} onOpenChange={setShowRouteDrawer}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+          <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-background shadow-xl outline-none">
+            <Drawer.Title className="sr-only">Mes parcours</Drawer.Title>
+            <div className="mx-auto mb-2 mt-3 h-1 w-10 rounded-full bg-muted" />
+            <div className="px-4 pb-8">
+              <AddToRouteMenu
+                boulderId={boulderId}
+                onClose={() => setShowRouteDrawer(false)}
               />
             </div>
           </Drawer.Content>

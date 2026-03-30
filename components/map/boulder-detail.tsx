@@ -18,6 +18,7 @@ import {
   Pencil,
   Bookmark,
   BookmarkCheck,
+  Route,
 } from 'lucide-react'
 import { CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import type {
@@ -35,6 +36,8 @@ import { useTickStore, formatTickStyle } from '@/stores/tick-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useListStore } from '@/stores/list-store'
 import { AddToListMenu } from '@/components/boulder/add-to-list-menu'
+import { AddToRouteMenu } from '@/components/routes/add-to-route-menu'
+import { useCustomRouteStore } from '@/stores/custom-route-store'
 import { SuggestionDrawer } from '@/components/boulder/suggestion-drawer'
 import { SectorDownloadButton } from '@/components/offline/sector-download-button'
 import { CommentSection } from '@/components/boulder/comment-section'
@@ -106,14 +109,17 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
     properties
   const [showTickForm, setShowTickForm] = useState(false)
   const [showListMenu, setShowListMenu] = useState(false)
+  const [showRouteMenu, setShowRouteMenu] = useState(false)
   const [showSuggestionDrawer, setShowSuggestionDrawer] = useState(false)
   const { user } = useAuthStore()
   const isBoulderCompleted = useTickStore((s) => s.isBoulderCompleted)
   const getTicksForBoulder = useTickStore((s) => s.getTicksForBoulder)
   const isBoulderInAnyList = useListStore((s) => s.isBoulderInAnyList)
+  const routes = useCustomRouteStore((s) => s.routes)
   const isCompleted = isBoulderCompleted(properties.id)
   const boulderTicks = getTicksForBoulder(properties.id)
   const isBookmarked = isBoulderInAnyList(properties.id)
+  const isInAnyRoute = routes.some((r) => r.boulderIds.includes(properties.id))
 
   return (
     <div className="space-y-4">
@@ -160,6 +166,30 @@ export function BoulderDetail({ properties, coordinates, isExpanded }: BoulderDe
               onClose={() => setShowListMenu(false)}
             />
           </div>
+          {user && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowRouteMenu(!showRouteMenu)}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors min-touch ${
+                  isInAnyRoute
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+                aria-label={isInAnyRoute ? 'Modifier les parcours' : 'Ajouter à un parcours'}
+              >
+                <Route className="h-5 w-5" />
+              </button>
+              {showRouteMenu && (
+                <div className="absolute right-0 top-full z-50 mt-1 w-64 rounded-lg border border-border bg-popover p-3 shadow-lg">
+                  <AddToRouteMenu
+                    boulderId={properties.id}
+                    onClose={() => setShowRouteMenu(false)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex flex-col items-center rounded-lg bg-primary/10 px-3 py-1.5">
             <span className="text-xl font-bold text-primary">{formatGrade(grade)}</span>
           </div>
