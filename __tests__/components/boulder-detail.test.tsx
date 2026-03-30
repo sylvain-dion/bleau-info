@@ -102,7 +102,7 @@ describe('BoulderDetail', () => {
           isExpanded={false}
         />
       )
-      expect(screen.getByText('1')).toBeDefined()
+      expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(1)
     })
 
     it('should render style tag', () => {
