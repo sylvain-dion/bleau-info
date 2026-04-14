@@ -14,6 +14,7 @@ import {
   Globe,
 } from 'lucide-react'
 import { useCustomRouteStore, type CustomRoute } from '@/stores/custom-route-store'
+import { RouteShareButton } from './route-share-button'
 import { useGuidedModeStore } from '@/stores/guided-mode-store'
 import { useTickStore } from '@/stores/tick-store'
 import { getBoulderById } from '@/lib/data/boulder-service'
@@ -123,6 +124,11 @@ export function RouteDetail({ route }: RouteDetailProps) {
             />
           </button>
         </label>
+      </div>
+
+      {/* Share */}
+      <div className="mb-4 flex items-center justify-between">
+        <RouteShareButton route={route} />
       </div>
 
       {/* Launch guided mode */}
