@@ -80,7 +80,10 @@ export function OfflineSectorWrapper({
       <SectorTabsContainer
         blocsContent={blocsContent}
         circuitsContent={
-          <SectorCircuitsTab sectorName={sector.name} />
+          <SectorCircuitsTab
+            sectorName={sector.name}
+            offlineCircuits={offlineData?.circuits}
+          />
         }
         meteoContent={
           <SectorWeatherTab

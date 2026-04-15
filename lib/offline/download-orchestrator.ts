@@ -14,10 +14,13 @@ import { getSectorData } from './sector-data-service'
 import { computeSectorHash } from './version-hash'
 import { useCommentStore } from '@/stores/comment-store'
 import { useConditionReportStore } from '@/stores/condition-report-store'
+import { useCustomRouteStore } from '@/stores/custom-route-store'
 import { ARCHIVE_THRESHOLD_MS } from '@/lib/validations/condition'
 import { fetchWeatherForecast } from '@/lib/weather/weather-service'
 import { fetchRainHistory } from '@/lib/weather/drying-service'
 import { computePraticability } from '@/lib/weather/praticability'
+import { getCircuitsForSector } from '@/lib/data/mock-circuits'
+import { filterRoutesForSector } from '@/lib/routes'
 
 /** Download progress reported to the UI */
 export interface DownloadProgress {
@@ -144,6 +147,11 @@ export function startSectorDownload(
       ? computePraticability(weatherForecast.days, null, recentConditions)
       : null
 
+    // Gather circuits + custom routes for offline pack (Story 9.7)
+    const sectorCircuits = getCircuitsForSector(sectorName)
+    const allCustomRoutes = useCustomRouteStore.getState().routes
+    const sectorRoutes = filterRoutesForSector(allCustomRoutes, boulderIdSet)
+
     // Save sector to IndexedDB
     await offlineDb.sectors.put({
       name: sectorName,
@@ -158,6 +166,8 @@ export function startSectorDownload(
       weatherForecast,
       rainHistory,
       praticabilityScore: praticability?.score ?? null,
+      circuits: sectorCircuits,
+      customRoutes: sectorRoutes,
     })
 
     bytesDownloaded = Math.floor(totalBytes * 0.3)

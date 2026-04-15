@@ -5,11 +5,14 @@ import { useNetworkStore } from '@/stores/network-store'
 import { useOfflineSectorStore } from '@/stores/offline-sector-store'
 import { useCommentStore } from '@/stores/comment-store'
 import { useConditionReportStore } from '@/stores/condition-report-store'
+import { useCustomRouteStore } from '@/stores/custom-route-store'
 import { offlineDb, type OfflineSector } from '@/lib/db/offline-db'
 import type { SectorDetail } from '@/lib/data/boulder-service'
 import type { BoulderListItem } from '@/components/sector/boulder-list-card'
 import type { WeatherForecast } from '@/lib/weather/weather-service'
 import type { RainHistory } from '@/lib/weather/drying-service'
+import type { CircuitInfo } from '@/lib/data/mock-circuits'
+import type { CustomRoute } from '@/stores/custom-route-store'
 
 interface OfflineSectorPageData {
   sector: SectorDetail
@@ -18,6 +21,10 @@ interface OfflineSectorPageData {
   weatherForecast?: WeatherForecast | null
   rainHistory?: RainHistory | null
   praticabilityScore?: number | null
+  /** Cached circuits from pack download (Story 9.7) */
+  circuits?: CircuitInfo[]
+  /** Cached custom routes overlapping this sector (Story 9.7) */
+  customRoutes?: CustomRoute[]
   downloadedAt: string
 }
 
@@ -138,6 +145,8 @@ function buildFromOffline(
     weatherForecast: cached.weatherForecast,
     rainHistory: cached.rainHistory,
     praticabilityScore: cached.praticabilityScore,
+    circuits: cached.circuits,
+    customRoutes: cached.customRoutes,
     downloadedAt: cached.downloadedAt,
   }
 }
@@ -169,6 +178,21 @@ function hydrateCachedData(cached: OfflineSector): void {
     if (newReports.length > 0) {
       useConditionReportStore.setState((s) => ({
         reports: [...s.reports, ...newReports],
+      }))
+    }
+  }
+
+  // Hydrate custom routes (Story 9.7) — only add routes not already known
+  // locally (identified by id), to avoid overwriting user edits.
+  if (cached.customRoutes?.length) {
+    const store = useCustomRouteStore.getState()
+    const existingIds = new Set(store.routes.map((r) => r.id))
+    const newRoutes = cached.customRoutes.filter(
+      (r) => !existingIds.has(r.id)
+    )
+    if (newRoutes.length > 0) {
+      useCustomRouteStore.setState((s) => ({
+        routes: [...newRoutes, ...s.routes],
       }))
     }
   }

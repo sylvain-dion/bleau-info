@@ -36,6 +36,12 @@ const CIRCUIT_LABELS: Record<CircuitColor, string> = {
 
 interface SectorCircuitsTabProps {
   sectorName: string
+  /**
+   * Preloaded circuits from the offline sector pack (Story 9.7).
+   * When provided, these are used instead of calling the live data service,
+   * ensuring the tab works entirely from IndexedDB when offline.
+   */
+  offlineCircuits?: CircuitInfo[]
 }
 
 /**
@@ -44,12 +50,15 @@ interface SectorCircuitsTabProps {
  * List view: shows all circuits in the sector.
  * Detail view: shows ordered boulder list with completion + log button.
  */
-export function SectorCircuitsTab({ sectorName }: SectorCircuitsTabProps) {
+export function SectorCircuitsTab({
+  sectorName,
+  offlineCircuits,
+}: SectorCircuitsTabProps) {
   const [selectedCircuitId, setSelectedCircuitId] = useState<string | null>(null)
 
   const circuits = useMemo(
-    () => getCircuitsForSector(sectorName),
-    [sectorName]
+    () => offlineCircuits ?? getCircuitsForSector(sectorName),
+    [sectorName, offlineCircuits]
   )
 
   const selected = selectedCircuitId

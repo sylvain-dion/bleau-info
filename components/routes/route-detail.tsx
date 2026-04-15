@@ -12,13 +12,15 @@ import {
   ArrowUp,
   ArrowDown,
   Globe,
+  Download,
 } from 'lucide-react'
 import { useCustomRouteStore, type CustomRoute } from '@/stores/custom-route-store'
 import { RouteShareButton } from './route-share-button'
 import { useGuidedModeStore } from '@/stores/guided-mode-store'
 import { useTickStore } from '@/stores/tick-store'
+import { useOfflineSectorStore } from '@/stores/offline-sector-store'
 import { getBoulderById } from '@/lib/data/boulder-service'
-import { computeRouteStats } from '@/lib/routes'
+import { computeRouteStats, isRouteOffline } from '@/lib/routes'
 import { formatDistance } from '@/lib/geo/distance'
 import { formatGrade, formatGradeRange, type Grade } from '@/lib/grades'
 
@@ -36,9 +38,14 @@ export function RouteDetail({ route }: RouteDetailProps) {
   const togglePublic = useCustomRouteStore((s) => s.togglePublic)
   const startGuide = useGuidedModeStore((s) => s.startGuide)
   const ticks = useTickStore((s) => s.ticks)
+  const offlineSectors = useOfflineSectorStore((s) => s.sectors)
 
   const tickedIds = new Set(ticks.map((t) => t.boulderId))
   const stats = computeRouteStats(route.boulderIds)
+  const isOffline = isRouteOffline(
+    route.boulderIds,
+    (name) => offlineSectors[name]?.status === 'downloaded'
+  )
 
   const boulders = route.boulderIds
     .map((id) => getBoulderById(id))
@@ -126,9 +133,19 @@ export function RouteDetail({ route }: RouteDetailProps) {
         </label>
       </div>
 
-      {/* Share */}
-      <div className="mb-4 flex items-center justify-between">
+      {/* Share + offline status */}
+      <div className="mb-4 flex items-center justify-between gap-2">
         <RouteShareButton route={route} />
+        {isOffline && (
+          <span
+            className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+            aria-label="Parcours disponible hors-ligne"
+            title="Tous les secteurs de ce parcours sont téléchargés"
+          >
+            <Download className="h-3 w-3" />
+            Hors-ligne
+          </span>
+        )}
       </div>
 
       {/* Launch guided mode */}
