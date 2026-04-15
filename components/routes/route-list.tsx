@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Route, MapPin, Trash2 } from 'lucide-react'
+import { Plus, Route, MapPin, Trash2, Download } from 'lucide-react'
 import { useCustomRouteStore } from '@/stores/custom-route-store'
 import { useAuthStore } from '@/stores/auth-store'
-import { computeRouteStats } from '@/lib/routes'
+import { useOfflineSectorStore } from '@/stores/offline-sector-store'
+import { computeRouteStats, isRouteOffline } from '@/lib/routes'
 import { formatDistance } from '@/lib/geo/distance'
 import { formatGradeRange, type Grade } from '@/lib/grades'
 import { RouteCreateDialog } from './route-create-dialog'
@@ -18,7 +19,11 @@ export function RouteList() {
   const createRoute = useCustomRouteStore((s) => s.createRoute)
   const deleteRoute = useCustomRouteStore((s) => s.deleteRoute)
   const user = useAuthStore((s) => s.user)
+  const offlineSectors = useOfflineSectorStore((s) => s.sectors)
   const [showCreate, setShowCreate] = useState(false)
+
+  const isSectorOffline = (name: string): boolean =>
+    offlineSectors[name]?.status === 'downloaded'
 
   if (!user) {
     return (
@@ -65,6 +70,7 @@ export function RouteList() {
         <div className="space-y-2">
           {routes.map((route) => {
             const stats = computeRouteStats(route.boulderIds)
+            const offline = isRouteOffline(route.boulderIds, isSectorOffline)
             return (
               <div
                 key={route.id}
@@ -106,6 +112,16 @@ export function RouteList() {
                       )}
                     </div>
                   </div>
+                  {offline && (
+                    <span
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      aria-label="Disponible hors-ligne"
+                      title="Tous les blocs sont dans un pack téléchargé"
+                    >
+                      <Download className="h-2.5 w-2.5" />
+                      Hors-ligne
+                    </span>
+                  )}
                   {route.isPublic && (
                     <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                       Public

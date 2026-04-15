@@ -14,6 +14,8 @@ import type { BoulderComment } from '@/lib/validations/comment'
 import type { ConditionReport } from '@/lib/validations/condition'
 import type { WeatherForecast } from '@/lib/weather/weather-service'
 import type { RainHistory } from '@/lib/weather/drying-service'
+import type { CircuitInfo } from '@/lib/data/mock-circuits'
+import type { CustomRoute } from '@/stores/custom-route-store'
 
 /** A fully cached sector for offline use */
 export interface OfflineSector {
@@ -41,6 +43,10 @@ export interface OfflineSector {
   rainHistory?: RainHistory | null
   /** Praticability score at download time */
   praticabilityScore?: number | null
+  /** Cached circuits for this sector (Story 9.7) */
+  circuits?: CircuitInfo[]
+  /** Cached user custom routes overlapping this sector (Story 9.7) */
+  customRoutes?: CustomRoute[]
 }
 
 /** A cached photo linked to a sector/boulder */
