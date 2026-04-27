@@ -266,6 +266,16 @@ describe('computeBadgesFromTicks', () => {
     const result = computeBadgesFromTicks([], {})
     expect(earnedIds(result)).toEqual([])
   })
+
+  it('derives a streak badge from consecutive tick dates', () => {
+    const ticks: Tick[] = [
+      mkTick({ id: 'a', tickDate: '2026-04-01' }),
+      mkTick({ id: 'b', tickDate: '2026-04-02' }),
+      mkTick({ id: 'c', tickDate: '2026-04-03' }),
+    ]
+    const result = computeBadgesFromTicks(ticks, {})
+    expect(earnedIds(result)).toContain('streak-3')
+  })
 })
 
 describe('BADGE_CATALOG', () => {
@@ -274,9 +284,38 @@ describe('BADGE_CATALOG', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('contains 22 badges across 6 categories', () => {
-    expect(BADGE_CATALOG).toHaveLength(22)
+  it('contains 25 badges across 7 categories', () => {
+    expect(BADGE_CATALOG).toHaveLength(25)
     const categories = new Set(BADGE_CATALOG.map((b) => b.category))
-    expect(categories.size).toBe(6)
+    expect(categories.size).toBe(7)
+  })
+})
+
+describe('computeBadges — streak badges (Story 14.2)', () => {
+  it('omits streak badges when longestStreak is undefined', () => {
+    const result = computeBadges(publicInput({ tickCount: 100 }))
+    const streakBadges = result.filter((b) => b.definition.category === 'streak')
+    expect(streakBadges).toHaveLength(0)
+  })
+
+  it('unlocks streak-3 at exactly 3 consecutive days', () => {
+    const result = computeBadges(publicInput({ longestStreak: 3 }))
+    expect(earnedIds(result)).toContain('streak-3')
+    expect(earnedIds(result)).not.toContain('streak-7')
+  })
+
+  it('unlocks streak-7 at the 7-day threshold', () => {
+    const result = computeBadges(publicInput({ longestStreak: 7 }))
+    expect(earnedIds(result)).toEqual(
+      expect.arrayContaining(['streak-3', 'streak-7']),
+    )
+    expect(earnedIds(result)).not.toContain('streak-30')
+  })
+
+  it('unlocks streak-30 only at 30+ days', () => {
+    const just29 = computeBadges(publicInput({ longestStreak: 29 }))
+    expect(earnedIds(just29)).not.toContain('streak-30')
+    const exact30 = computeBadges(publicInput({ longestStreak: 30 }))
+    expect(earnedIds(exact30)).toContain('streak-30')
   })
 })

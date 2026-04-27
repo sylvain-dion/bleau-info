@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Flame,
 } from 'lucide-react'
 import { getClimberProfile } from '@/lib/data/mock-climbers'
 import { BadgesSection } from '@/components/profile/badges-section'
@@ -137,10 +138,15 @@ export default function ClimberProfilePage({
             label="Circuits terminés"
             value={String(profile.stats.circuitsCompleted)}
           />
+          <StatCard
+            icon={<Flame className="h-4 w-4 text-orange-500" />}
+            label="Record de streak"
+            value={`${profile.stats.longestStreak} j`}
+          />
         </div>
       )}
 
-      {/* Badges — Story 14.1 */}
+      {/* Badges — Stories 14.1 & 14.2 */}
       {profile.privacy.statsPublic && (
         <BadgesSection badges={computeBadges(profile.stats)} />
       )}

@@ -9,6 +9,7 @@
 import type { Tick } from '@/lib/validations/tick'
 import { getBoulderById } from '@/lib/data/boulder-service'
 import { getGradeIndex } from '@/lib/grades'
+import { computeStreakStats } from '@/lib/streaks'
 
 export type BadgeCategory =
   | 'volume'
@@ -17,6 +18,7 @@ export type BadgeCategory =
   | 'explore'
   | 'circuit'
   | 'style'
+  | 'streak'
 
 export interface BadgeDefinition {
   id: string
@@ -53,6 +55,8 @@ export interface BadgeInput {
   onsightCount?: number
   /** Optional: number of unique YYYY-MM-DD tick dates (current user only) */
   uniqueClimbingDays?: number
+  /** Optional: longest run of consecutive climbing days ever achieved */
+  longestStreak?: number
 }
 
 export interface EarnedBadge {
@@ -291,6 +295,35 @@ export const BADGE_CATALOG: readonly BadgeDefinition[] = [
     icon: 'CalendarDays',
     color: 'text-rose-500',
   },
+
+  // Streaks — longestStreak (current user only)
+  {
+    id: 'streak-3',
+    category: 'streak',
+    label: 'En forme',
+    description: '3 jours consécutifs',
+    threshold: 3,
+    icon: 'Flame',
+    color: 'text-orange-500',
+  },
+  {
+    id: 'streak-7',
+    category: 'streak',
+    label: 'Semaine de feu',
+    description: '7 jours consécutifs',
+    threshold: 7,
+    icon: 'Flame',
+    color: 'text-orange-600',
+  },
+  {
+    id: 'streak-30',
+    category: 'streak',
+    label: 'Mois marathon',
+    description: '30 jours consécutifs',
+    threshold: 30,
+    icon: 'Flame',
+    color: 'text-red-600',
+  },
 ] as const
 
 /** Display order for categories (earned badges sort first within this order). */
@@ -301,6 +334,7 @@ const CATEGORY_ORDER: readonly BadgeCategory[] = [
   'explore',
   'circuit',
   'style',
+  'streak',
 ]
 
 // ---------------------------------------------------------------------------
@@ -343,6 +377,8 @@ function valueFor(def: BadgeDefinition, input: BadgeInput): number | null {
         return input.uniqueClimbingDays ?? null
       }
       return null
+    case 'streak':
+      return input.longestStreak ?? null
   }
 }
 
@@ -416,6 +452,8 @@ export function computeBadgesFromTicks(
     if (boulder) uniqueSectors.add(boulder.sector)
   }
 
+  const streak = computeStreakStats(ticks)
+
   return computeBadges({
     tickCount: ticks.length,
     uniqueBoulders: uniqueBoulderIds.size,
@@ -425,5 +463,6 @@ export function computeBadgesFromTicks(
     flashCount,
     onsightCount,
     uniqueClimbingDays: uniqueDays.size,
+    longestStreak: streak.longestStreak,
   })
 }
