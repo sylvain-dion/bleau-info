@@ -15,6 +15,10 @@ export interface PublicClimberProfile {
     maxGrade: string
     sectorsVisited: number
     circuitsCompleted: number
+    /** Longest streak of consecutive climbing days (Story 14.2) */
+    longestStreak: number
+    /** Currently active streak in days, 0 if broken (Story 14.2) */
+    currentStreak: number
   }
   recentAscensions: {
     boulderId: string
@@ -43,6 +47,8 @@ const MOCK_CLIMBERS: PublicClimberProfile[] = [
       maxGrade: '7a',
       sectorsVisited: 12,
       circuitsCompleted: 5,
+      longestStreak: 9,
+      currentStreak: 3,
     },
     recentAscensions: [
       { boulderId: 'cul-de-chien-1', boulderName: 'La Marie-Rose', grade: '6a', sector: 'Cul de Chien', tickDate: '2026-03-25', style: 'flash' },
@@ -62,6 +68,8 @@ const MOCK_CLIMBERS: PublicClimberProfile[] = [
       maxGrade: '6b+',
       sectorsVisited: 6,
       circuitsCompleted: 2,
+      longestStreak: 5,
+      currentStreak: 0,
     },
     recentAscensions: [
       { boulderId: 'franchard-1', boulderName: 'Le Toit de Franchard', grade: '6b', sector: 'Franchard Isatis', tickDate: '2026-03-26', style: 'flash' },
@@ -79,6 +87,8 @@ const MOCK_CLIMBERS: PublicClimberProfile[] = [
       maxGrade: '5a',
       sectorsVisited: 3,
       circuitsCompleted: 1,
+      longestStreak: 2,
+      currentStreak: 0,
     },
     recentAscensions: [],
     privacy: { profilePublic: false, statsPublic: false, ascensionsPublic: false },

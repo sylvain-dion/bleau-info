@@ -10,6 +10,7 @@ import { useTickStore } from '@/stores/tick-store'
 import { useCircuitCompletionStore } from '@/stores/circuit-completion-store'
 import { computeBadgesFromTicks } from '@/lib/badges'
 import { BadgesSection } from '@/components/profile/badges-section'
+import { StreakSection } from '@/components/profile/streak-section'
 import { createClient } from '@/lib/supabase/client'
 import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
@@ -135,6 +136,9 @@ export default function ProfilPage() {
           contributionPoints={0}
         />
       </div>
+
+      {/* Streaks — Story 14.2 */}
+      <StreakSection ticks={ticks} />
 
       {/* Badges — Story 14.1 */}
       <BadgesSection badges={badges} />
