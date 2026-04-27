@@ -15,6 +15,8 @@ import {
   EyeOff,
 } from 'lucide-react'
 import { getClimberProfile } from '@/lib/data/mock-climbers'
+import { BadgesSection } from '@/components/profile/badges-section'
+import { computeBadges } from '@/lib/badges'
 
 export default function ClimberProfilePage({
   params,
@@ -136,6 +138,11 @@ export default function ClimberProfilePage({
             value={String(profile.stats.circuitsCompleted)}
           />
         </div>
+      )}
+
+      {/* Badges — Story 14.1 */}
+      {profile.privacy.statsPublic && (
+        <BadgesSection badges={computeBadges(profile.stats)} />
       )}
 
       {/* Recent ascensions */}

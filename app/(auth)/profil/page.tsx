@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation'
 import { User, Save, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useTickStore } from '@/stores/tick-store'
+import { useCircuitCompletionStore } from '@/stores/circuit-completion-store'
+import { computeBadgesFromTicks } from '@/lib/badges'
+import { BadgesSection } from '@/components/profile/badges-section'
 import { createClient } from '@/lib/supabase/client'
 import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
@@ -29,7 +32,10 @@ import type { AvatarPresetKey } from '@/lib/validations/profile'
 
 export default function ProfilPage() {
   const { user, isLoading } = useAuthStore()
-  const tickCount = useTickStore((s) => s.ticks.length)
+  const ticks = useTickStore((s) => s.ticks)
+  const circuitCompletions = useCircuitCompletionStore((s) => s.completions)
+  const tickCount = ticks.length
+  const badges = computeBadgesFromTicks(ticks, circuitCompletions)
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -129,6 +135,9 @@ export default function ProfilPage() {
           contributionPoints={0}
         />
       </div>
+
+      {/* Badges — Story 14.1 */}
+      <BadgesSection badges={badges} />
 
       {/* Trust Score */}
       <div className="mb-6">
