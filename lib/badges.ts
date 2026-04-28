@@ -420,13 +420,24 @@ export function computeBadges(input: BadgeInput): BadgeStatus[] {
 }
 
 /**
- * Derive a BadgeInput from raw tick-store data + circuit completions,
- * then compute badge status. Used on the authenticated user's own profile.
+ * Derive a `BadgeInput` from raw tick-store data + circuit completions.
+ * Shared between `computeBadgesFromTicks` and the goals section so both
+ * read from a single source of truth.
  */
-export function computeBadgesFromTicks(
+export function deriveBadgeInputFromTicks(
   ticks: Tick[],
   circuitCompletions: Record<string, unknown>,
-): BadgeStatus[] {
+): Required<Pick<BadgeInput,
+  | 'tickCount'
+  | 'uniqueBoulders'
+  | 'maxGrade'
+  | 'sectorsVisited'
+  | 'circuitsCompleted'
+  | 'flashCount'
+  | 'onsightCount'
+  | 'uniqueClimbingDays'
+  | 'longestStreak'
+>> {
   const uniqueBoulderIds = new Set<string>()
   const uniqueSectors = new Set<string>()
   const uniqueDays = new Set<string>()
@@ -454,7 +465,7 @@ export function computeBadgesFromTicks(
 
   const streak = computeStreakStats(ticks)
 
-  return computeBadges({
+  return {
     tickCount: ticks.length,
     uniqueBoulders: uniqueBoulderIds.size,
     maxGrade,
@@ -464,5 +475,16 @@ export function computeBadgesFromTicks(
     onsightCount,
     uniqueClimbingDays: uniqueDays.size,
     longestStreak: streak.longestStreak,
-  })
+  }
+}
+
+/**
+ * Derive a BadgeInput from raw tick-store data + circuit completions,
+ * then compute badge status. Used on the authenticated user's own profile.
+ */
+export function computeBadgesFromTicks(
+  ticks: Tick[],
+  circuitCompletions: Record<string, unknown>,
+): BadgeStatus[] {
+  return computeBadges(deriveBadgeInputFromTicks(ticks, circuitCompletions))
 }

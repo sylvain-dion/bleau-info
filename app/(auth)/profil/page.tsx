@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -8,9 +8,10 @@ import { User, Save, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useTickStore } from '@/stores/tick-store'
 import { useCircuitCompletionStore } from '@/stores/circuit-completion-store'
-import { computeBadgesFromTicks } from '@/lib/badges'
+import { computeBadges, deriveBadgeInputFromTicks } from '@/lib/badges'
 import { BadgesSection } from '@/components/profile/badges-section'
 import { StreakSection } from '@/components/profile/streak-section'
+import { GoalsSection } from '@/components/profile/goals-section'
 import { createClient } from '@/lib/supabase/client'
 import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
@@ -36,7 +37,11 @@ export default function ProfilPage() {
   const ticks = useTickStore((s) => s.ticks)
   const circuitCompletions = useCircuitCompletionStore((s) => s.completions)
   const tickCount = ticks.length
-  const badges = computeBadgesFromTicks(ticks, circuitCompletions)
+  const badgeInput = useMemo(
+    () => deriveBadgeInputFromTicks(ticks, circuitCompletions),
+    [ticks, circuitCompletions],
+  )
+  const badges = useMemo(() => computeBadges(badgeInput), [badgeInput])
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -139,6 +144,9 @@ export default function ProfilPage() {
 
       {/* Streaks — Story 14.2 */}
       <StreakSection ticks={ticks} />
+
+      {/* Goals — Story 14.3 */}
+      <GoalsSection input={badgeInput} />
 
       {/* Badges — Story 14.1 */}
       <BadgesSection badges={badges} />
