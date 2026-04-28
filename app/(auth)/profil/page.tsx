@@ -13,6 +13,7 @@ import { BadgesSection } from '@/components/profile/badges-section'
 import { StreakSection } from '@/components/profile/streak-section'
 import { GoalsSection } from '@/components/profile/goals-section'
 import { AchievementsLog } from '@/components/profile/achievements-log'
+import { PersonalRecords } from '@/components/profile/personal-records'
 import { createClient } from '@/lib/supabase/client'
 import { profileSchema } from '@/lib/validations/profile'
 import { GRADE_SCALE, formatGrade } from '@/lib/grades'
@@ -151,6 +152,9 @@ export default function ProfilPage() {
 
       {/* Badges — Story 14.1 */}
       <BadgesSection badges={badges} />
+
+      {/* Personal records & grade progression — Story 14.6 */}
+      <PersonalRecords ticks={ticks} />
 
       {/* Recent achievements — Story 14.4 */}
       <AchievementsLog />

@@ -21,6 +21,7 @@ import type { StreakStats } from '@/lib/streaks'
 import type { Goal, GoalProgress } from '@/lib/goals'
 import { getGoalTypeMeta } from '@/lib/goals'
 import type { AchievementEvent } from '@/lib/achievements'
+import type { PersonalRecord } from '@/lib/progression'
 
 /** Web Share API payload shape (also used as clipboard text source). */
 export interface AchievementShare {
@@ -136,6 +137,35 @@ function buildShareForGoal(goal: Goal): AchievementShare {
   const text = [
     '🎯 Objectif atteint !',
     `${meta.label} : ${targetLabel}`,
+    '',
+    `📱 ${APP_NAME} — ${APP_TAGLINE}`,
+    url,
+  ].join('\n')
+  return { title, text, url }
+}
+
+// ---------------------------------------------------------------------------
+// Personal records (Story 14.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a share payload for a personal record (first time crossing a
+ * grade tier). The text emphasizes the *first* nature of the moment —
+ * this is the emotional milestone, distinct from a generic "I climbed
+ * a 6a today" post.
+ */
+export function buildRecordShare(record: PersonalRecord): AchievementShare {
+  const url = getShareOrigin()
+  const tierLabel = formatGrade(record.tier)
+  const climbedLabel = formatGrade(record.grade)
+  const title = `Premier ${tierLabel} — ${record.boulderName}`
+  const sameAsTier = record.grade.toLowerCase() === record.tier.toLowerCase()
+  const climbLine = sameAsTier
+    ? `🪨 ${record.boulderName} (${climbedLabel})`
+    : `🪨 ${record.boulderName} (${climbedLabel}) — premier ${tierLabel}`
+  const text = [
+    `🚀 Mon premier ${tierLabel} à Fontainebleau !`,
+    climbLine,
     '',
     `📱 ${APP_NAME} — ${APP_TAGLINE}`,
     url,
