@@ -94,6 +94,19 @@ describe('useGoalsStore', () => {
     expect(goal?.achievedAt).toBeTruthy()
   })
 
+  it('reconcileAchievements preserves the goals reference when nothing changes', () => {
+    // Reference stability matters — the achievement watcher subscribes
+    // to goals, and a fresh array on every reconcile would feed it into
+    // an infinite useEffect loop.
+    useGoalsStore.getState().addGoal({ type: 'tickCount', target: 100 })
+    const before = useGoalsStore.getState().goals
+    useGoalsStore
+      .getState()
+      .reconcileAchievements({ ...EMPTY_INPUT, tickCount: 5 })
+    const after = useGoalsStore.getState().goals
+    expect(after).toBe(before)
+  })
+
   it('clear empties the goal list', () => {
     useGoalsStore.getState().addGoal({ type: 'tickCount', target: 10 })
     useGoalsStore.getState().addGoal({ type: 'sectorsVisited', target: 5 })

@@ -83,17 +83,26 @@ export const useGoalsStore = create<GoalsState>()(
       reconcileAchievements: (input) => {
         const now = new Date().toISOString()
         const newlyAchieved: string[] = []
+        const current = get().goals
 
+        // First pass: find newly-achieved ids without mutating state.
+        for (const g of current) {
+          if (g.achievedAt) continue
+          if (computeGoalProgress(g, input).isAchieved) {
+            newlyAchieved.push(g.id)
+          }
+        }
+
+        // Skip the write entirely when nothing crossed the line —
+        // returning a new array reference here would cascade re-renders
+        // and feed the achievement watcher's effect into an infinite loop.
+        if (newlyAchieved.length === 0) return newlyAchieved
+
+        const achieved = new Set(newlyAchieved)
         set((state) => ({
-          goals: state.goals.map((g) => {
-            if (g.achievedAt) return g
-            const progress = computeGoalProgress(g, input)
-            if (progress.isAchieved) {
-              newlyAchieved.push(g.id)
-              return { ...g, achievedAt: now }
-            }
-            return g
-          }),
+          goals: state.goals.map((g) =>
+            achieved.has(g.id) ? { ...g, achievedAt: now } : g,
+          ),
         }))
 
         return newlyAchieved

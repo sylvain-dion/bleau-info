@@ -13,7 +13,7 @@
  * "what we've already celebrated" world (achievements store).
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useTickStore } from '@/stores/tick-store'
 import { useCircuitCompletionStore } from '@/stores/circuit-completion-store'
 import { useGoalsStore } from '@/stores/goals-store'
@@ -32,31 +32,17 @@ import {
 /**
  * Mount once on the authenticated profile page.
  *
- * Re-runs whenever ticks, circuit completions, or goals change.
- * Skips the very first run if there are no ticks at all (new users
- * shouldn't get a wave of "first day" celebrations from seeded data).
+ * Re-runs only when raw ticks or circuit completions change. We
+ * intentionally do NOT depend on `goals` or any of the achievements
+ * store's seen-sets — those are read via `getState()` inside the
+ * effect to avoid feedback loops (the effect itself mutates them).
+ *
+ * Skips when there are no ticks so new users don't get a wave of
+ * "first day" celebrations from seeded data.
  */
 export function useAchievementWatcher(): void {
   const ticks = useTickStore((s) => s.ticks)
   const completions = useCircuitCompletionStore((s) => s.completions)
-  const goals = useGoalsStore((s) => s.goals)
-  const reconcileGoals = useGoalsStore((s) => s.reconcileAchievements)
-
-  const seenBadgeIds = useAchievementsStore((s) => s.seenBadgeIds)
-  const seenStreakMilestones = useAchievementsStore(
-    (s) => s.seenStreakMilestones,
-  )
-  const seenGoalIds = useAchievementsStore((s) => s.seenGoalIds)
-  const enqueue = useAchievementsStore((s) => s.enqueueAchievements)
-
-  // Refs avoid re-firing the effect when the store version of seen
-  // sets ticks (it grows from inside the effect itself).
-  const seenBadgesRef = useRef(seenBadgeIds)
-  const seenStreaksRef = useRef(seenStreakMilestones)
-  const seenGoalsRef = useRef(seenGoalIds)
-  seenBadgesRef.current = seenBadgeIds
-  seenStreaksRef.current = seenStreakMilestones
-  seenGoalsRef.current = seenGoalIds
 
   useEffect(() => {
     if (ticks.length === 0) return
@@ -64,22 +50,26 @@ export function useAchievementWatcher(): void {
     const input = deriveBadgeInputFromTicks(ticks, completions)
     const badges = computeBadges(input)
 
+    const achievementsState = useAchievementsStore.getState()
     const badgeEvents = detectNewBadgeAchievements(
       badges,
-      seenBadgesRef.current,
+      achievementsState.seenBadgeIds,
     )
     const streakEvents = detectNewStreakAchievements(
       input.longestStreak ?? 0,
-      seenStreaksRef.current,
+      achievementsState.seenStreakMilestones,
     )
 
     // Goals: ask the goals store to mark anything that just crossed
     // the line, then turn that id list into rich events.
-    const newlyAchievedGoalIds = reconcileGoals(input)
+    const goalsState = useGoalsStore.getState()
+    const newlyAchievedGoalIds = goalsState.reconcileAchievements(input)
     const goalEvents = detectNewGoalAchievements(
       newlyAchievedGoalIds,
-      goals,
-      seenGoalsRef.current,
+      // Read fresh after reconcile so achievedAt timestamps are
+      // visible to the lookup map inside the detector.
+      useGoalsStore.getState().goals,
+      achievementsState.seenGoalIds,
     )
 
     const all: AchievementEvent[] = [
@@ -87,6 +77,6 @@ export function useAchievementWatcher(): void {
       ...streakEvents,
       ...goalEvents,
     ]
-    if (all.length > 0) enqueue(all)
-  }, [ticks, completions, goals, enqueue, reconcileGoals])
+    if (all.length > 0) achievementsState.enqueueAchievements(all)
+  }, [ticks, completions])
 }
