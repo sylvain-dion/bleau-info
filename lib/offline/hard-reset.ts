@@ -28,6 +28,7 @@ const ZUSTAND_KEYS = [
   'bleau-privacy-settings',
   'bleau-custom-routes',
   'bleau-goals',
+  'bleau-achievements',
 ] as const
 
 /** IndexedDB database names managed by the app */
