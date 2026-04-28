@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { useAchievementsStore } from '@/stores/achievements-store'
 import type { AchievementEvent } from '@/lib/achievements'
+import { ShareButton } from '@/components/share/share-button'
+import { buildAchievementShare } from '@/lib/social-share'
 
 const ICONS = {
   Trophy,
@@ -74,7 +76,10 @@ export function AchievementCelebration() {
       aria-live="polite"
       data-testid="achievement-celebration"
     >
-      <div className="animate-bounce-in flex w-[min(90vw,360px)] flex-col items-center gap-4 rounded-2xl bg-card p-8 text-center shadow-2xl">
+      <div
+        className="animate-bounce-in flex w-[min(90vw,360px)] flex-col items-center gap-4 rounded-2xl bg-card p-8 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/20">
           <Icon className={`h-10 w-10 ${current.color}`} />
         </div>
@@ -89,6 +94,10 @@ export function AchievementCelebration() {
             {current.subtitle}
           </p>
         </div>
+        <ShareButton
+          share={buildAchievementShare(current)}
+          ariaLabel={`Partager : ${current.title}`}
+        />
       </div>
     </div>
   )

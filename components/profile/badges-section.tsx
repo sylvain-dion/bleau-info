@@ -15,6 +15,8 @@ import {
   Medal,
 } from 'lucide-react'
 import type { BadgeStatus, BadgeDefinition } from '@/lib/badges'
+import { ShareButton } from '@/components/share/share-button'
+import { buildBadgeShare } from '@/lib/social-share'
 
 const ICONS: Record<BadgeDefinition['icon'], React.ComponentType<{ className?: string }>> = {
   Trophy,
@@ -119,16 +121,25 @@ function BadgeTile({ badge, isOpen, onToggle }: BadgeTileProps) {
       {isOpen && (
         <div
           role="tooltip"
-          className="absolute left-1/2 top-full z-10 mt-1 w-40 -translate-x-1/2 rounded-lg border border-border bg-popover p-2 text-center text-[11px] shadow-lg"
+          className="absolute left-1/2 top-full z-10 mt-1 w-44 -translate-x-1/2 rounded-lg border border-border bg-popover p-2 text-center text-[11px] shadow-lg"
         >
           <p className="font-semibold text-foreground">{badge.definition.label}</p>
           <p className="mt-0.5 text-muted-foreground">
             {badge.definition.description}
           </p>
-          {!earned && (
+          {!badge.earned && (
             <p className="mt-1 text-[10px] text-muted-foreground/70">
               Progression : {Math.round(badge.progress * 100)}%
             </p>
+          )}
+          {badge.earned && (
+            <div className="mt-2 flex justify-center border-t border-border pt-2">
+              <ShareButton
+                share={buildBadgeShare(badge)}
+                variant="icon"
+                ariaLabel={`Partager le badge ${badge.definition.label}`}
+              />
+            </div>
           )}
         </div>
       )}
