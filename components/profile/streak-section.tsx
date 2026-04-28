@@ -7,6 +7,8 @@ import {
   type CalendarCell,
 } from '@/lib/streaks'
 import type { Tick } from '@/lib/validations/tick'
+import { ShareButton } from '@/components/share/share-button'
+import { buildStreakShare } from '@/lib/social-share'
 
 interface StreakSectionProps {
   ticks: Tick[]
@@ -38,6 +40,8 @@ export function StreakSection({ ticks, weeks = 12 }: StreakSectionProps) {
     )
   }
 
+  const streakShare = buildStreakShare(stats)
+
   return (
     <section aria-label="Activité de grimpe" className="mb-6">
       {/* Streak summary tiles */}
@@ -61,6 +65,17 @@ export function StreakSection({ ticks, weeks = 12 }: StreakSectionProps) {
           unit=""
         />
       </div>
+
+      {/* Share active streak */}
+      {streakShare && (
+        <div className="mb-3 flex justify-end">
+          <ShareButton
+            share={streakShare}
+            variant="icon"
+            ariaLabel="Partager mon streak"
+          />
+        </div>
+      )}
 
       {/* Calendar heatmap */}
       <ActivityCalendar cells={cells} />

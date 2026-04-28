@@ -8,6 +8,8 @@ import {
   type GoalProgress,
 } from '@/lib/goals'
 import type { BadgeInput } from '@/lib/badges'
+import { ShareButton } from '@/components/share/share-button'
+import { buildGoalShare } from '@/lib/social-share'
 
 const ICONS = {
   Star,
@@ -90,14 +92,27 @@ export function GoalCardView({ progress, onRemove }: GoalCardViewProps) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onRemove(goal.id)}
-          className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
-          aria-label={`Supprimer l'objectif ${meta.label}`}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {isAchieved && (() => {
+            const share = buildGoalShare(progress)
+            if (!share) return null
+            return (
+              <ShareButton
+                share={share}
+                variant="icon"
+                ariaLabel={`Partager l'objectif atteint ${meta.label}`}
+              />
+            )
+          })()}
+          <button
+            type="button"
+            onClick={() => onRemove(goal.id)}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
+            aria-label={`Supprimer l'objectif ${meta.label}`}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Progress bar */}
