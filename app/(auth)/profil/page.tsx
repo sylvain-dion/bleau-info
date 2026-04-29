@@ -25,7 +25,7 @@ import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { StorageManager } from '@/components/offline/storage-manager'
 import { ConflictList } from '@/components/sync/conflict-list'
-import { MyCircuitsSection } from '@/components/profile/my-circuits-section'
+import { RecentAscentsSection } from '@/components/profile/recent-ascents-section'
 import { WeatherAlertsConfig } from '@/components/profile/weather-alerts-config'
 import { PrivacyConfig } from '@/components/profile/privacy-config'
 import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
@@ -167,8 +167,8 @@ export default function ProfilPage() {
         />
       </div>
 
-      {/* Circuit progression (Story 9.4) */}
-      <MyCircuitsSection />
+      {/* Recent ascents — Story 4.6 (links to /profil/mes-ascensions) */}
+      <RecentAscentsSection />
 
       {/* Boulder drafts */}
       <div className="mb-6">
