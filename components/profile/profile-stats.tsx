@@ -1,9 +1,10 @@
-import { CheckCircle2, Award, CalendarDays } from 'lucide-react'
+import Link from 'next/link'
+import { CheckCircle2, Award, CalendarDays, ChevronRight } from 'lucide-react'
 
 interface ProfileStatsProps {
   /** ISO date string of when the user created their account */
   memberSince: string
-  /** Number of completed ascents (ticks). Mock 0 until Epic 4. */
+  /** Number of completed ascents (ticks). */
   tickCount: number
   /** Contribution points. Mock 0 until Epic 4. */
   contributionPoints: number
@@ -12,8 +13,9 @@ interface ProfileStatsProps {
 /**
  * Read-only stat cards displayed on the profile page.
  *
- * Shows placeholder zeroes for ticks and contribution points —
- * real data will come from the database in Epic 4 (Carnet de Croix).
+ * The "Croix" card now navigates to the dedicated hub
+ * `/profil/mes-ascensions` (Story 4.6) where the user can drill into
+ * their carnet, circuits and statistics.
  */
 export function ProfileStats({ memberSince, tickCount, contributionPoints }: ProfileStatsProps) {
   const formattedDate = new Date(memberSince).toLocaleDateString('fr-FR', {
@@ -23,11 +25,22 @@ export function ProfileStats({ memberSince, tickCount, contributionPoints }: Pro
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      <StatCard
-        icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
-        value={tickCount}
-        label="Croix"
-      />
+      <Link
+        href="/profil/mes-ascensions"
+        aria-label={`Voir mes ascensions (${tickCount} croix)`}
+        className="group flex flex-col items-center gap-1 rounded-lg border border-border bg-card p-3 text-center transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        data-testid="profile-stats-croix-link"
+      >
+        <CheckCircle2 className="h-5 w-5 text-green-500" />
+        <p className="text-lg font-bold text-foreground">{tickCount}</p>
+        <p className="flex items-center gap-0.5 text-xs text-muted-foreground">
+          Croix
+          <ChevronRight
+            className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </p>
+      </Link>
       <StatCard
         icon={<Award className="h-5 w-5 text-primary" />}
         value={contributionPoints}

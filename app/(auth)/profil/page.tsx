@@ -25,12 +25,11 @@ import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
 import { HardResetDialog } from '@/components/profile/hard-reset-dialog'
 import { StorageManager } from '@/components/offline/storage-manager'
 import { ConflictList } from '@/components/sync/conflict-list'
-import { MyCircuitsSection } from '@/components/profile/my-circuits-section'
+import { RecentAscentsSection } from '@/components/profile/recent-ascents-section'
+import { RecentContributionsSection } from '@/components/profile/recent-contributions-section'
 import { WeatherAlertsConfig } from '@/components/profile/weather-alerts-config'
 import { PrivacyConfig } from '@/components/profile/privacy-config'
-import { BoulderDraftsSection } from '@/components/profile/boulder-drafts-section'
 import { SuggestionsSection } from '@/components/profile/suggestions-section'
-import { VideoSubmissionsSection } from '@/components/profile/video-submissions-section'
 import type { ProfileFormData } from '@/lib/validations/profile'
 import type { AvatarPresetKey } from '@/lib/validations/profile'
 
@@ -167,22 +166,15 @@ export default function ProfilPage() {
         />
       </div>
 
-      {/* Circuit progression (Story 9.4) */}
-      <MyCircuitsSection />
+      {/* Recent ascents — Story 4.6 (links to /profil/mes-ascensions) */}
+      <RecentAscentsSection />
 
-      {/* Boulder drafts */}
-      <div className="mb-6">
-        <BoulderDraftsSection />
-      </div>
+      {/* Recent contributions — Story 5.8 (links to /profil/contributions) */}
+      <RecentContributionsSection />
 
       {/* Modification suggestions (Story 5.6) */}
       <div className="mb-6">
         <SuggestionsSection />
-      </div>
-
-      {/* Video submissions (Story 5.7+) */}
-      <div className="mb-6">
-        <VideoSubmissionsSection />
       </div>
 
       {/* Edit Form */}

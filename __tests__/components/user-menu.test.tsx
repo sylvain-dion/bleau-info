@@ -113,14 +113,28 @@ describe('UserMenu', () => {
       })
     })
 
-    it('should show Statistiques link in dropdown', () => {
+    it('should show Mes ascensions link in dropdown (Story 4.6)', () => {
       render(<UserMenu />)
       const button = screen.getByLabelText('Menu utilisateur')
       fireEvent.click(button)
 
-      const statsLink = screen.getByText('Statistiques')
-      expect(statsLink).toBeDefined()
-      expect(statsLink.closest('a')?.getAttribute('href')).toBe('/statistiques')
+      const ascentsLink = screen.getByText('Mes ascensions')
+      expect(ascentsLink).toBeDefined()
+      expect(ascentsLink.closest('a')?.getAttribute('href')).toBe(
+        '/profil/mes-ascensions',
+      )
+    })
+
+    it('should show Mes contributions link in dropdown (Story 5.8)', () => {
+      render(<UserMenu />)
+      const button = screen.getByLabelText('Menu utilisateur')
+      fireEvent.click(button)
+
+      const link = screen.getByText('Mes contributions')
+      expect(link).toBeDefined()
+      expect(link.closest('a')?.getAttribute('href')).toBe(
+        '/profil/contributions',
+      )
     })
 
     it('should close dropdown on Escape key', () => {
