@@ -4,6 +4,7 @@ import { WifiOff, Download, Clock } from 'lucide-react'
 import { useOfflineSectorPage } from '@/lib/hooks/use-offline-sector-page'
 import { SectorHeader } from './sector-header'
 import { SectorTabsContainer } from './sector-tabs'
+import { SectorEcoBanner } from './sector-eco-banner'
 import { BoulderListView } from './boulder-list-view'
 import { SectorCircuitsTab } from './sector-circuits-tab'
 import { SectorWeatherTab } from './sector-weather-tab'
@@ -77,6 +78,7 @@ export function OfflineSectorWrapper({
   return (
     <>
       <SectorHeader sector={sector} boulderIds={boulders.map((b) => b.id)} isOfflineReady={!!offlineData} />
+      <SectorEcoBanner sectorSlug={sectorSlug} />
       <SectorTabsContainer
         blocsContent={blocsContent}
         circuitsContent={

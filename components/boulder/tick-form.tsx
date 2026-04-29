@@ -2,7 +2,7 @@
 
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CheckCircle2, X } from 'lucide-react'
 import { tickFormSchema, todayISO, type TickFormData, type TickStyle } from '@/lib/validations/tick'
 import { useTickStore } from '@/stores/tick-store'
@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/auth-store'
 import { triggerTickFeedback } from '@/lib/feedback'
 import { TickStyleSelector } from './tick-style-selector'
 import { GRADE_SCALE } from '@/lib/grades'
+import { boulderInActiveZones, hasForbiddenZone } from '@/lib/environmental-zones'
+import { EcoWarningDialog } from './eco-warning-dialog'
 
 interface TickFormProps {
   boulderId: string
@@ -29,6 +31,16 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
   const { user } = useAuthStore()
   const addTick = useTickStore((s) => s.addTick)
   const [perceivedGrade, setPerceivedGrade] = useState<string>(boulderGrade)
+  const [pendingTick, setPendingTick] = useState<TickFormData | null>(null)
+
+  // Story 14e.1 — eco gate: if the boulder sits in a forbidden zone today,
+  // hold the submit and show a confirmation dialog before saving the tick.
+  const forbiddenZones = useMemo(() => {
+    const zones = boulderInActiveZones(boulderId)
+    return hasForbiddenZone(zones)
+      ? zones.filter((z) => z.properties.severity === 'forbidden')
+      : []
+  }, [boulderId])
 
   const {
     register,
@@ -44,7 +56,7 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
     },
   })
 
-  function onSubmit(data: TickFormData) {
+  function commitTick(data: TickFormData) {
     addTick({
       userId: user?.id ?? 'anonymous',
       boulderId,
@@ -61,7 +73,16 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
     onClose()
   }
 
+  function onSubmit(data: TickFormData) {
+    if (forbiddenZones.length > 0) {
+      setPendingTick(data)
+      return
+    }
+    commitTick(data)
+  }
+
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -168,5 +189,18 @@ export function TickForm({ boulderId, boulderName, boulderGrade, onClose, onSucc
         </button>
       </div>
     </form>
+
+    {pendingTick && (
+      <EcoWarningDialog
+        zones={forbiddenZones}
+        onCancel={() => setPendingTick(null)}
+        onConfirm={() => {
+          const data = pendingTick
+          setPendingTick(null)
+          commitTick(data)
+        }}
+      />
+    )}
+    </>
   )
 }

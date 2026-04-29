@@ -129,4 +129,66 @@ describe('TickForm', () => {
     const radios = screen.getAllByRole('radio')
     expect(radios).toHaveLength(3)
   })
+
+  describe('eco gate (Story 14e.1)', () => {
+    // Cul de Chien boulder ids sit inside the active forbidden nidification
+    // polygon. Today (the test runtime) falls within Mar 1 → Jun 30.
+    const ecoGuardedProps = {
+      ...defaultProps,
+      boulderId: 'cul-de-chien-1',
+      boulderName: 'La Marie-Rose',
+    }
+
+    it('does not save the tick on the first Valider — opens the eco dialog', async () => {
+      render(<TickForm {...ecoGuardedProps} />)
+      fireEvent.click(screen.getByText('Flash'))
+      fireEvent.click(screen.getByText('Valider'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('eco-warning-dialog')).toBeDefined()
+      })
+
+      // Tick must NOT be saved yet
+      expect(useTickStore.getState().ticks).toHaveLength(0)
+      expect(ecoGuardedProps.onClose).not.toHaveBeenCalled()
+    })
+
+    it('cancelling the eco dialog leaves the form intact', async () => {
+      render(<TickForm {...ecoGuardedProps} />)
+      fireEvent.click(screen.getByText('Flash'))
+      fireEvent.click(screen.getByText('Valider'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('eco-warning-dialog')).toBeDefined()
+      })
+
+      fireEvent.click(screen.getByTestId('eco-warning-cancel'))
+
+      expect(screen.queryByTestId('eco-warning-dialog')).toBeNull()
+      expect(useTickStore.getState().ticks).toHaveLength(0)
+      expect(ecoGuardedProps.onClose).not.toHaveBeenCalled()
+    })
+
+    it('confirming the eco dialog saves the tick and closes the form', async () => {
+      render(<TickForm {...ecoGuardedProps} />)
+      fireEvent.click(screen.getByText('Flash'))
+      fireEvent.click(screen.getByText('Valider'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('eco-warning-dialog')).toBeDefined()
+      })
+
+      fireEvent.click(screen.getByTestId('eco-warning-confirm'))
+
+      await waitFor(() => {
+        const ticks = useTickStore.getState().ticks
+        expect(ticks).toHaveLength(1)
+        expect(ticks[0].boulderId).toBe('cul-de-chien-1')
+        expect(ticks[0].tickStyle).toBe('flash')
+      })
+
+      expect(ecoGuardedProps.onClose).toHaveBeenCalledTimes(1)
+      expect(ecoGuardedProps.onSuccess).toHaveBeenCalledTimes(1)
+    })
+  })
 })
