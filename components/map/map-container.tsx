@@ -15,6 +15,11 @@ import { getMapStyleUrl, createFallbackStyle } from '@/lib/maplibre/styles'
 import { mockBoulders, CIRCUIT_COLORS } from '@/lib/data/mock-boulders'
 import { buildHeatmapData } from '@/lib/heatmap'
 import { getCircuitRoutes } from '@/lib/data/mock-circuits'
+import {
+  mockEnvironmentalZones,
+  ECO_ZONE_COLORS,
+} from '@/lib/data/mock-environmental-zones'
+import { getActiveZones } from '@/lib/environmental-zones'
 import type { FeatureCollection, Point } from 'geojson'
 import { useMapStore } from '@/stores/map-store'
 import { useFilterStore, matchesFilters } from '@/stores/filter-store'
@@ -166,6 +171,7 @@ export function MapContainer({ theme }: MapContainerProps) {
     )
 
     map.on('load', () => {
+      addEcoZoneLayers(map)
       addBoulderLayers(map)
       addHeatmapLayer(map)
       addCompletedBoulderLayer(map)
@@ -186,6 +192,7 @@ export function MapContainer({ theme }: MapContainerProps) {
       if (e.error?.message?.includes('Failed to fetch') || e.error?.status === 404) {
         map.setStyle(createFallbackStyle())
         map.once('styledata', () => {
+          addEcoZoneLayers(map)
           addBoulderLayers(map)
           addHeatmapLayer(map)
           addCompletedBoulderLayer(map)
@@ -256,6 +263,7 @@ export function MapContainer({ theme }: MapContainerProps) {
 
     // Re-add layers after style change (setStyle removes all custom layers)
     map.once('styledata', () => {
+      addEcoZoneLayers(map)
       addBoulderLayers(map)
       addHeatmapLayer(map)
       addCompletedBoulderLayer(map)
@@ -600,6 +608,88 @@ function updateCompletedLayer(map: maplibregl.Map | null) {
     (f: (typeof mockBoulders.features)[number]) => completedIds.has(f.properties.id)
   )
   source.setData({ type: 'FeatureCollection', features })
+}
+
+/**
+ * Story 14e.1 — Render currently active environmental zones as
+ * translucent polygons under the boulder/cluster layers.
+ *
+ * Severity drives both fill and outline color so the visual hierarchy
+ * matches the banner / dialog UX: forbidden = red, warning = amber,
+ * info = sky blue.
+ */
+function addEcoZoneLayers(map: maplibregl.Map) {
+  if (map.getSource('eco-zones')) return
+
+  const active = getActiveZones()
+  const data: GeoJSON.FeatureCollection = {
+    type: 'FeatureCollection',
+    features: active.map((feature) => ({ ...feature })),
+  }
+
+  map.addSource('eco-zones', {
+    type: 'geojson',
+    data: data as typeof mockEnvironmentalZones,
+  })
+
+  // Fill layer — soft translucent.
+  map.addLayer({
+    id: 'eco-zones-fill',
+    type: 'fill',
+    source: 'eco-zones',
+    paint: {
+      'fill-color': [
+        'match',
+        ['get', 'severity'],
+        'forbidden', ECO_ZONE_COLORS.forbidden.fill,
+        'warning', ECO_ZONE_COLORS.warning.fill,
+        'info', ECO_ZONE_COLORS.info.fill,
+        '#94a3b8',
+      ],
+      'fill-opacity': 0.18,
+    },
+  })
+
+  // Outline — solid for forbidden zones (full attention).
+  map.addLayer({
+    id: 'eco-zones-outline-forbidden',
+    type: 'line',
+    source: 'eco-zones',
+    filter: ['==', ['get', 'severity'], 'forbidden'],
+    paint: {
+      'line-color': ECO_ZONE_COLORS.forbidden.border,
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        10, 1.5,
+        15, 2.5,
+      ],
+      'line-opacity': 0.9,
+    },
+  })
+
+  // Outline — dashed for warning + info (softer cue).
+  map.addLayer({
+    id: 'eco-zones-outline-soft',
+    type: 'line',
+    source: 'eco-zones',
+    filter: ['!=', ['get', 'severity'], 'forbidden'],
+    paint: {
+      'line-color': [
+        'match',
+        ['get', 'severity'],
+        'warning', ECO_ZONE_COLORS.warning.border,
+        'info', ECO_ZONE_COLORS.info.border,
+        '#64748b',
+      ],
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        10, 1,
+        15, 2,
+      ],
+      'line-dasharray': [3, 2],
+      'line-opacity': 0.8,
+    },
+  })
 }
 
 /** No-op — circuit dots are injected into the boulders source via filterBoulders() */
