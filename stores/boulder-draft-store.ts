@@ -35,6 +35,15 @@ export interface BoulderDraft {
   /** Sync status for offline/online queue (Story 5.5) */
   syncStatus: 'local' | 'pending' | 'synced' | 'conflict' | 'error'
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'changes_requested'
+  /**
+   * Soft-delete flag — Story 5.8.
+   *
+   * When the draft is publicly visible (`status === 'approved'`), users
+   * cannot remove it directly: a deletion request is enqueued for the
+   * moderation team. While that request is pending, the draft stays
+   * visible but the hub displays a "Suppression en attente" badge.
+   */
+  pendingDeletion?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -71,6 +80,17 @@ interface BoulderDraftState {
 
   /** Get all drafts that need syncing */
   getUnsyncedDrafts: () => BoulderDraft[]
+
+  /**
+   * Soft-delete an "online" draft (Story 5.8).
+   *
+   * For locally-only drafts the row is removed immediately. For
+   * publicly-visible drafts (`approved`), the row is flagged with
+   * `pendingDeletion: true` and a moderation request will be triggered
+   * by the caller — the store is not aware of the moderator queue.
+   * Returns the resulting action so the caller can react.
+   */
+  requestDeletion: (id: string) => 'removed' | 'pending' | 'noop'
 }
 
 /** Simple unique ID generator (same pattern as tick-store). */
@@ -138,6 +158,24 @@ export const useBoulderDraftStore = create<BoulderDraftState>()(
         return get().drafts.filter(
           (d) => d.syncStatus === 'local' || d.syncStatus === 'error'
         )
+      },
+
+      requestDeletion: (id) => {
+        const draft = get().drafts.find((d) => d.id === id)
+        if (!draft) return 'noop'
+        if (draft.status === 'approved') {
+          if (draft.pendingDeletion) return 'pending'
+          set((state) => ({
+            drafts: state.drafts.map((d) =>
+              d.id === id
+                ? { ...d, pendingDeletion: true, updatedAt: new Date().toISOString() }
+                : d,
+            ),
+          }))
+          return 'pending'
+        }
+        set((state) => ({ drafts: state.drafts.filter((d) => d.id !== id) }))
+        return 'removed'
       },
 
       isNameTaken: (name, sector) => {

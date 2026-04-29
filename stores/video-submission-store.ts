@@ -12,6 +12,14 @@ export interface VideoSubmission {
   moderationStatus: 'pending' | 'approved' | 'rejected'
   /** Sync queue status (Story 6.2) */
   syncStatus: SyncStatus
+  /**
+   * Soft-delete flag — Story 5.8.
+   *
+   * When set, the video stays visible (because it's already public)
+   * but the contributions hub shows a "Suppression en attente" badge
+   * and the moderation queue will pick it up on next sync.
+   */
+  pendingDeletion?: boolean
   userId: string
   createdAt: string
   updatedAt: string
@@ -63,6 +71,15 @@ interface VideoSubmissionState {
 
   /** Get all submissions that need syncing */
   getUnsyncedSubmissions: () => VideoSubmission[]
+
+  /**
+   * Soft-delete a video submission (Story 5.8).
+   *
+   * - `pending` / `rejected` videos: removed immediately.
+   * - `approved` videos: flagged with `pendingDeletion: true`; the
+   *   moderator queue picks it up on next sync.
+   */
+  requestDeletion: (id: string) => 'removed' | 'pending' | 'noop'
 }
 
 function generateId(): string {
@@ -151,6 +168,26 @@ export const useVideoSubmissionStore = create<VideoSubmissionState>()(
         return get().submissions.filter(
           (s) => s.syncStatus === 'local' || s.syncStatus === 'error'
         )
+      },
+
+      requestDeletion: (id) => {
+        const sub = get().submissions.find((s) => s.id === id)
+        if (!sub) return 'noop'
+        if (sub.moderationStatus === 'approved') {
+          if (sub.pendingDeletion) return 'pending'
+          set((state) => ({
+            submissions: state.submissions.map((s) =>
+              s.id === id
+                ? { ...s, pendingDeletion: true, updatedAt: new Date().toISOString() }
+                : s,
+            ),
+          }))
+          return 'pending'
+        }
+        set((state) => ({
+          submissions: state.submissions.filter((s) => s.id !== id),
+        }))
+        return 'removed'
       },
     }),
     {

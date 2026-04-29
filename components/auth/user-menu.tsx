@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { LogIn, LogOut, User, ListChecks, Mountain, Shield, MessageSquare, Share2 } from 'lucide-react'
+import { LogIn, LogOut, User, ListChecks, Mountain, Shield, MessageSquare, Share2, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/supabase/client'
 import { getAvatarPreset } from '@/lib/validations/profile'
@@ -155,6 +155,15 @@ function AuthenticatedMenu() {
             >
               <Mountain className="h-4 w-4" />
               Mes ascensions
+            </Link>
+            <Link
+              href="/profil/contributions"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Sparkles className="h-4 w-4" />
+              Mes contributions
             </Link>
             <Link
               href="/listes"

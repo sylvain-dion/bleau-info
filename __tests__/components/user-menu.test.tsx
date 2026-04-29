@@ -125,6 +125,18 @@ describe('UserMenu', () => {
       )
     })
 
+    it('should show Mes contributions link in dropdown (Story 5.8)', () => {
+      render(<UserMenu />)
+      const button = screen.getByLabelText('Menu utilisateur')
+      fireEvent.click(button)
+
+      const link = screen.getByText('Mes contributions')
+      expect(link).toBeDefined()
+      expect(link.closest('a')?.getAttribute('href')).toBe(
+        '/profil/contributions',
+      )
+    })
+
     it('should close dropdown on Escape key', () => {
       render(<UserMenu />)
       const button = screen.getByLabelText('Menu utilisateur')
