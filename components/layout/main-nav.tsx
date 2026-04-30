@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Mountain, Activity, Megaphone, Route, Menu, X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
@@ -192,14 +193,29 @@ export function MainNavMobileToggle() {
 }
 
 // ---------------------------------------------------------------------------
-// Mobile sheet — full-screen overlay covering the entire viewport
+// Mobile sheet — full-screen overlay covering the entire viewport.
+//
+// Rendered via createPortal to document.body so it escapes the header's
+// stacking / containing-block context. The header uses `backdrop-blur`,
+// which (per the CSS spec) makes it a containing block for fixed-position
+// descendants — without the portal the sheet would inherit the header's
+// box and only paint inside the top bar.
 // ---------------------------------------------------------------------------
 
 function MobileSheet() {
   const { setOpen, links } = useMainNav()
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
 
-  return (
+  // Defer the portal until the component has mounted on the client —
+  // document is not defined during SSR.
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex flex-col bg-background md:hidden"
       role="dialog"
@@ -258,6 +274,7 @@ function MobileSheet() {
           )
         })}
       </nav>
-    </div>
+    </div>,
+    document.body,
   )
 }
