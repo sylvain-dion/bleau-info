@@ -188,13 +188,6 @@ describe('MainNav', () => {
     expect(screen.queryByTestId('main-nav-sheet')).toBeNull()
   })
 
-  it('closes the sheet when the backdrop is clicked', () => {
-    renderNav()
-    fireEvent.click(screen.getByTestId('main-nav-burger'))
-    fireEvent.click(screen.getByTestId('main-nav-sheet-backdrop'))
-    expect(screen.queryByTestId('main-nav-sheet')).toBeNull()
-  })
-
   it('closes the sheet when a link inside is clicked', () => {
     renderNav()
     fireEvent.click(screen.getByTestId('main-nav-burger'))

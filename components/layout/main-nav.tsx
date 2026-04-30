@@ -192,7 +192,7 @@ export function MainNavMobileToggle() {
 }
 
 // ---------------------------------------------------------------------------
-// Mobile sheet — slides in from the right
+// Mobile sheet — full-screen overlay covering the entire viewport
 // ---------------------------------------------------------------------------
 
 function MobileSheet() {
@@ -201,74 +201,63 @@ function MobileSheet() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] md:hidden"
+      className="fixed inset-0 z-[60] flex flex-col bg-background md:hidden"
       role="dialog"
       aria-modal="true"
       aria-label="Menu de navigation"
       data-testid="main-nav-sheet"
     >
-      {/* Backdrop */}
-      <button
-        type="button"
-        onClick={() => setOpen(false)}
-        aria-label="Fermer le menu"
-        data-testid="main-nav-sheet-backdrop"
-        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
-      />
-
-      {/* Panel */}
-      <div className="absolute right-0 top-0 flex h-full w-72 max-w-[85vw] flex-col bg-background shadow-lg">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <span className="text-sm font-semibold text-foreground">Menu</span>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Fermer le menu"
-            data-testid="main-nav-sheet-close"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <nav
-          className="flex flex-1 flex-col gap-1 p-3"
-          aria-label="Navigation"
+      {/* Header — same height as the global header so close lines up visually */}
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <span className="text-sm font-semibold text-foreground">Menu</span>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Fermer le menu"
+          data-testid="main-nav-sheet-close"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          {links.map((link) => {
-            const Icon = link.icon
-            const active =
-              pathname === link.href || pathname?.startsWith(`${link.href}/`)
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                data-testid={`main-nav-sheet-link-${link.label.toLowerCase()}`}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                  active
-                    ? 'bg-muted text-foreground'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  {link.label}
-                </span>
-                {!!link.badge && link.badge > 0 && (
-                  <span
-                    className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-none text-primary-foreground"
-                    data-testid={`main-nav-sheet-badge-${link.label.toLowerCase()}`}
-                  >
-                    {link.badge > 99 ? '99+' : link.badge}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
+          <X className="h-5 w-5" />
+        </button>
       </div>
+
+      <nav
+        className="flex flex-1 flex-col gap-1 overflow-y-auto p-4"
+        aria-label="Navigation"
+      >
+        {links.map((link) => {
+          const Icon = link.icon
+          const active =
+            pathname === link.href || pathname?.startsWith(`${link.href}/`)
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              data-testid={`main-nav-sheet-link-${link.label.toLowerCase()}`}
+              aria-current={active ? 'page' : undefined}
+              className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-base transition-colors ${
+                active
+                  ? 'bg-muted text-foreground'
+                  : 'text-foreground hover:bg-muted'
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <Icon className="h-5 w-5 text-muted-foreground" />
+                {link.label}
+              </span>
+              {!!link.badge && link.badge > 0 && (
+                <span
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-none text-primary-foreground"
+                  data-testid={`main-nav-sheet-badge-${link.label.toLowerCase()}`}
+                >
+                  {link.badge > 99 ? '99+' : link.badge}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }
