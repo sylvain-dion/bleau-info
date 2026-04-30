@@ -30,6 +30,12 @@ export const videoSubmissionSchema = z.object({
     .optional()
     .or(z.literal(''))
     .transform((val) => (val === '' ? undefined : val)),
+
+  /**
+   * Story 15.1 — uploader flags the video as showing the climbing beta
+   * so other users see it veiled until they tap "Afficher la bêta".
+   */
+  containsBeta: z.boolean().optional(),
 })
 
 /** Input type — what the form fields provide. */

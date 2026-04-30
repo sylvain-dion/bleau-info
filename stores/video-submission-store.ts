@@ -9,6 +9,11 @@ export interface VideoSubmission {
   videoUrl: string
   climberName: string | null
   videographerName: string | null
+  /**
+   * Story 15.1 — uploader tagged this video as containing the climbing beta.
+   * Optional for backward-compat with previously persisted submissions.
+   */
+  containsBeta?: boolean
   moderationStatus: 'pending' | 'approved' | 'rejected'
   /** Sync queue status (Story 6.2) */
   syncStatus: SyncStatus
@@ -32,11 +37,15 @@ export type VideoSubmissionInput = Pick<
 > & {
   climberName?: string | null
   videographerName?: string | null
+  containsBeta?: boolean
 }
 
 /** Updatable fields when editing an existing submission. */
 export type VideoSubmissionUpdate = Partial<
-  Pick<VideoSubmission, 'videoUrl' | 'climberName' | 'videographerName'>
+  Pick<
+    VideoSubmission,
+    'videoUrl' | 'climberName' | 'videographerName' | 'containsBeta'
+  >
 >
 
 interface VideoSubmissionState {
@@ -100,6 +109,7 @@ export const useVideoSubmissionStore = create<VideoSubmissionState>()(
           videoUrl: data.videoUrl,
           climberName: data.climberName ?? null,
           videographerName: data.videographerName ?? null,
+          containsBeta: data.containsBeta ?? false,
           moderationStatus: 'pending',
           syncStatus: 'local',
           userId: data.userId,

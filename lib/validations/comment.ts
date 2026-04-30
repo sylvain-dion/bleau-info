@@ -7,6 +7,12 @@ export const commentFormSchema = z.object({
     .string()
     .min(1, 'Le commentaire ne peut pas être vide')
     .max(500, '500 caractères maximum'),
+  /**
+   * Story 15.1 — author flags the comment as containing climbing beta
+   * (handhold sequence, crux, …) so other users see it veiled until
+   * they explicitly choose to reveal.
+   */
+  containsBeta: z.boolean().optional().default(false),
 })
 
 export type CommentFormData = z.infer<typeof commentFormSchema>
@@ -20,6 +26,8 @@ export interface BoulderComment {
   boulderId: string
   boulderName: string
   text: string
+  /** Story 15.1 — author tagged this comment as a spoiler. */
+  containsBeta?: boolean
   syncStatus: SyncStatus
   createdAt: string
   updatedAt: string

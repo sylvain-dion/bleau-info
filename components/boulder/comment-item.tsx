@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, Wifi, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Clock, Wifi, Pencil, Trash2, Check, X, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useCommentStore } from '@/stores/comment-store'
+import { useSpoilerPreferenceStore } from '@/stores/spoiler-preference-store'
 import { SyncStatusPill } from '@/components/ui/sync-status-pill'
 import { ReportCommentButton } from './report-comment-button'
+import { SpoilerVeil } from './spoiler-veil'
 import type { BoulderComment } from '@/lib/validations/comment'
 
 interface CommentItemProps {
@@ -23,20 +25,36 @@ export function CommentItem({ comment }: CommentItemProps) {
   const { user } = useAuthStore()
   const updateComment = useCommentStore((s) => s.updateComment)
   const removeComment = useCommentStore((s) => s.removeComment)
+  const isCommentRevealed = useSpoilerPreferenceStore(
+    (s) => s.isCommentRevealed,
+  )
+  const revealComment = useSpoilerPreferenceStore((s) => s.revealComment)
 
   const [mode, setMode] = useState<'view' | 'edit' | 'confirm-delete'>('view')
   const [editText, setEditText] = useState(comment.text)
+  const [editContainsBeta, setEditContainsBeta] = useState(
+    !!comment.containsBeta,
+  )
 
   const isOwn = user?.id === comment.userId
   const wasEdited = comment.updatedAt !== comment.createdAt
+  // Author always sees their own beta — gating only applies to other readers.
+  const veilHidden =
+    !!comment.containsBeta &&
+    !isOwn &&
+    !isCommentRevealed(comment.id, comment.boulderId)
 
   function handleSaveEdit() {
     const trimmed = editText.trim()
-    if (!trimmed || trimmed === comment.text) {
+    const textChanged = trimmed && trimmed !== comment.text
+    const betaChanged = editContainsBeta !== !!comment.containsBeta
+    if (!textChanged && !betaChanged) {
       setMode('view')
       return
     }
-    updateComment(comment.id, trimmed)
+    updateComment(comment.id, textChanged ? trimmed : comment.text, {
+      containsBeta: editContainsBeta,
+    })
     setMode('view')
   }
 
@@ -74,10 +92,25 @@ export function CommentItem({ comment }: CommentItemProps) {
             rows={3}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
+          <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
+            <input
+              type="checkbox"
+              checked={editContainsBeta}
+              onChange={(e) => setEditContainsBeta(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary/50"
+              data-testid="comment-edit-beta-checkbox"
+            />
+            <EyeOff className="h-3 w-3" />
+            <span>Contient de la bêta</span>
+          </label>
           <div className="mt-1.5 flex justify-end gap-1.5">
             <button
               type="button"
-              onClick={() => { setMode('view'); setEditText(comment.text) }}
+              onClick={() => {
+                setMode('view')
+                setEditText(comment.text)
+                setEditContainsBeta(!!comment.containsBeta)
+              }}
               className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted"
             >
               <X className="h-3 w-3" />
@@ -119,9 +152,23 @@ export function CommentItem({ comment }: CommentItemProps) {
         </div>
       ) : (
         /* View mode */
-        <p className="text-sm leading-relaxed text-foreground">
-          {comment.text}
-        </p>
+        <>
+          {comment.containsBeta && isOwn && (
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+              <EyeOff className="h-2.5 w-2.5" />
+              Bêta
+            </span>
+          )}
+          <SpoilerVeil
+            hidden={veilHidden}
+            kind="comment"
+            onReveal={() => revealComment(comment.id)}
+          >
+            <p className="text-sm leading-relaxed text-foreground">
+              {comment.text}
+            </p>
+          </SpoilerVeil>
+        </>
       )}
 
       {/* Footer: timestamp + actions */}

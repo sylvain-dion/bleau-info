@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link2, User, Video } from 'lucide-react'
+import { Link2, EyeOff } from 'lucide-react'
 import { videoSubmissionSchema } from '@/lib/validations/video-submission'
 import type { VideoSubmissionFormInput } from '@/lib/validations/video-submission'
 import { parseVideoUrl } from '@/lib/video'
@@ -73,6 +73,7 @@ export function VideoSubmissionForm({
       videoUrl: existingSubmission?.videoUrl ?? '',
       climberName: existingSubmission?.climberName ?? '',
       videographerName: existingSubmission?.videographerName ?? '',
+      containsBeta: existingSubmission?.containsBeta ?? false,
     },
   })
 
@@ -85,6 +86,7 @@ export function VideoSubmissionForm({
         videoUrl: data.videoUrl,
         climberName: data.climberName || null,
         videographerName: data.videographerName || null,
+        containsBeta: !!data.containsBeta,
       })
     } else {
       addSubmission({
@@ -92,6 +94,7 @@ export function VideoSubmissionForm({
         videoUrl: data.videoUrl,
         climberName: data.climberName || null,
         videographerName: data.videographerName || null,
+        containsBeta: !!data.containsBeta,
         userId: user?.id ?? 'anonymous',
       })
       showVideoSubmittedToast()
@@ -171,6 +174,28 @@ export function VideoSubmissionForm({
           />
         )}
       />
+
+      {/* Contains beta — Story 15.1 */}
+      <label className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm select-none">
+        <input
+          type="checkbox"
+          {...register('containsBeta')}
+          className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary/50"
+          data-testid="video-form-beta-checkbox"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-foreground">
+            <EyeOff className="h-3.5 w-3.5" />
+            <span className="font-medium">
+              Cette vidéo contient de la bêta
+            </span>
+          </div>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+            Les autres grimpeurs verront un voile à la place de la vidéo
+            jusqu&apos;à ce qu&apos;ils choisissent de l&apos;afficher.
+          </p>
+        </div>
+      </label>
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">

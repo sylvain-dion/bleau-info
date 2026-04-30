@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Send } from 'lucide-react'
+import { Send, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useCommentStore } from '@/stores/comment-store'
 import { showCommentPostedToast } from '@/lib/feedback'
@@ -27,12 +27,16 @@ export function CommentForm({
   const { user } = useAuthStore()
   const addComment = useCommentStore((s) => s.addComment)
   const [text, setText] = useState('')
+  const [containsBeta, setContainsBeta] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const result = commentFormSchema.safeParse({ text: text.trim() })
+    const result = commentFormSchema.safeParse({
+      text: text.trim(),
+      containsBeta,
+    })
     if (!result.success) {
       setError(result.error.issues[0].message)
       return
@@ -45,9 +49,11 @@ export function CommentForm({
       boulderId,
       boulderName,
       text: result.data.text,
+      containsBeta: result.data.containsBeta,
     })
 
     setText('')
+    setContainsBeta(false)
     setError(null)
     showCommentPostedToast()
     onSuccess?.()
@@ -76,9 +82,22 @@ export function CommentForm({
           className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
         {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-        <p className="mt-0.5 text-right text-[10px] text-muted-foreground">
-          {text.length}/500
-        </p>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
+            <input
+              type="checkbox"
+              checked={containsBeta}
+              onChange={(e) => setContainsBeta(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary/50"
+              data-testid="comment-form-beta-checkbox"
+            />
+            <EyeOff className="h-3 w-3" />
+            <span>Contient de la bêta (méthode, séquence)</span>
+          </label>
+          <span className="text-[10px] text-muted-foreground">
+            {text.length}/500
+          </span>
+        </div>
       </div>
       <button
         type="submit"
