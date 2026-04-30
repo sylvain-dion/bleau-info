@@ -12,6 +12,8 @@ interface VideoItem {
   videoUrl: string
   climberName?: string | null
   videographerName?: string | null
+  /** Story 15.1 — show the video behind a spoiler veil. */
+  containsBeta?: boolean
 }
 
 interface VideoCarouselProps {
@@ -48,6 +50,7 @@ export function VideoCarousel({ boulderId, mockVideos }: VideoCarouselProps) {
           videoUrl: s.videoUrl,
           climberName: s.climberName,
           videographerName: s.videographerName,
+          containsBeta: s.containsBeta,
         })),
     [storeSubmissions]
   )
@@ -109,6 +112,8 @@ export function VideoCarousel({ boulderId, mockVideos }: VideoCarouselProps) {
               videoUrl={video.videoUrl}
               climberName={video.climberName}
               videographerName={video.videographerName}
+              containsBeta={video.containsBeta}
+              boulderId={boulderId}
             />
           ))}
         </div>

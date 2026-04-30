@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { MessageSquare, ChevronDown, EyeOff, Wifi } from 'lucide-react'
+import { MessageSquare, ChevronDown, EyeOff, Eye, Wifi } from 'lucide-react'
 import { useCommentStore } from '@/stores/comment-store'
 import { useNetworkStore } from '@/stores/network-store'
 import { useCommentReportStore } from '@/stores/comment-report-store'
+import { useSpoilerPreferenceStore } from '@/stores/spoiler-preference-store'
 import { CommentForm } from './comment-form'
 import { CommentItem } from './comment-item'
 
@@ -25,7 +26,15 @@ export function CommentSection({ boulderId, boulderName }: CommentSectionProps) 
   const allComments = useCommentStore((s) => s.comments)
   const isOnline = useNetworkStore((s) => s.isOnline)
   const reportStoreReports = useCommentReportStore((s) => s.reports)
+  const isRevealAllForBoulder = useSpoilerPreferenceStore(
+    (s) => s.isRevealAllForBoulder,
+  )
+  const setRevealAll = useSpoilerPreferenceStore((s) => s.setRevealAll)
+  const hideAllForBoulder = useSpoilerPreferenceStore(
+    (s) => s.hideAllForBoulder,
+  )
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const revealAllOn = isRevealAllForBoulder(boulderId)
 
   const hiddenIds = useMemo(() => {
     const counts = new Map<string, number>()
@@ -49,14 +58,50 @@ export function CommentSection({ boulderId, boulderName }: CommentSectionProps) 
 
   const visibleComments = comments.slice(0, visibleCount)
   const hasMore = visibleCount < comments.length
+  const hasBetaComments = comments.some((c) => c.containsBeta)
+
+  function handleRevealAll() {
+    setRevealAll(boulderId, true)
+  }
+
+  function handleHideAll() {
+    hideAllForBoulder(boulderId, {
+      commentIds: comments.filter((c) => c.containsBeta).map((c) => c.id),
+      videoKeys: [],
+    })
+  }
 
   return (
     <section className="mb-6">
-      <div className="mb-3 flex items-center gap-2">
-        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold text-foreground">
-          Commentaires{comments.length > 0 ? ` (${comments.length})` : ''}
-        </h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">
+            Commentaires{comments.length > 0 ? ` (${comments.length})` : ''}
+          </h2>
+        </div>
+
+        {hasBetaComments && (
+          <button
+            type="button"
+            onClick={revealAllOn ? handleHideAll : handleRevealAll}
+            className="flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            data-testid="comment-section-reveal-all-toggle"
+            aria-pressed={revealAllOn}
+          >
+            {revealAllOn ? (
+              <>
+                <EyeOff className="h-3 w-3" />
+                Tout masquer
+              </>
+            ) : (
+              <>
+                <Eye className="h-3 w-3" />
+                Tout afficher la bêta
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Offline sync indicator */}
